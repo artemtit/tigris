@@ -1,5 +1,7 @@
 # Tigris
 
+**语言 / Language：** [简体中文](README.md) · [English](README.en.md)
+
 把 Android TV 的桌面换成 tvOS 26 的样子：沉底的 Liquid Glass Dock、Top Shelf 式的顶部内容、毛玻璃控制中心、风景照片背景和相框屏保。
 
 > 十二生肖开源系列第三个项目：虎。Tigris 是拉丁语和希腊语里的"老虎"。
@@ -21,6 +23,33 @@
 | ![顶部内容](docs/screenshots/shelf.jpg) | ![展开](docs/screenshots/grid.jpg) |
 | **控制中心** | **相框 / 屏保** |
 | ![控制中心](docs/screenshots/cc.jpg) | ![相框](docs/screenshots/frame.jpg) |
+
+## 电视安装与兼容性反馈（按证据分类）
+
+> **截至 2026-10-23；官方 APK 最低 Android 9（API 28）。** 下表记录具体**机型、系统、测试版本**上的安装与运行反馈，不是对整品牌的保证。**能安装 ≠ 能设默认桌面 ≠ HDMI / 亮度 / 壁纸等全部正常。** “旧版出错”不代表最新版仍出错；未收到最新版复测时明确标注“待验证”。
+
+| 电视型号 | Android / 固件 | 安装及运行结论 | 测试范围和限制 | 证据 |
+|---|---|---|---|---|
+| **Sony BRAVIA XR-55A80J** | Android TV 12 | ✅ 维护者实机验证 | 官方项目主要测试机；不代表所有索尼机型 | 本项目维护者说明 |
+| **Sony BRAVIA VH1** | Android TV 10 / API 29 | ✅ v1.9 已运行、快速连按返回键不再复现崩溃 | v1.8 曾因连续返回键崩溃；不等于 2.0.2 全功能实测 | [#2](https://github.com/lesnolie/Tigris/issues/2) |
+| **Sony KD-55X9500H** | Android TV 10 / API 29 | ✅ 社区在 v1.9 上运行过 | 旧版观察到控制中心胶囊玻璃异常；修复已进 `main`（[#11](https://github.com/lesnolie/Tigris/pull/11)），尚待新版实机复测 | [#10](https://github.com/lesnolie/Tigris/pull/10) |
+| **雷鸟 / FFalcon 75R685C**（`tcl_mt5879_cn`） | Android 11 / API 30，国行固件 | ✅ 社区实机验证 Guard 版和 TCL 专用安装方式 | TCL 拒绝直接 `adb install`；经「多屏互动」推送。音量、TCL 设置、信号源选择器已测试；亮度滑条按设计隐藏 | [#1](https://github.com/lesnolie/Tigris/pull/1) |
+| **小米 MiTV-ANSP0** | Android 9 / API 28 | ⚠️ APK 可安装，但**旧版启动崩溃** | `BlendMode` 问题已在 v2.0+ 修复；**未收到 v2.0.2 该机复测**，不标成新版验证通过 | [#9](https://github.com/lesnolie/Tigris/issues/9) |
+| **小米 MiTV-ASTR0** | Android 14 / 小米 OS3 | ⚠️ 已有应用运行反馈，但功能异常 | 壁纸下载数始终为 0；系统还拒绝部分守护服务启动。没有完整安装方式和全部功能的验证记录 | [#8](https://github.com/lesnolie/Tigris/issues/8) |
+| **小米旧型号（未提供具体型号）** | 版本未提供，低于安装包要求 | ❌ 官方 APK 安装遭拒绝（`INSTALL_FAILED_OLDER_SDK`） | 需要反馈具体型号和 API 版本；不能把全部小米电视判定为不兼容 | [#3](https://github.com/lesnolie/Tigris/issues/3) |
+| **创维 / 酷开 7S710_A3** | Android 8 / API 26 | ❌ 官方 APK 不支持；✅ 贡献者 API 26 Fork 曾成功运行 | Fork 曾测试 HDMI2 与返回 Tigris；**不等于官方 v2.0.2 已通过酷开实机验证** | [#4](https://github.com/lesnolie/Tigris/pull/4) |
+
+**选哪个安装包？** [最新 Releases](https://github.com/lesnolie/Tigris/releases/latest)：一般电视使用 `Tigris.apk`；TCL / 雷鸟国行固件使用 `Tigris-guard.apk` 和 [T-Cast 推送安装](tools/tcast-push.py)。`INSTALL_FAILED_OLDER_SDK` 表示设备 API 低于 APK 的 `minSdk`，不是更换安装器能解决的。小米等部分国产固件可能需要额外的桌面守护配置，详见下文和 [AGENTS.md](AGENTS.md)。
+
+### 继续提交电视兼容性反馈
+
+欢迎使用 **[电视兼容性反馈模板](https://github.com/lesnolie/Tigris/issues/new/choose)** 提供机型、Android 版本、Tigris 版本、安装包、安装结果和日志。没有实机确认的结论会保留“待验证”。**自动化只收集模板中的结构化字段，为中英文 README 创建待审核 PR；不会自动把陌生用户的反馈当作确认兼容，也不会直接改 `main`。** 旧 Issues / PR 中的历史证据由维护者在上表核对记录。
+
+#### 自动收集的新反馈（社区自报，待核验）
+
+<!-- TV_COMPATIBILITY_AUTO_START -->
+尚无新的结构化社区反馈。[提交电视兼容性反馈](https://github.com/lesnolie/Tigris/issues/new/choose)。
+<!-- TV_COMPATIBILITY_AUTO_END -->
 
 ## 让 AI Agent 帮你安装
 

@@ -1,0 +1,68 @@
+name: "📺 电视安装 / TV compatibility report"
+description: "反馈真实电视上的安装、启动、功能兼容性 / Report install, launch and feature compatibility on a real TV"
+title: "[TV] 品牌 型号 / Brand Model"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请填写实际测试结果，而不是根据品牌猜测。**安装成功不等于所有功能正常**。
+        Provide actual observed results; installing successfully does not prove every feature works.
+        提交后，会由自动化生成 README 更新 PR，**必须由维护者审核才会合并**。
+  - type: input
+    id: brand
+    attributes:
+      label: "品牌 / Brand"
+      placeholder: "Sony / 小米 / TCL / 雷鸟 / 创维 / ..."
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: "型号 / Model"
+      placeholder: "XR-55A80J, 75R685C, MiTV-ANSP0 ..."
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: "Android 版本 / Android version"
+      description: "最好包含 API/SDK 号 / Prefer Android version and API level"
+      placeholder: "Android 11 (API 30)"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: "Tigris 版本 / Tigris version"
+      placeholder: "v2.0.2"
+    validations:
+      required: true
+  - type: dropdown
+    id: apk
+    attributes:
+      label: "安装包 / APK type"
+      options:
+        - "Standard / 标准版"
+        - "Guard / 守护版"
+        - "Custom fork / 自定义版本"
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: "安装结果 / Installation result"
+      options:
+        - "Installed and launches / 已安装且启动"
+        - "Installed but crashes / 安装成功但崩溃"
+        - "Installation rejected / 无法安装"
+        - "Not tested / 尚未测试"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: "实际现象、功能测试和日志 / Observations, feature tests and logs"
+      description: "例如 HDMI、返回键、默认桌面、亮度、音量、错误代码 / HDMI, Back key, HOME behavior, brightness, volume, error codes"
+      placeholder: "请写出实际操作和结果 / Steps and observed results"
+    validations:
+      required: true

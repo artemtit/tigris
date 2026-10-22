@@ -1,0 +1,36 @@
+name: Validate bilingual compatibility docs
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'README.en.md'
+      - 'tools/update-tv-compatibility.py'
+      - 'tools/test_tv_compatibility_docs.py'
+      - '.github/ISSUE_TEMPLATE/tv-compatibility.yml'
+      - '.github/workflows/tv-compatibility-docs.yml'
+      - '.github/workflows/validate-tv-compatibility-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unit tests for safe Issue Form parsing
+        run: python -m unittest discover -s tools -p 'test_tv_compatibility_docs.py' -v
+      - name: Render current community reports from GitHub
+        run: python tools/update-tv-compatibility.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify READMEs match generated report tables
+        run: git diff --exit-code -- README.md README.en.md

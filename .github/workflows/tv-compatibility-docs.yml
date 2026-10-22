@@ -1,0 +1,62 @@
+name: Propose TV compatibility documentation updates
+
+on:
+  issues:
+    types: [opened, edited, reopened, closed]
+  schedule:
+    - cron: '19 2 * * 1'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/ISSUE_TEMPLATE/tv-compatibility.yml'
+      - 'tools/update-tv-compatibility.py'
+      - 'README.md'
+      - 'README.en.md'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: read
+
+concurrency:
+  group: tv-compatibility-readme-sync
+  cancel-in-progress: false
+
+jobs:
+  suggest:
+    name: Create reviewed docs PR from structured Issue reports
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build bilingual self-reported device tables
+        run: python tools/update-tv-compatibility.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Open PR for maintainers (never auto-merge)
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: docs/auto-tv-compatibility
+          delete-branch: true
+          add-paths: |
+            README.md
+            README.en.md
+          commit-message: "docs: sync community TV installation reports"
+          title: "docs: update community TV installation reports"
+          body: |
+            Automated snapshot of **self-reported** TV compatibility from
+            structured GitHub Issue Forms. No report is treated as verified.
+            Please review models, Android versions and results before merging.
+            Do not treat install success as proof that all TV controls work.
