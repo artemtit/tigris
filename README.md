@@ -1,5 +1,11 @@
 # Tigris
 
+<p align="center">
+  <a href="https://tigris-tv.pages.dev/">
+    <img src="website/public/img/favicon.svg" alt="Tigris — 官方网站图标 / official website icon" width="112" />
+  </a>
+</p>
+
 **语言 / Language：** [简体中文](README.md) · [English](README.en.md)
 
 把 Android TV 的桌面换成 tvOS 26 的样子：沉底的 Liquid Glass Dock、Top Shelf 式的顶部内容、毛玻璃控制中心、风景照片背景和相框屏保。

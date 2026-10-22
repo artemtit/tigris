@@ -1,5 +1,11 @@
 # Tigris
 
+<p align="center">
+  <a href="https://tigris-tv.pages.dev/">
+    <img src="website/public/img/favicon.svg" alt="Tigris — 官方网站图标 / official website icon" width="112" />
+  </a>
+</p>
+
 **Language / 语言:** [English](README.en.md) · [简体中文](README.md)
 
 A tvOS-inspired launcher for Android TV, featuring a Liquid Glass Dock, Top Shelf-like content, a translucent Control Center, photographic wallpapers, and a photo-frame screensaver.
