@@ -607,6 +607,9 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         fun set(level: Bravia.Level?) {
             // An asynchronous read started before a key press must not overwrite its newer target.
             if (ready && (sending || android.os.SystemClock.uptimeMillis() - lastInteraction < 600)) return
+            // The panel polls every 2 s; an unchanged reading must not relayout and redraw the panel.
+            if (ready && level != null && level.value.coerceIn(level.min, level.max) == value &&
+                level.min == min && level.max == max) return
             val wasReady = ready
             val oldTarget = value
             ready = level != null

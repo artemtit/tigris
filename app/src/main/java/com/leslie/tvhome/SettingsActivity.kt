@@ -81,7 +81,10 @@ class SettingsActivity : Activity() {
         repo = AppRepo(this)
 
         val root = FrameLayout(this).apply { setBackgroundColor(Color.rgb(28, 28, 30)) }
-        backdrop = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP }
+        backdrop = ImageView(this).apply {
+            scaleType = ImageView.ScaleType.MATRIX
+            addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ -> placeBackdrop(v as ImageView) }
+        }
         root.addView(backdrop, FrameLayout.LayoutParams(-1, -1))
         heading = text(28f, weight = 600).apply { gravity = Gravity.CENTER }
         root.addView(heading, FrameLayout.LayoutParams(-1, -2, Gravity.TOP).apply { topMargin = dp(40) })
@@ -150,10 +153,25 @@ class SettingsActivity : Activity() {
             })
         }
         backdrop.setImageBitmap(bmp)
+        placeBackdrop(backdrop)
         icon.visibility = if (bmp != null) android.view.View.INVISIBLE else android.view.View.VISIBLE
         // Below the TV in the picture, which reaches a little lower than the icon would.
-        (about.layoutParams as LinearLayout.LayoutParams).topMargin = dp(if (bmp != null) 52 else 26)
+        (about.layoutParams as LinearLayout.LayoutParams).topMargin = dp(if (bmp != null) 62 else 26)
         about.requestLayout()
+    }
+
+    /**
+     * Fills the screen, 8% larger than needed and against the right edge: a subject in the left
+     * third of a 16:9 picture (where the icon would be) then sits over the description column.
+     */
+    private fun placeBackdrop(v: ImageView) {
+        val d = v.drawable ?: return
+        if (v.width == 0 || d.intrinsicWidth <= 0) return
+        val s = maxOf(v.width / d.intrinsicWidth.toFloat(), v.height / d.intrinsicHeight.toFloat()) * 1.08f
+        v.imageMatrix = android.graphics.Matrix().apply {
+            setScale(s, s)
+            postTranslate(v.width - d.intrinsicWidth * s, (v.height - d.intrinsicHeight * s) / 2)
+        }
     }
 
     private fun showIcon(v: ImageView) {

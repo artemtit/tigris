@@ -185,12 +185,25 @@ class PhoneServer private constructor(private val ctx: Context, private val toke
         return json(state().put("ok", true))
     }
 
+    /**
+     * Decodes at the smallest power-of-two reduction still at least [width] wide: a 48 MP phone photo
+     * decoded whole needs about 190 MB, more than this app's heap.
+     */
+    private fun decodeAtMost(f: File, width: Int): Bitmap? {
+        val o = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(f.path, o)
+        if (o.outWidth <= 0) return null
+        var sample = 1
+        while (o.outWidth / (sample * 2) >= width) sample *= 2
+        return BitmapFactory.decodeFile(f.path, BitmapFactory.Options().apply { inSampleSize = sample })
+    }
+
     /** The settings icon: any picture, kept as PNG, at most 960 px wide (a tile is drawn at 400 or so). */
     private fun uploadIcon(session: IHTTPSession): Response {
         val files = HashMap<String, String>()
         session.parseBody(files)
         val src = files.values.map { File(it) }.firstOrNull { it.exists() && it.length() in 1..MAX_UPLOAD }
-            ?.let { BitmapFactory.decodeFile(it.path) } ?: return json(state().put("ok", false))
+            ?.let { decodeAtMost(it, 960) } ?: return json(state().put("ok", false))
         val bmp = if (src.width > 960) Bitmap.createScaledBitmap(src, 960, src.height * 960 / src.width, true) else src
         val tmp = File(ctx.filesDir, SettingsActivity.ICON_FILE + ".part")
         tmp.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
@@ -205,7 +218,7 @@ class PhoneServer private constructor(private val ctx: Context, private val toke
         val files = HashMap<String, String>()
         session.parseBody(files)
         val src = files.values.map { File(it) }.firstOrNull { it.exists() && it.length() in 1..MAX_UPLOAD }
-            ?.let { BitmapFactory.decodeFile(it.path) } ?: return json(state().put("ok", false))
+            ?.let { decodeAtMost(it, 1920) } ?: return json(state().put("ok", false))
         val bmp = if (src.width > 1920) Bitmap.createScaledBitmap(src, 1920, src.height * 1920 / src.width, true) else src
         val tmp = File(ctx.filesDir, SettingsActivity.BACKDROP_FILE + ".part")
         tmp.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 92, it) }
