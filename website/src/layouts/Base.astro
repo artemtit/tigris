@@ -25,7 +25,7 @@ const canonical = `${brand.site}${copy.meta.canonical.replace(brand.site, "")}`;
   <link rel="canonical" href={canonical} />
   {copy.meta.alts.map((alt) => <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />)}
   <link rel="icon" href={assets.favicon} type="image/svg+xml" />
-  <link rel="apple-touch-icon" href={assets.favicon} />
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
 
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content={brand.name} />

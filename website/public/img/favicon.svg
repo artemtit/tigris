@@ -1,12 +1,80 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Tigris">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-labelledby="title desc">
+  <title id="title">Titanium T app icon</title>
+  <desc id="desc">A custom segmented, satin-silver capital T on a glossy black rounded-square app icon.</desc>
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#DCEAFF"/>
-      <stop offset="1" stop-color="#8FB0EA"/>
+    <linearGradient id="base" x1="0" y1="0" x2="0.92" y2="1">
+      <stop offset="0" stop-color="#262728"/>
+      <stop offset=".32" stop-color="#101112"/>
+      <stop offset=".75" stop-color="#060708"/>
+      <stop offset="1" stop-color="#131416"/>
     </linearGradient>
+    <radialGradient id="rimlight" cx=".49" cy="-.04" r=".9">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".21"/>
+      <stop offset=".20" stop-color="#ffffff" stop-opacity=".075"/>
+      <stop offset=".60" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cornerShade" cx=".48" cy=".50" r=".70">
+      <stop offset=".43" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity=".48"/>
+    </radialGradient>
+    <linearGradient id="silver" x1="0.09" y1="0.02" x2=".86" y2="1">
+      <stop offset="0" stop-color="#fffefa"/>
+      <stop offset=".22" stop-color="#f3f1ee"/>
+      <stop offset=".51" stop-color="#c6c5c3"/>
+      <stop offset=".77" stop-color="#98999c"/>
+      <stop offset="1" stop-color="#747679"/>
+    </linearGradient>
+    <linearGradient id="silverLeft" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffefd"/>
+      <stop offset=".45" stop-color="#e7e5e3"/>
+      <stop offset="1" stop-color="#a4a5a7"/>
+    </linearGradient>
+    <linearGradient id="silverRight" x1="0" y1="0" x2=".9" y2="1">
+      <stop offset="0" stop-color="#f2f0ed"/>
+      <stop offset=".5" stop-color="#b8b9bb"/>
+      <stop offset="1" stop-color="#8b8e91"/>
+    </linearGradient>
+    <linearGradient id="silverStem" x1="0" y1="0" x2=".9" y2="1">
+      <stop offset="0" stop-color="#e9e8e6"/>
+      <stop offset=".52" stop-color="#c4c5c6"/>
+      <stop offset="1" stop-color="#848689"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".37"/>
+      <stop offset=".32" stop-color="#fff" stop-opacity=".02"/>
+      <stop offset=".75" stop-color="#15181c" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".23"/>
+    </linearGradient>
+    <filter id="tileShadow" x="-10%" y="-10%" width="120%" height="125%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur"/>
+      <feOffset in="blur" dx="2" dy="9" result="offset"/>
+      <feFlood flood-color="#000000" flood-opacity=".75" result="dark"/>
+      <feComposite in="dark" in2="offset" operator="in" result="shadow"/>
+      <feMerge><feMergeNode in="shadow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="squircle"><rect width="1024" height="1024" rx="224"/></clipPath>
   </defs>
-  <rect width="64" height="64" rx="15" fill="#0B0F16"/>
-  <path d="M16 19h32v6H37v22h-7V25H16z" fill="url(#g)"/>
-  <path d="M43 19l7 6-7 6z" fill="url(#g)" opacity="0.55"/>
-  <rect x="16" y="46" width="24" height="4" rx="2" fill="#B9D4FF" opacity="0.35"/>
+
+  <!-- Premium black icon tile, with transparent outside corners -->
+  <g clip-path="url(#squircle)">
+    <rect width="1024" height="1024" fill="url(#base)"/>
+    <rect width="1024" height="1024" fill="url(#rimlight)"/>
+    <rect width="1024" height="1024" fill="url(#cornerShade)"/>
+    <rect x="2" y="2" width="1020" height="1020" rx="222" fill="none" stroke="#ffffff" stroke-opacity=".055" stroke-width="3"/>
+  </g>
+
+  <!-- All components are real, editable vector paths. Deliberate diagonal seams distinguish this T from a standard typeface. -->
+  <g filter="url(#tileShadow)" stroke="#fdfcf8" stroke-opacity=".28" stroke-width="1.5" stroke-linejoin="round">
+    <!-- Upper-left wing with a tapered diagonal cut -->
+    <path id="t-wing-left" d="M260 293H469L425 424H260Q238 424 238 402V315Q238 293 260 293Z" fill="url(#silverLeft)"/>
+    <!-- Keystoned central cap, descending toward the stem -->
+    <path id="t-cap-center" d="M486 293H546L590 424H440Z" fill="url(#silver)"/>
+    <!-- Upper-right wing, a counterpart to the left -->
+    <path id="t-wing-right" d="M563 293H763Q785 293 785 315V402Q785 424 763 424H607Z" fill="url(#silverRight)"/>
+    <!-- The body is split by one long, extremely narrow angled gap -->
+    <path id="t-stem-top" d="M442 438H582V607L442 529Z" fill="url(#silver)"/>
+    <path id="t-stem-bottom" d="M442 550L582 628V752Q582 774 560 774H464Q442 774 442 752Z" fill="url(#silverStem)"/>
+  </g>
+
 </svg>
