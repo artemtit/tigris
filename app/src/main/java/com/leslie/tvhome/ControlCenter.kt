@@ -64,8 +64,15 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         private val edge = android.graphics.RadialGradient(0f, 0f, 1f,
             intArrayOf(Color.argb(230, 255, 255, 255), Color.TRANSPARENT),
             null, android.graphics.Shader.TileMode.CLAMP)
-        // Added rather than layered on: the glass glows brighter in its own colours instead of turning milky.
-        private val lightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { blendMode = android.graphics.BlendMode.PLUS }
+        // The View is also constructed on API 28, even though live glass is disabled there.
+        // Preserve the original PLUS effect on API 29+, and use API 28-safe additive blending below.
+        private val lightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                blendMode = android.graphics.BlendMode.PLUS
+            } else {
+                xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.ADD)
+            }
+        }
         init { visibility = View.INVISIBLE; translationZ = ctx.dp(100.5f).toFloat() }
         override fun onDraw(canvas: Canvas) {
             mask.reset()
