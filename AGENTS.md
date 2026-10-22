@@ -183,6 +183,7 @@ adb -s <TV_IP>:5555 shell am broadcast -a com.leslie.tvhome.CONFIG -n com.leslie
 # clock_style corner|large|off · focus_style / cc_style auto|tvos|simple / auto|glass|panel · intro off|boot|wake
 # intro_source video|wordmark (the uploaded video, or the Tigris wordmark)
 # own_icon / settings_bg true|false (the uploaded settings icon / page background, or the built-in look; the files are kept either way)
+# background daily|scenery|fresh|anime|art|mine|custom|green|blue|purple|orange|graphite (home wallpaper source, or a built-in gradient)
 ```
 
 ## 9. Adapting Tigris to a TV that isn't fully supported
