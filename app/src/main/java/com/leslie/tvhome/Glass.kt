@@ -32,7 +32,9 @@ object LiquidGlass {
     fun bake(source: Bitmap, screenW: Int, screenH: Int, rect: Rect, radius: Float, overlay: Drawable? = null): Bitmap {
         val w = rect.width()
         val h = rect.height()
-        val zone = min(h * 0.26f, radius * 1.4f)    // refracting band along the rim
+        // Match Canvas round-rect geometry for capsules, including when the requested radius exceeds half the short side.
+        val cornerRadius = radius.coerceIn(0f, min(w, h) / 2f)
+        val zone = min(h * 0.26f, cornerRadius * 1.4f)    // refracting band along the rim
         val pull = zone * 0.9f                       // how far the rim reaches outside
         val blurR = 7
         val margin = (pull + blurR * 2 + 2).toInt()
@@ -67,11 +69,11 @@ object LiquidGlass {
             for (i in 0 until w) {
                 val px = i + 0.5f
                 // Signed distance to the rounded rectangle (negative inside).
-                val qx = abs(px - hw) - (hw - radius)
-                val qy = abs(py - hh) - (hh - radius)
+                val qx = abs(px - hw) - (hw - cornerRadius)
+                val qy = abs(py - hh) - (hh - cornerRadius)
                 val ox = max(qx, 0f)
                 val oy = max(qy, 0f)
-                val sdf = sqrt(ox * ox + oy * oy) + min(max(qx, qy), 0f) - radius
+                val sdf = sqrt(ox * ox + oy * oy) + min(max(qx, qy), 0f) - cornerRadius
                 val a = (0.5f - sdf).coerceIn(0f, 1f)
                 if (a <= 0f) continue
                 val depth = -sdf

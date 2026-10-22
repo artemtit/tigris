@@ -116,6 +116,8 @@ class WallpaperActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             setBackgroundColor(Color.rgb(16, 16, 18))
             clipChildren = false
+            // The focused first-column tile expands into the root's left padding.
+            clipToPadding = false
             setPadding(dp(64), dp(44), dp(56), dp(32))
             addView(left, LinearLayout.LayoutParams(0, -1, 1f))
             addView(right, LinearLayout.LayoutParams(dp(250), -2).apply { marginStart = dp(24) })

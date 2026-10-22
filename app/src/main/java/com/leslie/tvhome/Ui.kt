@@ -193,6 +193,8 @@ class Sheet(private val host: FrameLayout) {
     private val ctx = host.context
     val root = FrameLayout(ctx).apply {
         setBackgroundColor(Color.argb(200, 0, 0, 0))
+        // Focused controls can scale past the bounds of their parent.
+        clipChildren = false
         isClickable = true
         alpha = 0f
         // Above focused tiles, which lift themselves with translationZ; no shadow (see ControlCenter.scrim).
@@ -202,6 +204,8 @@ class Sheet(private val host: FrameLayout) {
     private val col = LinearLayout(ctx).apply {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER_HORIZONTAL
+        // Pills grow to 1.06x on focus, beyond this wrap-content column.
+        clipChildren = false
     }
     private val title = ctx.text(28f, bold = true).apply { gravity = Gravity.CENTER }
     private val message = ctx.text(16f, Color.argb(180, 255, 255, 255)).apply {
