@@ -235,6 +235,12 @@ class SettingsActivity : Activity() {
         }) {
             prefs.introSource = if (prefs.introSource == Prefs.INTRO_WORDMARK) Prefs.INTRO_VIDEO else Prefs.INTRO_WORDMARK
         }
+        row("唤醒后等待", "从待机唤醒时，先黑屏这么久再播放动画。不少电视（尤其是 OLED）在系统亮屏后过几秒画面才真正亮起；看不到动画开头就调长，黑屏太久就调短。", {
+            if (prefs.wakeDelay == 0) "不等待" else "${prefs.wakeDelay / 1000.0} 秒".replace(".0 ", " ")
+        }) {
+            val opts = listOf(0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 10_000)
+            prefs.wakeDelay = opts.firstOrNull { it > prefs.wakeDelay } ?: 0
+        }
         row("开机动画声音", "播放动画视频里的声音。", { onOff(prefs.introSound) }) { prefs.introSound = !prefs.introSound }
         row("预览开机动画", "现在回到主屏幕播放一次。", { "" }, chevron = true) {
             startActivity(Intent(this, HomeActivity::class.java)

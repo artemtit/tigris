@@ -64,9 +64,14 @@ class Intro(
     /** Nothing may keep the home screen covered: whatever goes wrong, the intro ends by then. */
     private val watchdog = Runnable { finish() }
 
-    fun start() {
+    /** Covers the screen at once; the animation itself begins after [delay] ms of black. */
+    fun start(delay: Long = 0) {
         host.addView(overlay, FrameLayout.LayoutParams(-1, -1))
-        main.postDelayed(watchdog, 15_000)
+        main.postDelayed(watchdog, 15_000 + delay)
+        if (delay > 0) main.postDelayed({ if (!finished) begin() }, delay) else begin()
+    }
+
+    private fun begin() {
         val video = if (Prefs(ctx).introSource == Prefs.INTRO_WORDMARK) null else videoFile(ctx)
         if (video == null) {
             showWordmark()

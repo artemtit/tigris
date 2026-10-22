@@ -182,6 +182,7 @@ Every one of these can also be set over adb, for example:
 adb -s <TV_IP>:5555 shell am broadcast -a com.leslie.tvhome.CONFIG -n com.leslie.tvhome/.ConfigReceiver   --ez clock_24 true --es clock_style corner --es focus_style auto --es cc_style auto --es intro boot --ez intro_sound true
 # clock_style corner|large|off · focus_style / cc_style auto|tvos|simple / auto|glass|panel · intro off|boot|wake
 # intro_source video|wordmark (the uploaded video, or the Tigris wordmark)
+# --ei wake_delay <ms> (intro=wake: black before the animation on wake, default 5000; OLED panels light up late)
 # own_icon / settings_bg true|false (the uploaded settings icon / page background, or the built-in look; the files are kept either way)
 # background daily|scenery|fresh|anime|art|mine|custom|green|blue|purple|orange|graphite (home wallpaper source, or a built-in gradient)
 ```

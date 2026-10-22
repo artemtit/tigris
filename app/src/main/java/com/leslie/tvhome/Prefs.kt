@@ -37,8 +37,17 @@ class Prefs(ctx: Context) {
 
     /** Packages that memory cleanup never stops (casting receivers etc.). */
     var keep: Set<String>
-        get() = sp.getStringSet("keep", DEFAULT_KEEP)!!.toSet()
-        set(v) = sp.edit().putStringSet("keep", v).apply()
+        get() {
+            val saved = sp.getStringSet("keep", null)?.toSet() ?: return DEFAULT_KEEP
+            // Defaults added in a later version join a list the user already saved, once.
+            val seen = sp.getStringSet("keep_defaults", null) ?: KEEP_UNTRACKED
+            val added = DEFAULT_KEEP - seen
+            if (added.isEmpty()) return saved
+            val merged = saved + added
+            sp.edit().putStringSet("keep", merged).putStringSet("keep_defaults", DEFAULT_KEEP).apply()
+            return merged
+        }
+        set(v) = sp.edit().putStringSet("keep", v).putStringSet("keep_defaults", DEFAULT_KEEP).apply()
 
     var cleanOnStandby: Boolean
         get() = sp.getBoolean("clean_on_standby", true)
@@ -166,6 +175,14 @@ class Prefs(ctx: Context) {
         get() = sp.getBoolean("settings_bg", true)
         set(v) = sp.edit().putBoolean("settings_bg", v).apply()
 
+    /**
+     * How long the screen stays black on wake before the intro starts. Many panels (OLED especially)
+     * light up seconds after Android reports the screen on, and nothing tells the app when.
+     */
+    var wakeDelay: Int
+        get() = sp.getInt("wake_delay", 5000)
+        set(v) = sp.edit().putInt("wake_delay", v.coerceIn(0, 15_000)).apply()
+
     var introSound: Boolean
         get() = sp.getBoolean("intro_sound", true)
         set(v) = sp.edit().putBoolean("intro_sound", v).apply()
@@ -195,9 +212,13 @@ class Prefs(ctx: Context) {
 
         val DEFAULT_KEEP = setOf(
             "com.dangbei.screencast",
+            "com.weekd.miracastreceiver",
             "com.xiaodianshi.tv.yst",
             "dev.vodik7.atvtoolsserver",
         )
+
+        /** The defaults from before new ones were tracked; a list saved then has already seen these. */
+        private val KEEP_UNTRACKED = setOf("com.dangbei.screencast", "com.xiaodianshi.tv.yst", "dev.vodik7.atvtoolsserver")
 
         /** Initial grid order on first run; everything else follows alphabetically. */
         val DEFAULT_ORDER = listOf(
