@@ -63,10 +63,14 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     private lateinit var root: FrameLayout
     private lateinit var scene: FrameLayout
     private lateinit var backdrop: FrameLayout
-    private var glassScene: LiveGlass? = null
     private lateinit var bg: ImageView
     private lateinit var header: FrameLayout
     private lateinit var clockText: TextView
+    /** The large clock top left, with the date above it ([Prefs.CLOCK_LARGE]). */
+    private lateinit var bigClock: LinearLayout
+    private lateinit var bigDate: TextView
+    private lateinit var bigTime: TextView
+    private var intro: Intro? = null
     private lateinit var avatar: IconButton
     private lateinit var netButton: IconButton
     private lateinit var ccButton: IconButton
@@ -186,10 +190,13 @@ class HomeActivity : Activity(), TileAdapter.Listener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Tween.readScale(this)
         prefs = Prefs(this)
         repo = AppRepo(this)
         buildViews()
         control = ControlCenter(this, root)
+        // Covers the screen before its first frame, so the home screen is never seen ahead of it.
+        if (Intro.dueAfterBoot(this)) playIntro()
         reload()
         registerReceiver(pkgReceiver, IntentFilter().apply {
             addAction(Intent.ACTION_PACKAGE_ADDED)
@@ -197,15 +204,37 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             addAction(Intent.ACTION_PACKAGE_CHANGED)
             addDataScheme("package")
         })
+        registerReceiver(screenOn, IntentFilter(Intent.ACTION_SCREEN_ON))
         KeeperService.start(this)
-        if (!prefs.adbAuthorized) main.postDelayed({ askAdbAuthorization() }, 1500)
+        if (!prefs.adbAuthorized) main.postDelayed({ askAdbAuthorization() }, if (intro != null) 8000L else 1500L)
+    }
+
+    // ------------------------------------------------------------------- intro
+
+    /** When the screen last came on; the intro plays if the home screen is what it woke up to. */
+    private var wokeAt = 0L
+    private val screenOn = object : BroadcastReceiver() {
+        override fun onReceive(c: Context, i: Intent) { wokeAt = android.os.SystemClock.uptimeMillis() }
+    }
+
+    /** Plays the boot animation over the home screen; [preview] is the one started from settings. */
+    fun playIntro(preview: Boolean = false) {
+        if (intro != null) return
+        if (!preview) prefs.introBoot = Intro.bootStamp(this)
+        sheets.toList().forEach { it.dismiss() }
+        control.close()
+        intro = Intro(this, root, scene, prefs.introSound) {
+            intro = null
+            if (sheets.isEmpty() && !control.isOpen) focusAt(focusedPos)
+        }.also { it.start() }
     }
 
     override fun onDestroy() {
         unregisterReceiver(pkgReceiver)
         main.removeCallbacksAndMessages(null)
         control.destroy()
-        glassScene?.dispose()
+        intro?.finish()
+        runCatching { unregisterReceiver(screenOn) }
         io.shutdown()
         net.shutdown()
         super.onDestroy()
@@ -236,7 +265,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         firstRowY = (sh * 0.744f).toInt()          // 804 px; next row just peeks above the bottom edge
         expandedRowY = (sh * 0.36f).toInt()
 
-        // The dock hugs the first row: a focused tile (scaled 1.115) nearly touches its edges.
+        // The dock hugs the first row: a focused tile (scaled 1.12) nearly touches its edges.
         val pad = dp(15)
         dockRect.set(side - pad, firstRowY - pad, sw - side + pad, firstRowY + tileH + pad)
         dockRadius = dp(11) + pad.toFloat()
@@ -248,6 +277,24 @@ class HomeActivity : Activity(), TileAdapter.Listener {
 
         // A persistent status row, also visible over Top Shelf and the expanded app grid.
         header = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
+        // The tvOS 26 clock this launcher started with: the date over a large thin clock, top left.
+        bigDate = text(20f, bold = true).apply { setShadowLayer(dp(8).toFloat(), 0f, 0f, Color.argb(60, 0, 0, 0)) }
+        bigTime = TextView(this).apply {
+            setTextColor(Color.WHITE)
+            typeface = Fonts.inter(this@HomeActivity, 250)
+            textSize = 118f
+            includeFontPadding = false
+            letterSpacing = -0.02f
+            setShadowLayer(dp(12).toFloat(), 0f, 0f, Color.argb(50, 0, 0, 0))
+        }
+        bigClock = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(bigDate, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(4) })
+            addView(bigTime, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(10) })
+        }
+        header.addView(bigClock, FrameLayout.LayoutParams(-2, -2).apply {
+            leftMargin = side - dp(4); topMargin = (sh * 0.197f).toInt()
+        })
         clockText = text(14f, weight = 600).apply {
             setShadowLayer(dp(5).toFloat(), 0f, dp(1).toFloat(), Color.argb(140, 0, 0, 0))
         }
@@ -333,34 +380,39 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 // The glass was baked for its resting place, so it fades out quickly once it moves.
                 dock.translationY = -off
                 dock.alpha = (1f - off / (rowPitch * 0.7f)).coerceIn(0f, 1f)
+                // The large clock gives way to the rows coming up under it.
+                if (!shelfShown) bigClock.alpha = dock.alpha
             }
         })
         scene.addView(grid, match())
         header.bringToFront()
-        root.viewTreeObserver.addOnPreDrawListener {
-            if (::control.isInitialized && (scene.isDirty || scene.hasTransientState())) control.invalidateLiveScene()
-            true
-        }
         setContentView(root)
     }
 
-    /** Shows the gradient theme, or the photo for the current rotation slot (cross-fading when it changes). */
+    /**
+     * Shows the gradient theme, or the photo for the current rotation slot (cross-fading when it
+     * changes). Called every minute; the next photo is downloaded only when its turn comes.
+     */
     private fun applyBackground() {
         val theme = prefs.background
-        val walls = Wallpapers(this, Wallpapers.sourceFor(theme))
-        val photo = if (Wallpapers.isPhoto(theme)) walls.current(prefs.wallMinutes) else null
+        if (!Wallpapers.isPhoto(theme)) return showBackground(theme, null)
+        if (refreshing) return
+        refreshing = true
+        io.execute {
+            val walls = Wallpapers(this, Wallpapers.sourceFor(theme))
+            runCatching { walls.refresh(); walls.advance(prefs.wallMinutes) }
+            val photo = walls.current()
+            refreshing = false
+            main.post { if (!isDestroyed && prefs.background == theme) showBackground(theme, photo) }
+        }
+    }
+
+    private fun showBackground(theme: String, photo: java.io.File?) {
         val key = if (Wallpapers.isPhoto(theme)) "$theme:${photo?.name}" else theme
         if (key == shownBackground) return
         shownBackground = key
         io.execute {
-            if (Wallpapers.isPhoto(theme) && !refreshing) {
-                refreshing = true
-                walls.refresh()
-                refreshing = false
-                // First run: nothing was cached yet, so try again now that photos exist.
-                if (photo == null && walls.files().isNotEmpty()) main.post { shownBackground = null; applyBackground() }
-            }
-            val bmp = photo?.let { walls.forHome(it) } ?: Backgrounds.render(if (Wallpapers.isPhoto(theme)) "green" else theme)
+            val bmp = photo?.let { Wallpapers(this, Wallpapers.sourceFor(theme)).forHome(it) } ?: Backgrounds.render(if (Wallpapers.isPhoto(theme)) "green" else theme)
             val glass = LiquidGlass.bake(bmp, sw, sh, dockRect, dockRadius).also { it.prepareToDraw() }
             homeDock = glass
             main.post {
@@ -487,6 +539,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         shelfShown = v
         if (v) shelf.visibility = View.VISIBLE else bg.visibility = View.VISIBLE
         shelf.animate().cancel()
+        // The large clock gives way to the shelf.
+        bigClock.animate().alpha(if (v) 0f else dock.alpha).setDuration(350).start()
         shelf.animate().alpha(if (v) 1f else 0f).setDuration(if (v) 500 else 350)
             .withEndAction {
                 // The shelf covers the whole screen: stop drawing the photo underneath it.
@@ -523,20 +577,21 @@ class HomeActivity : Activity(), TileAdapter.Listener {
 
     private fun updateClock() {
         val now = Date()
-        clockText.text = SimpleDateFormat("h:mm a", Locale.US).format(now)
+        clockText.text = SimpleDateFormat(if (prefs.clock24) "HH:mm" else "h:mm a", Locale.US).format(now)
+        bigDate.text = SimpleDateFormat("M月d日EEEE", Locale.CHINA).format(now)
+        // The large clock leaves out AM/PM, as tvOS did; at that size it reads as the time of day.
+        bigTime.text = SimpleDateFormat(if (prefs.clock24) "HH:mm" else "h:mm", Locale.US).format(now)
     }
 
-    /** Only the home scene, excluding every control-center view and dialog. */
-    fun invalidateGlassSource() { glassScene?.invalidate() }
-
-    fun drawGlassScene(canvas: Canvas) {
-        if (android.os.Build.VERSION.SDK_INT < 31 || !canvas.isHardwareAccelerated) {
-            scene.draw(canvas)
-            return
-        }
-        val live = glassScene ?: LiveGlass(scene).also { glassScene = it }
-        live.draw(canvas)
+    private fun applyClockStyle() {
+        val style = prefs.clockStyle
+        clockText.visibility = if (style == Prefs.CLOCK_CORNER) View.VISIBLE else View.GONE
+        bigClock.visibility = if (style == Prefs.CLOCK_LARGE) View.VISIBLE else View.GONE
+        updateClock()
     }
+
+    /** The home scene alone, without the control center or any dialog; the glass controls sample it. */
+    val sceneView: View get() = scene
 
     private fun updateNetworkIcon() {
         val cm = getSystemService(ConnectivityManager::class.java)
@@ -782,6 +837,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         restartIdle()
+        // Any key skips the intro to its closing zoom; nothing behind it reacts meanwhile.
+        intro?.let { if (event.action == KeyEvent.ACTION_UP) it.skip(); return true }
         val code = event.keyCode
         if (event.action == KeyEvent.ACTION_UP && (code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_MENU)) {
             when {
@@ -799,6 +856,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        if (intent.getBooleanExtra(Intro.EXTRA_PREVIEW, false)) { playIntro(preview = true); return }
         // Home pressed while already home: close everything and go back to the top.
         sheets.toList().forEach { it.dismiss() }
         control.close()
@@ -820,6 +878,12 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     override fun onResume() {
         super.onResume()
         avatar.visibility = if (prefs.showAvatar) View.VISIBLE else View.GONE
+        adapter.tvosFocus = prefs.focusTvos(this)
+        applyClockStyle()
+        control.applyStyle()
+        // Woken from standby onto the home screen.
+        if (wokeAt > 0 && android.os.SystemClock.uptimeMillis() - wokeAt < 8_000 && prefs.intro == Prefs.INTRO_WAKE) playIntro()
+        wokeAt = 0
         prefs.homeInFront = true
         HomeGuardService.onHomeResumed()
         restartIdle()
@@ -832,6 +896,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     }
 
     override fun onPause() {
+        // Leaving for another app (or standby) ends the intro rather than leaving it half played.
+        intro?.finish()
         prefs.homeInFront = false
         main.removeCallbacks(idleFrame)
         main.removeCallbacks(ticker)
@@ -904,7 +970,7 @@ class IconButton(ctx: Context, icon: Int, private val portrait: Boolean = false,
         setOnFocusChangeListener { _, f ->
             disc.setColor(if (f) Color.WHITE else Color.TRANSPARENT)
             if (!portrait) img.setColorFilter(if (f) Color.BLACK else Color.WHITE)
-            animate().scaleX(if (f) 1.1f else 1f).scaleY(if (f) 1.1f else 1f).setDuration(150).start()
+            tweenScale(if (f) 1.1f else 1f, 150)
         }
     }
 

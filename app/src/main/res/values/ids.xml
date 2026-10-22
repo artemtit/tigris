@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- View tags holding each view's own Tween. -->
+    <item name="motion_bump" type="id" />
+    <item name="motion_focus" type="id" />
+</resources>

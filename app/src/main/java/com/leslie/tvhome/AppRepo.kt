@@ -6,11 +6,13 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.util.LruCache
 import androidx.palette.graphics.Palette
@@ -138,15 +140,23 @@ class AppRepo(private val ctx: Context) {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
     }
 
-    fun cachedTile(pkg: String): Bitmap? = tiles.get(pkg)
+    fun cachedTile(pkg: String): Bitmap? = tiles.get(tileKey(pkg))
+
+    /** The settings tile is keyed by its custom icon's date too, so a newly uploaded one shows up. */
+    private fun tileKey(pkg: String): String =
+        if (pkg == ctx.packageName) pkg + "@" + (SettingsActivity.customIcon(ctx)?.lastModified() ?: 0L) else pkg
 
     /** Builds the tile bitmap; call off the main thread. */
     fun tile(app: AppEntry): Bitmap {
-        tiles.get(app.pkg)?.let { return it }
+        val key = tileKey(app.pkg)
+        tiles.get(key)?.let { return it }
         val bmp = Bitmap.createBitmap(TILE_W, TILE_H, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
-        app.input?.let { drawInputTile(c, it); tiles.put(app.pkg, bmp); return bmp }
-        val banner = try {
+        app.input?.let { drawInputTile(c, it); tiles.put(key, bmp); return bmp }
+        val own = if (app.component.className == SettingsActivity::class.java.name)
+            SettingsActivity.customIcon(ctx)?.let { SettingsActivity.decodeIcon(it, TILE_W) }?.let { BitmapDrawable(ctx.resources, it) }
+        else null
+        val banner = own ?: try {
             pm.getActivityInfo(app.component, 0).loadBanner(pm)
                 ?: pm.getApplicationInfo(app.pkg, 0).loadBanner(pm)
         } catch (e: Exception) { null }
@@ -156,12 +166,12 @@ class AppRepo(private val ctx: Context) {
             val icon = try { pm.getActivityIcon(app.component) } catch (e: Exception) { pm.defaultActivityIcon }
             drawIconTile(c, icon)
         }
-        tiles.put(app.pkg, bmp)
+        tiles.put(key, bmp)
         return bmp
     }
 
     /** Drops the cached tile of [pkg] (it was updated or removed), or of every app. */
-    fun invalidate(pkg: String? = null) { if (pkg == null) tiles.evictAll() else tiles.remove(pkg) }
+    fun invalidate(pkg: String? = null) { if (pkg == null) tiles.evictAll() else tiles.remove(tileKey(pkg)) }
 
     private fun drawCenterCrop(c: Canvas, d: Drawable) {
         val iw = d.intrinsicWidth.takeIf { it > 0 } ?: TILE_W

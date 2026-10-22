@@ -3,6 +3,21 @@ package com.leslie.tvhome
 import android.content.Context
 import android.content.SharedPreferences
 
+/**
+ * What the TV can afford. Low-end TVs (little memory, or Android 9/10, which ship on older chips)
+ * get the cheaper look by default; every such default can be changed in 主屏幕设置.
+ */
+object Device {
+    @Volatile private var lowEnd: Boolean? = null
+
+    fun isLowEnd(ctx: Context): Boolean = lowEnd ?: run {
+        val am = ctx.getSystemService(android.app.ActivityManager::class.java)
+        val mem = android.app.ActivityManager.MemoryInfo().also { am.getMemoryInfo(it) }
+        (am.isLowRamDevice || mem.totalMem < 2_500L * 1024 * 1024 || android.os.Build.VERSION.SDK_INT < 30 ||
+            Runtime.getRuntime().availableProcessors() < 4).also { lowEnd = it }
+    }
+}
+
 /** All user settings in one place. */
 class Prefs(ctx: Context) {
     private val sp: SharedPreferences = ctx.getSharedPreferences("tvhome", Context.MODE_PRIVATE)
@@ -106,9 +121,77 @@ class Prefs(ctx: Context) {
         get() = sp.getStringSet("pinned_inputs", emptySet())!!.toSet()
         set(v) = sp.edit().putStringSet("pinned_inputs", v).apply()
 
+    /** 24-hour clock ("14:05") instead of "2:05 PM". */
+    var clock24: Boolean
+        get() = sp.getBoolean("clock_24", false)
+        set(v) = sp.edit().putBoolean("clock_24", v).apply()
+
+    /** [CLOCK_CORNER] (small, top right), [CLOCK_LARGE] (date and a large clock top left, as before v1.9) or [CLOCK_OFF]. */
+    var clockStyle: String
+        get() = sp.getString("clock_style", CLOCK_CORNER)!!
+        set(v) = sp.edit().putString("clock_style", v).apply()
+
+    /** [AUTO], [CC_GLASS] or [CC_PANEL]; see [ccGlass]. */
+    var ccStyle: String
+        get() = sp.getString("cc_style", AUTO)!!
+        set(v) = sp.edit().putString("cc_style", v).apply()
+
+    /** The Control Center uses floating glass controls rather than one plain panel. */
+    fun ccGlass(ctx: Context) = when (ccStyle) { CC_GLASS -> true; CC_PANEL -> false; else -> !Device.isLowEnd(ctx) }
+
+    /** [AUTO], [FOCUS_TVOS] (tilt and a gliding highlight) or [FOCUS_SIMPLE] (scale and shadow only). */
+    var focusStyle: String
+        get() = sp.getString("focus_style", AUTO)!!
+        set(v) = sp.edit().putString("focus_style", v).apply()
+
+    fun focusTvos(ctx: Context) = when (focusStyle) { FOCUS_TVOS -> true; FOCUS_SIMPLE -> false; else -> !Device.isLowEnd(ctx) }
+
+    /** When the boot animation plays: [INTRO_OFF], [INTRO_BOOT] (after a cold boot) or [INTRO_WAKE] (also on wake from standby). */
+    var intro: String
+        get() = sp.getString("intro", INTRO_OFF)!!
+        set(v) = sp.edit().putString("intro", v).apply()
+
+    /** What plays: the uploaded video ([INTRO_VIDEO], the wordmark when there is none) or the Tigris wordmark ([INTRO_WORDMARK]). */
+    var introSource: String
+        get() = sp.getString("intro_source", INTRO_VIDEO)!!
+        set(v) = sp.edit().putString("intro_source", v).apply()
+
+    /** The settings icon: the user's own picture when there is one (true), or the built-in gear. */
+    var ownIcon: Boolean
+        get() = sp.getBoolean("own_icon", true)
+        set(v) = sp.edit().putBoolean("own_icon", v).apply()
+
+    /** The settings page on its uploaded picture ([SettingsActivity.backdropFile]) rather than plain dark. */
+    var settingsBg: Boolean
+        get() = sp.getBoolean("settings_bg", true)
+        set(v) = sp.edit().putBoolean("settings_bg", v).apply()
+
+    var introSound: Boolean
+        get() = sp.getBoolean("intro_sound", true)
+        set(v) = sp.edit().putBoolean("intro_sound", v).apply()
+
+    /** When the boot animation last played after a boot ([Intro.bootStamp]), so it plays once per boot. */
+    var introBoot: Long
+        get() = sp.getLong("intro_boot", 0L)
+        set(v) = sp.edit().putLong("intro_boot", v).apply()
+
     companion object {
         const val SAVER_PHOTOS = "photos"
         const val SAVER_AERIAL = "aerial"
+
+        const val AUTO = "auto"
+        const val CLOCK_CORNER = "corner"
+        const val CLOCK_LARGE = "large"
+        const val CLOCK_OFF = "off"
+        const val CC_GLASS = "glass"
+        const val CC_PANEL = "panel"
+        const val FOCUS_TVOS = "tvos"
+        const val FOCUS_SIMPLE = "simple"
+        const val INTRO_OFF = "off"
+        const val INTRO_BOOT = "boot"
+        const val INTRO_WAKE = "wake"
+        const val INTRO_VIDEO = "video"
+        const val INTRO_WORDMARK = "wordmark"
 
         val DEFAULT_KEEP = setOf(
             "com.dangbei.screencast",

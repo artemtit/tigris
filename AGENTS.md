@@ -122,7 +122,7 @@ Take a screenshot and look at it:
 adb -s <TV_IP>:5555 exec-out screencap -p > tv.png
 ```
 
-You should see a compact clock, two round controls and an optional profile portrait top-right, and a row of app tiles on a glass dock near the bottom. Back opens separate floating glass controls with no enclosing panel. Press Home (`input keyevent KEYCODE_HOME`) and check again.
+You should see a compact clock, two round controls and an optional profile portrait top-right, and a row of app tiles on a glass dock near the bottom. Back opens the Control Center: separate floating glass controls, or a dark panel on low-end TVs. Press Home (`input keyevent KEYCODE_HOME`) and check again.
 
 If the stock launcher appears instead:
 
@@ -173,6 +173,17 @@ Tell the user these exist; change them only if asked. All of them are in the Con
 - Photo frame as the system screensaver (电视空闲时显示相框), the idle time, and its content (屏保内容): photos or Apple TV aerial films (streamed from Apple, about 15–20 Mbps; falls back to photos offline). On Xiaomi, which shows its own screensaver instead of Android's, the home screen starts the frame 15 s before Xiaomi's would.
 - HDMI inputs on the home screen: Control Center → 输入源 → 在主屏幕上显示….
 - Apps kept alive by memory cleanup.
+- Clock (时间格式, 时钟位置), focus animation (聚焦动画), Control Center style (控制中心样式). The last two default to 自动, which picks the cheaper look on low-end TVs.
+- Boot animation (开机动画), off by default. The app ships no video: the user uploads one on the phone page, or you push it with `adb push <video> /sdcard/Android/data/com.leslie.tvhome/files/intro.mp4`. Don't download a trademarked clip for the user. The same goes for a custom settings icon (`files/settings_icon.png`) and a settings-page background (`files/settings_bg.jpg`, a 16:9 picture with its subject on the left), both also uploadable on the phone page.
+
+Every one of these can also be set over adb, for example:
+
+```sh
+adb -s <TV_IP>:5555 shell am broadcast -a com.leslie.tvhome.CONFIG -n com.leslie.tvhome/.ConfigReceiver   --ez clock_24 true --es clock_style corner --es focus_style auto --es cc_style auto --es intro boot --ez intro_sound true
+# clock_style corner|large|off · focus_style / cc_style auto|tvos|simple / auto|glass|panel · intro off|boot|wake
+# intro_source video|wordmark (the uploaded video, or the Tigris wordmark)
+# own_icon / settings_bg true|false (the uploaded settings icon / page background, or the built-in look; the files are kept either way)
+```
 
 ## 9. Adapting Tigris to a TV that isn't fully supported
 

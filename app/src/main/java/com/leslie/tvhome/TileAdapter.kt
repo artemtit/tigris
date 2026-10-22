@@ -6,6 +6,7 @@ import android.content.Context
 import android.graphics.Color
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -35,6 +36,18 @@ class TileCell(ctx: Context, val tileW: Int, val tileH: Int) : FrameLayout(ctx) 
         alpha = 0f
     }
     private val shadowPad = dp(SHADOW_PAD)
+    private val focusTween = Tween()
+    /** The light glancing off a focused tile; only drawn while focused. */
+    private val sheen = View(ctx).apply {
+        background = android.graphics.drawable.GradientDrawable().apply {
+            gradientType = android.graphics.drawable.GradientDrawable.RADIAL_GRADIENT
+            colors = intArrayOf(Color.argb(78, 255, 255, 255), Color.argb(26, 255, 255, 255), Color.TRANSPARENT)
+            gradientRadius = tileW * 0.62f
+            setGradientCenter(0.5f, 0.5f)
+        }
+        alpha = 0f
+        visibility = INVISIBLE
+    }
 
     init {
         clipChildren = false
@@ -46,6 +59,7 @@ class TileCell(ctx: Context, val tileW: Int, val tileH: Int) : FrameLayout(ctx) 
         shadow.translationX = -shadowPad.toFloat()
         shadow.translationY = -shadowPad.toFloat()
         card.addView(image, LayoutParams(tileW, tileH))
+        card.addView(sheen, LayoutParams(tileW, tileH))
         card.clipRounded(dp(11).toFloat())
         addView(card, LayoutParams(tileW, tileH))
         // The name hangs below the tile without taking layout space, so rows keep an exact pitch.
@@ -53,30 +67,58 @@ class TileCell(ctx: Context, val tileW: Int, val tileH: Int) : FrameLayout(ctx) 
         label.translationY = tileH + dp(17).toFloat()
     }
 
-    fun setFocusedLook(f: Boolean, fromDx: Int, fromDy: Int, showLabel: Boolean = true) {
-        val s = if (f) 1.115f else 1f
+    /**
+     * tvOS focus: the tile lifts towards the viewer (larger, a deep shadow under it), tilting in
+     * from the direction of travel; with [tvos] a soft highlight glides across it as it settles,
+     * light catching a glass surface. Driven by [Tween], so it plays even with animations off.
+     */
+    fun setFocusedLook(f: Boolean, fromDx: Int, fromDy: Int, showLabel: Boolean = true, tvos: Boolean = true) {
+        val s0 = card.scaleX
+        val s1 = if (f) FOCUS_SCALE else 1f
         // Draw the lifted tile (and its shadow) above its neighbours.
         translationZ = if (f) 1f else 0f
-        shadow.animate().cancel()
-        shadow.animate().alpha(if (f) 0.9f else 0f).scaleX(s).scaleY(s)
-            .translationY(-shadowPad + if (f) dp(18).toFloat() else 0f)
-            .setDuration(if (f) 240 else 170).setInterpolator(Motion.ease).start()
-        card.animate().cancel()
         card.cameraDistance = tileW * 14f
-        if (f && (fromDx != 0 || fromDy != 0)) {
-            // Tilt in from the direction of travel, then settle — the tvOS parallax feel.
-            card.rotationY = fromDx * 6f
-            card.rotationX = -fromDy * 6f
+        val tilt = f && tvos && (fromDx != 0 || fromDy != 0)
+        val rx0 = if (tilt) -fromDy * 6f else card.rotationX
+        val ry0 = if (tilt) fromDx * 6f else card.rotationY
+        val z1 = if (f) dp(4).toFloat() else 0f
+        val z0 = card.translationZ
+        val sh0 = shadow.alpha
+        val sh1 = if (f) 0.9f else 0f
+        val shy0 = shadow.translationY
+        val shy1 = -shadowPad + if (f) dp(18).toFloat() else 0f
+        val l0 = label.alpha
+        val l1 = if (f && showLabel) 1f else 0f
+        val g0 = sheen.alpha
+        val g1 = if (f && tvos) 1f else 0f
+        if (f && tvos) {
+            // The highlight enters from the side the focus came from and comes to rest near the top.
+            sheen.translationX = -fromDx * tileW * 0.45f
+            sheen.translationY = -tileH * 0.25f - fromDy * tileH * 0.3f
         }
-        card.animate().scaleX(s).scaleY(s).rotationX(0f).rotationY(0f)
-            .translationZ(if (f) dp(4).toFloat() else 0f)
-            .setDuration(if (f) 240 else 170)
-            .setInterpolator(if (f) Motion.spring else Motion.ease).start()
-        label.animate().alpha(if (f && showLabel) 1f else 0f).setDuration(170).start()
+        val gx0 = sheen.translationX
+        val gy0 = sheen.translationY
+        sheen.visibility = if (f && tvos || g0 > 0f) VISIBLE else INVISIBLE
+        focusTween.start(if (f) 260 else 170, if (f) Motion.spring else Motion.ease, end = {
+            if (!f) sheen.visibility = INVISIBLE
+        }) { p ->
+            val e = p.coerceAtMost(1f)
+            card.scaleX = lerp(s0, s1, p); card.scaleY = card.scaleX
+            card.rotationX = lerp(rx0, 0f, e)
+            card.rotationY = lerp(ry0, 0f, e)
+            card.translationZ = lerp(z0, z1, e)
+            shadow.alpha = lerp(sh0, sh1, e)
+            shadow.scaleX = card.scaleX; shadow.scaleY = card.scaleX
+            shadow.translationY = lerp(shy0, shy1, e)
+            label.alpha = lerp(l0, l1, e)
+            sheen.alpha = lerp(g0, g1, e)
+            if (f) { sheen.translationX = lerp(gx0, 0f, e); sheen.translationY = lerp(gy0, -tileH * 0.25f, e) }
+        }
     }
 
     companion object {
         const val SHADOW_PAD = 30
+        const val FOCUS_SCALE = 1.12f
         private var shared: android.graphics.Bitmap? = null
 
         /** One shadow bitmap serves every tile. */
@@ -122,6 +164,9 @@ class TileAdapter(
     /** Tiles in the dock (the first row) hide their name, which would sit on the glass edge. */
     var dockCount = 0
 
+    /** Tilt-in and gliding highlight on focus ([Prefs.focusTvos]); otherwise only the zoom and shadow. */
+    var tvosFocus = true
+
     /** Direction of the last D-pad move, used for the tilt-in. */
     var lastDx = 0
     var lastDy = 0
@@ -157,7 +202,7 @@ class TileAdapter(
         val vh = VH(cell)
         cell.setOnFocusChangeListener { _, f ->
             val p = vh.bindingAdapterPosition
-            cell.setFocusedLook(f, lastDx, lastDy, showLabel = p >= dockCount)
+            cell.setFocusedLook(f, lastDx, lastDy, showLabel = p >= dockCount, tvos = tvosFocus)
             if (f && p != RecyclerView.NO_POSITION) listener.onTileFocused(p, cell)
         }
         cell.setOnClickListener {

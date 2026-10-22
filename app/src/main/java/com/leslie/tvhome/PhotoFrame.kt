@@ -34,8 +34,8 @@ class PhotoFrameView(ctx: Context) : FrameLayout(ctx) {
     private val io = Executors.newSingleThreadExecutor()
     private val layers = arrayOf(image(), image())
     private var front = 0
-    private var files: List<File> = emptyList()
-    private var index = 0
+    private var last: File? = null
+    private var any = false
     private var started = false
 
     private val clock = ctx.text(64f, weight = 250).apply { shadow() }
@@ -93,11 +93,8 @@ class PhotoFrameView(ctx: Context) : FrameLayout(ctx) {
         started = true
         tick.run()
         io.execute {
-            files = walls.files().shuffled()
-            if (files.isEmpty()) {
-                walls.refresh(force = true)
-                files = walls.files().shuffled()
-            }
+            walls.refresh()
+            any = walls.files().isNotEmpty()
             main.post { if (started) advance.run() }
         }
     }
@@ -110,10 +107,11 @@ class PhotoFrameView(ctx: Context) : FrameLayout(ctx) {
     }
 
     private fun next() {
-        if (files.isEmpty()) return
-        val f = files[index % files.size]
-        index++
+        if (!any) return
         io.execute {
+            // A new picture while the day's list lasts (downloaded now), then round the ones here.
+            val f = walls.next(last) ?: return@execute
+            last = f
             val bmp = walls.decode(f, full = true) ?: return@execute
             val text = walls.caption(f)
             main.post { if (started) show(bmp, text) }

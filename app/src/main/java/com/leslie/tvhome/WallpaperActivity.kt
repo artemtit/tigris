@@ -191,6 +191,7 @@ class WallpaperActivity : Activity() {
         }
         prefs.background = key
         cards.forEach { (k, c) -> c.selected(k == key) }
+        io.execute { Wallpapers.trimExcept(this, key) }
         if (key in Wallpapers.SOURCES && Wallpapers(this, key).files().isEmpty()) io.execute {
             Wallpapers(this, key).refresh(force = true)
             counts = ""

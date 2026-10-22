@@ -2,14 +2,20 @@ package com.leslie.tvhome
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorFilter
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PixelFormat
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
@@ -20,110 +26,84 @@ import android.widget.TextView
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
-/** Independent refracting glass controls floating over the home screen. */
+/**
+ * The Control Center, in one of two looks ([Prefs.ccGlass]): independent liquid-glass controls
+ * floating over the home screen, or, on low-end TVs, the same controls on one plain dark panel.
+ *
+ * The glass is cheap to draw: the home screen behind the controls is captured once at a quarter
+ * of its size and blurred when the Control Center opens (and again only if the screen behind
+ * changes), and each control paints its share of that picture as a texture. Nothing is blurred,
+ * clipped to a path or offscreen-rendered per frame, which kept the live GPU blur of v1.9 at
+ * 15 ms of GPU time per frame on a BRAVIA (MT5895).
+ */
 class ControlCenter(private val home: HomeActivity, private val host: FrameLayout) {
     private val ctx = home
     private val prefs = Prefs(ctx)
     private val gap = ctx.dp(12)
     private val cell = ctx.dp(47)
     private val width = cell * 4 + gap * 3
-    private val useLiveGlass = Build.VERSION.SDK_INT >= 31
+    private var glassStyle = prefs.ccGlass(ctx)
     private val surfaces = ArrayList<GlassSurface>()
-    @Volatile private var glassGeneration = 0
     private var destroyed = false
     private var refreshing = false
-    private var glassReady = false
-    private val glassIo = Executors.newSingleThreadExecutor()
-    private val prepareGlass = Runnable { prepareGlassNow() }
+
+    // ---- the blurred picture of the home screen behind the controls ----
+    private val sampleScale = 0.25f
+    private var blur: Bitmap? = null
+    private var blurShader: BitmapShader? = null
+    /** Where [blur] starts, in host coordinates. */
+    private var blurX = 0f
+    private var blurY = 0f
+    private var blurDirty = true
+    private val resample = Runnable { if (isOpen && blurDirty) sampleBehind() }
+    /** Saturated and lifted, so the glass takes on the colour of what is behind it. */
+    private val toneMatrix = ColorMatrix().apply {
+        setSaturation(1.5f)
+        postConcat(ColorMatrix(floatArrayOf(
+            0.88f, 0f, 0f, 0f, 22f,
+            0f, 0.88f, 0f, 0f, 22f,
+            0f, 0f, 0.88f, 0f, 22f,
+            0f, 0f, 0f, 1f, 0f)))
+    }
+
     private val scrim = View(ctx).apply {
         setBackgroundColor(Color.argb(32, 0, 0, 0))
         alpha = 0f
         translationZ = ctx.dp(100).toFloat()
+        // Raised only to sit above the tiles. With an outline, Android would also cast a
+        // screen-sized shadow under it, redrawn every frame: about 5 ms of GPU time on a BRAVIA.
+        outlineProvider = null
     }
-    // Layout only: the gaps between controls show the actual wallpaper, with no enclosing panel.
+    // Glass: layout only, the gaps between controls show the actual wallpaper. Panel: one dark card.
     private val panel = LinearLayout(ctx).apply {
         orientation = LinearLayout.VERTICAL
         clipChildren = false
         clipToPadding = false
         translationZ = ctx.dp(101).toFloat()
+        outlineProvider = null
         visibility = View.INVISIBLE
         alpha = 1f
     }
-    // One pass draws the shared blur through all button shapes. Individual buttons draw only
-    // their tint/rim, so the TV does not composite the same blurred scene ten times per frame.
-    private val liveLayer = object : View(ctx) {
-        private val mask = android.graphics.Path()
-        private val box = RectF()
-        private val toWindow = android.graphics.Matrix()
-        private val fromWindow = android.graphics.Matrix()
-        private val lightMatrix = android.graphics.Matrix()
-        // Unit-radius light, moved and sized with a local matrix instead of a new shader per frame.
-        private val pool = android.graphics.RadialGradient(0f, 0f, 1f,
-            intArrayOf(Color.argb(60, 255, 255, 255), Color.argb(95, 255, 255, 255), Color.argb(40, 255, 255, 255), Color.TRANSPARENT),
-            floatArrayOf(0f, 0.32f, 0.6f, 1f), android.graphics.Shader.TileMode.CLAMP)
-        private val edge = android.graphics.RadialGradient(0f, 0f, 1f,
-            intArrayOf(Color.argb(230, 255, 255, 255), Color.TRANSPARENT),
-            null, android.graphics.Shader.TileMode.CLAMP)
-        // Added rather than layered on: the glass glows brighter in its own colours instead of turning milky.
-        private val lightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { blendMode = android.graphics.BlendMode.PLUS }
-        init { visibility = View.INVISIBLE; translationZ = ctx.dp(100.5f).toFloat() }
-        override fun onDraw(canvas: Canvas) {
-            mask.reset()
-            // Shapes are mapped into this layer's own coordinates, so they line up with the controls exactly.
-            fromWindow.reset()
-            transformMatrixToGlobal(fromWindow)
-            fromWindow.invert(fromWindow)
-            for (surface in surfaces) {
-                val v = surface.owner
-                if (!v.isShown || v.width == 0) continue
-                // The real on-screen shape, scale included and not cropped to the panel's bounds.
-                box.set(0f, 0f, v.width.toFloat(), v.height.toFloat())
-                toWindow.reset()
-                v.transformMatrixToGlobal(toWindow)
-                toWindow.postConcat(fromWindow)
-                toWindow.mapRect(box)
-                val radius = minOf(surface.radius * v.scaleX * panel.scaleX, box.width() / 2, box.height() / 2)
-                mask.addRoundRect(box, radius, radius, android.graphics.Path.Direction.CW)
-            }
-            val save = canvas.save()
-            canvas.clipPath(mask)
-            home.drawGlassScene(canvas)
-            if (glowA > 0f) {
-                // The focused control lights the glass around it: a pool of light spilling
-                // into its neighbours, and their rims catching it.
-                // The light is kept in panel coordinates, so it rides along with the panel's own motion.
-                toWindow.reset()
-                panel.transformMatrixToGlobal(toWindow)
-                toWindow.postConcat(fromWindow)
-                lightMatrix.setScale(glowR, glowR)
-                lightMatrix.postTranslate(glowX, glowY)
-                lightMatrix.postConcat(toWindow)
-                lightPaint.alpha = (255 * glowA).toInt()
-                lightPaint.style = Paint.Style.FILL
-                pool.setLocalMatrix(lightMatrix)
-                lightPaint.shader = pool
-                canvas.drawPaint(lightPaint)
-                lightMatrix.setScale(glowR * 2.2f, glowR * 2.2f)
-                lightMatrix.postTranslate(glowX, glowY)
-                lightMatrix.postConcat(toWindow)
-                edge.setLocalMatrix(lightMatrix)
-                lightPaint.shader = edge
-                lightPaint.style = Paint.Style.STROKE
-                lightPaint.strokeWidth = ctx.dp(2.5f).toFloat()
-                canvas.drawPath(mask, lightPaint)
-            }
-            canvas.restoreToCount(save)
-        }
-    }
+    private val panelCard = rounded(Color.argb(228, 30, 30, 34), ctx.dp(28).toFloat())
+
+    // ---- the light that follows focus, spilling onto neighbouring controls (glass only) ----
     private var glowX = 0f
     private var glowY = 0f
     private var glowR = 0f
     private var glowA = 0f
-    private var glowAnim: android.animation.ValueAnimator? = null
+    private val glowTween = Tween()
+    // Unit-radius light, moved and sized with a local matrix instead of a new shader per frame.
+    private val pool = android.graphics.RadialGradient(0f, 0f, 1f,
+        intArrayOf(Color.argb(60, 255, 255, 255), Color.argb(95, 255, 255, 255), Color.argb(40, 255, 255, 255), Color.TRANSPARENT),
+        floatArrayOf(0f, 0.32f, 0.6f, 1f), Shader.TileMode.CLAMP)
+    // Added rather than layered on: the glass glows brighter in its own colours instead of turning
+    // milky. PorterDuff ADD is the same blend as BlendMode.PLUS and exists on Android 9.
+    private val lightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.ADD) }
+    private val panelToHost = Matrix()
 
     /** Glides the light to the newly focused control. */
     private fun glowAt(v: View, strength: Float = if (v is Slider) 0.5f else 1f) {
-        if (!useLiveGlass) return
+        if (!glassStyle) return
         if (v.width == 0) { v.post { if (v.isFocused) glowAt(v) }; return }
         val r = android.graphics.Rect(0, 0, v.width, v.height)
         panel.offsetDescendantRectToMyCoords(v, r)
@@ -131,21 +111,44 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         val ty = r.exactCenterY()
         val tr = maxOf(v.width, v.height) * 0.5f + ctx.dp(110)
         val fromX = glowX; val fromY = glowY; val fromR = glowR; val fromA = glowA
-        glowAnim?.cancel()
-        glowAnim = android.animation.ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 300
-            interpolator = Motion.ease
-            addUpdateListener {
-                val f = it.animatedFraction
-                val fresh = fromA == 0f
-                glowX = if (fresh) tx else fromX + (tx - fromX) * f
-                glowY = if (fresh) ty else fromY + (ty - fromY) * f
-                glowR = if (fresh) tr else fromR + (tr - fromR) * f
-                glowA = fromA + (strength - fromA) * f
-                liveLayer.invalidate()
-            }
-            start()
+        val fresh = fromA == 0f
+        glowTween.start(300) { f ->
+            glowX = if (fresh) tx else lerp(fromX, tx, f)
+            glowY = if (fresh) ty else lerp(fromY, ty, f)
+            glowR = if (fresh) tr else lerp(fromR, tr, f)
+            glowA = lerp(fromA, strength, f)
+            invalidateSurfaces()
         }
+    }
+
+    private fun invalidateSurfaces() { for (s in surfaces) s.owner.invalidate() }
+
+    /** The glass body's colour filter, per wash strength and focus level (cached in 16 steps). */
+    private val bodies = HashMap<Int, ColorMatrixColorFilter>()
+
+    private fun body(wash: Int, lit: Float): ColorMatrixColorFilter {
+        val step = (lit * 16).roundToInt().coerceIn(0, 16)
+        return bodies.getOrPut(wash * 32 + step) {
+            val l = step / 16f
+            // A black wash at rest, white as it lights up: the same as layers over the toned picture.
+            val black = 34f * (1f - l) / 255f
+            val white = (10f + wash * l) / 255f
+            val k = (1f - black) * (1f - white)
+            val o = 255f * white
+            ColorMatrixColorFilter(ColorMatrix(toneMatrix).apply {
+                postConcat(ColorMatrix(floatArrayOf(k, 0f, 0f, 0f, o, 0f, k, 0f, 0f, o, 0f, 0f, k, 0f, o, 0f, 0f, 0f, 1f, 0f)))
+            })
+        }
+    }
+
+    /** The rim's share of the focus light, per strength (cached in 16 steps). */
+    private val edges = arrayOfNulls<Shader>(17)
+
+    private fun edgeFor(a: Float): Shader {
+        val step = (a * 16).roundToInt().coerceIn(0, 16)
+        return edges[step] ?: android.graphics.RadialGradient(0f, 0f, 1f,
+            intArrayOf(Color.argb((230 * step / 16f).toInt(), 255, 255, 255), Color.TRANSPARENT), null, Shader.TileMode.CLAMP)
+            .also { edges[step] = it }
     }
 
     private val memButton: GlassButton
@@ -223,8 +226,6 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         inputModule = GlassButton("输入源", R.drawable.ic_input, Shape.CAPSULE) { pickInput() }
         panel.addView(inputModule, LinearLayout.LayoutParams(-1, cell).apply { topMargin = gap })
         panel.addView(status, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ctx.dp(10) })
-        // Keep the invisible layout measured so its glass can be prepared before opening.
-        if (useLiveGlass) host.addView(liveLayer, FrameLayout.LayoutParams(-1, -1))
         // The host clips the panel to its bounds; the padding is room for focused controls to grow into.
         val room = ctx.dp(16)
         panel.setPadding(room, room, room, room)
@@ -240,35 +241,57 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         }
         // Report cleanup without expanding the button and moving every control below it.
         status.setShadowLayer(ctx.dp(3).toFloat(), 0f, 0f, Color.BLACK)
+        applyStyle()
     }
 
-    /** Each control owns its own background, refraction, rounded rim and focus light. */
+    /** Picks up a change of [Prefs.ccStyle] made in settings. */
+    fun applyStyle() {
+        val glass = prefs.ccGlass(ctx)
+        if (glass == glassStyle && panel.tag != null) return
+        panel.tag = true
+        glassStyle = glass
+        panel.background = if (glass) null else panelCard
+        if (!glass) { blur = null; blurShader = null }
+        blurDirty = true
+        invalidateSurfaces()
+    }
+
+    /** Maps [v]'s own coordinates to the host's, through every scale and translation on the way. */
+    private fun toHost(v: View, out: Matrix) {
+        out.reset()
+        var cur: View = v
+        while (cur !== host) {
+            out.postConcat(cur.matrix)
+            val p = cur.parent as? View ?: break
+            out.postTranslate((cur.left - p.scrollX).toFloat(), (cur.top - p.scrollY).toFloat())
+            cur = p
+        }
+    }
+
+    /** Each control owns its own background: its share of the blurred screen, a sheen, a lit rim. */
     private inner class GlassSurface(val owner: View, val radius: Float) : Drawable() {
         /** How much white the focused glass takes on; sliders keep it low so their fill reads. */
         var focusWash = 140
-        var bitmap: Bitmap? = null
-            set(value) { field?.recycle(); field = value; invalidateSelf() }
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        private val glassPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         private val rect = RectF()
+        private val ownerToHost = Matrix()
+        private val hostToOwner = Matrix()
+        private val m = Matrix()
         init { surfaces += this }
 
         /** 0 = resting, 1 = focused; animated so the light swells in rather than switching. */
         var lit = 0f
             set(value) { field = value; invalidateSelf() }
-        private var litAnim: android.animation.ValueAnimator? = null
-        private var sheen: android.graphics.Shader? = null
-        private var rim: android.graphics.Shader? = null
-        private var spot: android.graphics.Shader? = null
+        private val litTween = Tween()
+        private var sheen: Shader? = null
+        private var rim: Shader? = null
+        private var spot: Shader? = null
         private val r get() = minOf(radius, bounds.width() / 2f, bounds.height() / 2f)
 
         fun light(on: Boolean) {
-            litAnim?.cancel()
-            litAnim = android.animation.ValueAnimator.ofFloat(lit, if (on) 1f else 0f).apply {
-                duration = if (on) 280 else 200
-                interpolator = Motion.ease
-                addUpdateListener { lit = it.animatedValue as Float }
-                start()
-            }
+            val from = lit
+            litTween.start(if (on) 280 else 200) { f -> lit = lerp(from, if (on) 1f else 0f, f) }
         }
 
         override fun onBoundsChange(b: android.graphics.Rect) {
@@ -278,27 +301,41 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
             // A sheen across the upper half, as light falling on a curved top surface.
             sheen = android.graphics.LinearGradient(0f, 0f, 0f, h,
                 intArrayOf(Color.argb(70, 255, 255, 255), Color.argb(0, 255, 255, 255)),
-                floatArrayOf(0f, 0.55f), android.graphics.Shader.TileMode.CLAMP)
+                floatArrayOf(0f, 0.55f), Shader.TileMode.CLAMP)
             // Rim: bright where it faces the light (top left), a softer reflection bottom right.
             rim = android.graphics.LinearGradient(0f, 0f, w, h,
                 intArrayOf(Color.WHITE, Color.argb(40, 255, 255, 255), Color.argb(40, 255, 255, 255), Color.argb(170, 255, 255, 255)),
-                floatArrayOf(0f, 0.35f, 0.65f, 1f), android.graphics.Shader.TileMode.CLAMP)
+                floatArrayOf(0f, 0.35f, 0.65f, 1f), Shader.TileMode.CLAMP)
             // The focus light: a soft glow pooled under the top left of the glass.
             spot = android.graphics.RadialGradient(w * 0.3f, h * 0.1f, maxOf(w, h) * 0.95f,
                 intArrayOf(Color.argb(120, 255, 255, 255), Color.argb(0, 255, 255, 255)),
-                null, android.graphics.Shader.TileMode.CLAMP)
+                null, Shader.TileMode.CLAMP)
         }
 
         override fun draw(c: Canvas) {
             rect.set(bounds)
             val r = r
-            if (!useLiveGlass) bitmap?.let { c.drawBitmap(it, null, rect, paint) }
-            // Milky body: a light wash over the blurred scene, much brighter when focused.
-            paint.color = if (!useLiveGlass && bitmap == null) Color.argb(90, 48, 52, 58)
-                else Color.argb((34 * (1f - lit)).toInt(), 0, 0, 0)
-            c.drawRoundRect(rect, r, r, paint)
-            paint.color = Color.argb((10 + focusWash * lit).toInt(), 255, 255, 255)
-            c.drawRoundRect(rect, r, r, paint)
+            if (!glassStyle) { drawFlat(c, r); return }
+            toHost(owner, ownerToHost)
+            ownerToHost.invert(hostToOwner)
+            // Every full-size pass costs about a millisecond of GPU time per frame on a BRAVIA's
+            // Mali, so what can be merged is: three passes when resting, five when lit.
+            val shader = blurShader
+            if (shader != null) {
+                // The blurred screen, mapped so this control shows exactly the part behind it,
+                // with the milky wash and the focus brightening folded into its colour filter.
+                m.setScale(1f / sampleScale, 1f / sampleScale)
+                m.postTranslate(blurX, blurY)
+                m.postConcat(hostToOwner)
+                shader.setLocalMatrix(m)
+                glassPaint.shader = shader
+                glassPaint.colorFilter = body(focusWash, lit)
+                c.drawRoundRect(rect, r, r, glassPaint)
+            } else {
+                paint.color = Color.argb((90 + focusWash * lit).toInt().coerceAtMost(255), 48, 52, 58)
+                c.drawRoundRect(rect, r, r, paint)
+            }
+            // A sheen across the top, as light falling on a curved surface; a pooled glow when lit.
             paint.color = Color.WHITE
             paint.shader = sheen
             paint.alpha = (110 + 145 * lit).toInt()
@@ -308,19 +345,67 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
                 paint.alpha = (255 * lit).toInt()
                 c.drawRoundRect(rect, r, r, paint)
             }
+            // The focused control lights the glass around it: a pool of light spilling into its
+            // neighbours, and their rims catching it. Kept in panel coordinates, so it rides
+            // along with the panel's own motion; controls out of its reach skip it.
+            val glow = glowA > 0f && nearGlow()
+            if (glow) {
+                toHost(panel, panelToHost)
+                m.setScale(glowR, glowR)
+                m.postTranslate(glowX, glowY)
+                m.postConcat(panelToHost)
+                m.postConcat(hostToOwner)
+                pool.setLocalMatrix(m)
+                lightPaint.shader = pool
+                lightPaint.alpha = (255 * glowA).toInt()
+                c.drawRoundRect(rect, r, r, lightPaint)
+            }
+            // Rim: bright where it faces the light (top left), a softer reflection bottom right,
+            // and the focus light caught on it, all in one stroke.
+            val rimShader = rim
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = ctx.dp(1f + 0.6f * lit).toFloat()
-            paint.shader = rim
             paint.alpha = (150 + 105 * lit).toInt()
-            rect.inset(paint.strokeWidth / 2, paint.strokeWidth / 2)
+            paint.shader = rimShader
+            if (glow && rimShader != null) {
+                val e = edgeFor(glowA)
+                m.setScale(glowR * 2.2f, glowR * 2.2f)
+                m.postTranslate(glowX, glowY)
+                m.postConcat(panelToHost)
+                m.postConcat(hostToOwner)
+                e.setLocalMatrix(m)
+                paint.shader = android.graphics.ComposeShader(rimShader, e, PorterDuff.Mode.ADD)
+            }
+            val inset = paint.strokeWidth / 2
+            rect.inset(inset, inset)
             c.drawRoundRect(rect, r, r, paint)
             paint.shader = null
             paint.alpha = 255
             paint.style = Paint.Style.FILL
         }
+
+        private val ownerRect = android.graphics.Rect()
+
+        /** Whether the focus light reaches this control at all (its rim light reaches 2.2x as far). */
+        private fun nearGlow(): Boolean {
+            ownerRect.set(0, 0, owner.width, owner.height)
+            try { panel.offsetDescendantRectToMyCoords(owner, ownerRect) } catch (e: IllegalArgumentException) { return true }
+            val reach = glowR * 2.2f
+            val dx = maxOf(ownerRect.left - glowX, 0f, glowX - ownerRect.right)
+            val dy = maxOf(ownerRect.top - glowY, 0f, glowY - ownerRect.bottom)
+            return dx * dx + dy * dy < reach * reach
+        }
+
+        /** The panel look: flat translucent controls that turn white when focused. */
+        private fun drawFlat(c: Canvas, r: Float) {
+            paint.shader = null
+            paint.style = Paint.Style.FILL
+            val a = lerp(34f, if (focusWash > 0) 255f else 70f, lit).toInt()
+            paint.color = Color.argb(a, 255, 255, 255)
+            c.drawRoundRect(rect, r, r, paint)
+        }
+
         override fun getOutline(outline: android.graphics.Outline) = outline.setRoundRect(bounds, r)
-        fun invalidateScene() { if (isOpen) invalidateSelf() }
-        fun dispose() { bitmap = null }
         override fun setAlpha(alpha: Int) {}
         override fun setColorFilter(cf: ColorFilter?) {}
         @Deprecated("Deprecated in Java")
@@ -336,103 +421,60 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
 
     private fun focus(view: View, glass: GlassSurface, on: Boolean, grow: Float = 1.08f) {
         glass.light(on)
-        // The focused control lifts towards the viewer; the shared blur layer follows its shape.
-        view.animate().cancel()
-        view.animate().scaleX(if (on) grow else 1f).scaleY(if (on) grow else 1f)
-            .setDuration(if (on) 260 else 200).setInterpolator(if (on) Motion.spring else Motion.ease)
-            .setUpdateListener { if (useLiveGlass) liveLayer.invalidate() }
-            .start()
+        // The focused control lifts towards the viewer; its glass keeps showing what is behind it.
+        view.tweenScale(if (on) grow else 1f, if (on) 260 else 200, if (on) Motion.spring else Motion.ease) {
+            if (glassStyle) view.invalidate()
+        }
     }
 
-    /** Merge layout/scene changes; slider fill animations do not invalidate the glass scene. */
+    /** The screen behind changed (background, shelf, layout): the glass samples it again. */
     fun refreshGlass() {
         if (destroyed) return
-        if (useLiveGlass) { invalidateLiveScene(); return }
-        host.removeCallbacks(prepareGlass)
-        host.postDelayed(prepareGlass, 80)
-    }
-
-    /** Capture without overlays, then bake the real scene through every separate glass shape. */
-    private fun prepareGlassNow() {
-        if (useLiveGlass) return
-        if (destroyed || panel.width == 0 || host.width == 0) return
-        val generation = ++glassGeneration
-        val source = snapshotBehind() ?: return
-        val jobs = surfaces.filter { it.owner.visibility == View.VISIBLE && it.owner.width > 0 && it.owner.height > 0 }.map { surface ->
-            val view = surface.owner
-            var x = 0
-            var y = 0
-            var child: View = view
-            while (child !== host) {
-                x += child.left
-                y += child.top
-                child = child.parent as? View ?: break
-            }
-            surface to android.graphics.Rect(x, y, x + view.width, y + view.height)
-        }
-        val screenW = host.width
-        val screenH = host.height
-        // A correctly aligned scene sample is available immediately, even on a cold first open.
-        // The refined glass replaces it on its own worker, never behind slow TV HTTP requests.
-        if (!glassReady) {
-            jobs.forEach { (surface, rect) ->
-                val sample = Bitmap.createBitmap(rect.width(), rect.height(), Bitmap.Config.ARGB_8888)
-                Canvas(sample).drawBitmap(source, null,
-                    RectF(-rect.left.toFloat(), -rect.top.toFloat(), (screenW - rect.left).toFloat(), (screenH - rect.top).toFloat()),
-                    Paint(Paint.FILTER_BITMAP_FLAG))
-                surface.bitmap = sample
-            }
-            glassReady = true
-        }
-        glassIo.execute {
-            if (glassGeneration != generation) { source.recycle(); return@execute }
-            val baked = try {
-                jobs.map { (surface, rect) -> surface to LiquidGlass.bake(source, screenW, screenH, rect, surface.radius) }
-            } finally { source.recycle() }
-            host.post {
-                if (!destroyed && glassGeneration == generation) {
-                    baked.forEach { (surface, bitmap) -> surface.bitmap = bitmap }
-                }
-                else baked.forEach { (_, bitmap) -> bitmap.recycle() }
-            }
+        blurDirty = true
+        if (isOpen && glassStyle) {
+            host.removeCallbacks(resample)
+            host.postDelayed(resample, 80)
         }
     }
 
-    fun invalidateLiveScene() {
-        if (!useLiveGlass || destroyed) return
-        home.invalidateGlassSource()
-        if (isOpen) liveLayer.invalidate()
-    }
-
-    private fun updateLiveLayer() {
-        if (!useLiveGlass) return
-        liveLayer.alpha = panel.alpha
-        liveLayer.invalidate()
-    }
-
-    private fun snapshotBehind(): Bitmap? {
-        val oldPanel = panel.alpha
-        val oldScrim = scrim.alpha
-        return try {
-            panel.alpha = 0f
-            scrim.alpha = 0f
-            // The result is blurred anyway: a quarter-size, clipped capture avoids rasterizing
-            // the full home screen on the UI thread, especially its large Top Shelf image.
-            val scale = 0.25f
-            Bitmap.createBitmap((host.width * scale).toInt(), (host.height * scale).toInt(), Bitmap.Config.ARGB_8888).also {
+    /**
+     * Captures the home screen behind the controls at a quarter of its size and blurs it, on the
+     * UI thread: a few milliseconds, once per opening at most.
+     */
+    private fun sampleBehind() {
+        if (destroyed || !glassStyle || host.width == 0 || panel.width == 0) return
+        val margin = ctx.dp(48)
+        val left = (panel.left - margin).coerceAtLeast(0)
+        val top = (panel.top - margin).coerceAtLeast(0)
+        val right = (panel.right + margin).coerceAtMost(host.width)
+        val bottom = (panel.bottom + margin).coerceAtMost(host.height)
+        val w = ((right - left) * sampleScale).roundToInt().coerceAtLeast(1)
+        val h = ((bottom - top) * sampleScale).roundToInt().coerceAtLeast(1)
+        val bmp = try {
+            Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also {
                 Canvas(it).apply {
-                    scale(scale, scale)
-                    val margin = ctx.dp(64)
-                    clipRect(panel.left - margin, panel.top - margin, panel.right + margin, panel.bottom + margin)
-                    host.draw(this)
+                    drawColor(Color.BLACK)
+                    scale(sampleScale, sampleScale)
+                    translate(-left.toFloat(), -top.toFloat())
+                    home.sceneView.draw(this)
                 }
             }
         } catch (e: RuntimeException) {
-            null
-        } finally {
-            panel.alpha = oldPanel
-            scrim.alpha = oldScrim
+            return
         }
+        val px = IntArray(w * h)
+        bmp.getPixels(px, 0, w, 0, 0, w, h)
+        // Three box passes come close to a Gaussian blur.
+        repeat(3) { LiquidGlass.boxBlur(px, w, h, 7) }
+        bmp.setPixels(px, 0, w, 0, 0, w, h)
+        bmp.prepareToDraw()
+        // Not recycled: a frame still being drawn may hold the previous picture. It is small.
+        blur = bmp
+        blurShader = BitmapShader(bmp, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+        blurX = left.toFloat()
+        blurY = top.toFloat()
+        blurDirty = false
+        invalidateSurfaces()
     }
 
     private enum class Shape { TILE, CAPSULE, ROUND }
@@ -656,20 +698,20 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
     fun open() {
         if (isOpen) return
         isOpen = true
-        glowAnim?.cancel()
+        glowTween.cancel()
         glowA = 0f
         home.pauseShelfRotation()
         panel.animate().cancel()
         scrim.animate().cancel()
         refresh()
         home.setGridBlocked(true)
-        if (scrim.parent == null) host.addView(scrim, FrameLayout.LayoutParams(-1, -1))
+        // A full-screen pass every frame: only the panel look, which hides less of the screen, uses it.
+        if (scrim.parent == null && !glassStyle) host.addView(scrim, FrameLayout.LayoutParams(-1, -1))
         panel.bringToFront()
-        if (useLiveGlass) invalidateLiveScene() else if (!glassReady) prepareGlassNow()
+        // Sampled before the first frame, so the glass never shows up empty.
+        if (glassStyle && (blurDirty || blur == null)) sampleBehind()
         panel.visibility = View.VISIBLE
-        if (useLiveGlass) liveLayer.visibility = View.VISIBLE
         panel.alpha = 0f
-        if (useLiveGlass) liveLayer.alpha = 0f
         panel.translationX = ctx.dp(24).toFloat()
         panel.scaleX = 0.97f
         panel.scaleY = 0.97f
@@ -677,7 +719,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         panel.pivotY = panel.paddingTop.toFloat()
         scrim.animate().alpha(1f).setDuration(220).start()
         panel.animate().alpha(1f).translationX(0f).scaleX(1f).scaleY(1f).setDuration(320)
-            .setInterpolator(Motion.ease).setUpdateListener { updateLiveLayer() }.start()
+            .setInterpolator(Motion.ease).setUpdateListener { if (glassStyle) invalidateSurfaces() }.start()
         memButton.requestFocus()
         host.removeCallbacks(ticker)
         host.post(ticker)
@@ -691,11 +733,10 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         volume.finishAnimation()
         scrim.animate().alpha(0f).setDuration(180).start()
         panel.animate().alpha(0f).translationX(ctx.dp(24).toFloat()).scaleX(0.97f).scaleY(0.97f).setDuration(200)
-            .setUpdateListener { updateLiveLayer() }
+            .setUpdateListener { if (glassStyle) invalidateSurfaces() }
             .withEndAction {
                 host.removeView(scrim)
                 panel.visibility = View.INVISIBLE
-                liveLayer.visibility = View.INVISIBLE
             }.start()
         home.restoreGridFocus()
         home.resumeShelfRotation()
@@ -704,14 +745,14 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
     fun destroy() {
         destroyed = true
         isOpen = false
-        ++glassGeneration
         host.removeCallbacks(ticker)
-        host.removeCallbacks(prepareGlass)
+        host.removeCallbacks(resample)
         panel.animate().cancel()
         scrim.animate().cancel()
-        surfaces.forEach { it.dispose() }
+        glowTween.cancel()
+        blur = null
+        blurShader = null
         io.shutdown()
-        glassIo.shutdown()
     }
 
     fun refocus() {

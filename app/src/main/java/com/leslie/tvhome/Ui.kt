@@ -40,17 +40,89 @@ object Motion {
     fun bump(v: View, dx: Int, dy: Int) {
         v.cameraDistance = v.width * 12f
         v.animate().cancel()
-        ValueAnimator.ofFloat(0f, 1f, 0f).apply {
-            duration = 260
-            addUpdateListener {
-                val f = it.animatedValue as Float
-                v.rotationY = dx * 7f * f
-                v.rotationX = -dy * 7f * f
-                v.translationX = dx * v.dp(5) * f
-                v.translationY = dy * v.dp(5) * f
-            }
-            start()
+        val t = v.getTag(R.id.motion_bump) as? Tween ?: Tween().also { v.setTag(R.id.motion_bump, it) }
+        t.start(260, android.view.animation.LinearInterpolator()) { p ->
+            val f = if (p < 0.5f) p * 2 else (1 - p) * 2
+            v.rotationY = dx * 7f * f
+            v.rotationX = -dy * 7f * f
+            v.translationX = dx * v.dp(5) * f
+            v.translationY = dy * v.dp(5) * f
         }
+    }
+}
+
+/**
+ * A frame-by-frame animation that still plays where the TV's animation scale is 0 ("animations
+ * off", common on Chinese firmwares and in speed-up guides), which makes every ValueAnimator and
+ * ViewPropertyAnimator jump straight to its end: focus would change with no zoom at all. Slowed
+ * or sped-up scales still apply, down to half speed, so a TV set to 0.5 looks as it always did.
+ */
+class Tween : android.view.Choreographer.FrameCallback {
+    private var startNanos = -1L
+    private var durationNanos = 1L
+    private var interp: android.animation.TimeInterpolator = Motion.ease
+    private var update: ((Float) -> Unit)? = null
+    private var end: (() -> Unit)? = null
+    var running = false
+        private set
+
+    fun start(ms: Long, interpolator: android.animation.TimeInterpolator = Motion.ease, end: (() -> Unit)? = null, update: (Float) -> Unit) {
+        cancel()
+        this.interp = interpolator
+        this.update = update
+        this.end = end
+        durationNanos = (ms * scale() * 1_000_000).toLong().coerceAtLeast(1)
+        startNanos = -1L
+        running = true
+        update(interpolator.getInterpolation(0f))
+        android.view.Choreographer.getInstance().postFrameCallback(this)
+    }
+
+    override fun doFrame(frameTimeNanos: Long) {
+        if (!running) return
+        if (startNanos < 0) startNanos = frameTimeNanos
+        val t = ((frameTimeNanos - startNanos).toFloat() / durationNanos).coerceIn(0f, 1f)
+        update?.invoke(interp.getInterpolation(t))
+        if (t >= 1f) {
+            running = false
+            end?.invoke()
+        } else android.view.Choreographer.getInstance().postFrameCallback(this)
+    }
+
+    fun cancel() {
+        if (!running) return
+        running = false
+        android.view.Choreographer.getInstance().removeFrameCallback(this)
+    }
+
+    companion object {
+        @Volatile var systemScale = 1f
+
+        /** Read once per start of the home screen; the setting can only change in system settings. */
+        fun readScale(ctx: Context) {
+            systemScale = runCatching {
+                android.provider.Settings.Global.getFloat(ctx.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+            }.getOrDefault(1f)
+        }
+
+        fun scale() = if (systemScale <= 0f) 0.5f else systemScale.coerceIn(0.5f, 1.5f)
+    }
+}
+
+/** Linear interpolation, for animating between a start and an end value. */
+fun lerp(a: Float, b: Float, f: Float) = a + (b - a) * f
+
+/** Focus zoom: scales the view to [s] (and lifts it to [z]) with a [Tween] kept on the view. */
+fun View.tweenScale(s: Float, ms: Long, interp: android.animation.TimeInterpolator = Motion.ease, z: Float? = null, onFrame: (() -> Unit)? = null) {
+    animate().cancel()
+    val t = getTag(R.id.motion_focus) as? Tween ?: Tween().also { setTag(R.id.motion_focus, it) }
+    val s0 = scaleX
+    val z0 = translationZ
+    t.start(ms, interp) { f ->
+        scaleX = lerp(s0, s, f)
+        scaleY = scaleX
+        if (z != null) translationZ = lerp(z0, z, f)
+        onFrame?.invoke()
     }
 }
 
@@ -108,8 +180,7 @@ class PillButton(ctx: Context, label: String, iconRes: Int? = null, val onClick:
             background = if (f) focus else idle
             tv.setTextColor(if (f) Color.BLACK else Color.WHITE)
             icon?.setColorFilter(if (f) Color.BLACK else Color.WHITE)
-            animate().scaleX(if (f) 1.06f else 1f).scaleY(if (f) 1.06f else 1f)
-                .translationZ(if (f) dp(10).toFloat() else 0f).setDuration(160).setInterpolator(Motion.ease).start()
+            tweenScale(if (f) 1.06f else 1f, 160, z = if (f) dp(10).toFloat() else 0f)
         }
     }
 }
@@ -124,8 +195,9 @@ class Sheet(private val host: FrameLayout) {
         setBackgroundColor(Color.argb(200, 0, 0, 0))
         isClickable = true
         alpha = 0f
-        // Above focused tiles, which lift themselves with translationZ.
+        // Above focused tiles, which lift themselves with translationZ; no shadow (see ControlCenter.scrim).
         translationZ = ctx.dp(200).toFloat()
+        outlineProvider = null
     }
     private val col = LinearLayout(ctx).apply {
         orientation = LinearLayout.VERTICAL

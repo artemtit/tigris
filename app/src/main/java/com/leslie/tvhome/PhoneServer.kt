@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.media.MediaMetadataRetriever
 import android.net.ConnectivityManager
 import android.os.Build
 import com.google.zxing.BarcodeFormat
@@ -21,7 +22,7 @@ import java.security.SecureRandom
 
 /**
  * The page a phone opens after scanning the QR code in the 壁纸 app: choose the background and the
- * screensaver, send photos, and paste picture links. Typing a link or picking photos with a remote
+ * screensaver, send photos, paste picture links, and upload the boot animation. Typing a link or picking photos with a remote
  * is slow; with a phone it is not. After Aerial's phone page (github.com/pengchujin/aerial-tv, MIT).
  *
  * It listens on the local network only while [WallpaperActivity] (the 壁纸 app) is open (and a few minutes after, so
@@ -44,7 +45,10 @@ class PhoneServer private constructor(private val ctx: Context, private val toke
                 path.startsWith("/thumb/") -> thumb(path.removePrefix("/thumb/"))
                 post && path == "/api/background" -> {
                     val v = form(session)["id"].orEmpty()
-                    if (v in Wallpapers.SOURCES || v in Backgrounds.THEMES) prefs.background = v
+                    if (v in Wallpapers.SOURCES || v in Backgrounds.THEMES) {
+                        prefs.background = v
+                        Wallpapers.trimExcept(ctx, v)
+                    }
                     json(state())
                 }
                 post && path == "/api/screensaver" -> {
@@ -69,6 +73,38 @@ class PhoneServer private constructor(private val ctx: Context, private val toke
                     json(state())
                 }
                 post && path == "/api/upload" -> upload(session)
+                post && path == "/api/intro/source" -> {
+                    val v = form(session)["source"].orEmpty()
+                    if (v == Prefs.INTRO_VIDEO || v == Prefs.INTRO_WORDMARK) prefs.introSource = v
+                    json(state())
+                }
+                post && path == "/api/intro" -> {
+                    val v = form(session)["mode"].orEmpty()
+                    if (v in listOf(Prefs.INTRO_OFF, Prefs.INTRO_BOOT, Prefs.INTRO_WAKE)) {
+                        prefs.intro = v
+                        // This boot counts as played: turning it on doesn't start it on the next return home.
+                        prefs.introBoot = Intro.bootStamp(ctx)
+                    }
+                    json(state())
+                }
+                post && path == "/api/intro/upload" -> uploadIntro(session)
+                post && path == "/api/icon/upload" -> uploadIcon(session)
+                post && path == "/api/backdrop/upload" -> uploadBackdrop(session)
+                post && path == "/api/backdrop/delete" -> {
+                    session.parseBody(HashMap())
+                    backdropFiles().forEach { it.delete() }
+                    json(state())
+                }
+                post && path == "/api/icon/delete" -> {
+                    session.parseBody(HashMap())
+                    iconFiles().forEach { it.delete() }
+                    json(state())
+                }
+                post && path == "/api/intro/delete" -> {
+                    session.parseBody(HashMap())
+                    introFiles().forEach { it.delete() }
+                    json(state())
+                }
                 else -> text(Response.Status.NOT_FOUND, "Not found")
             }
         }.getOrElse { text(Response.Status.INTERNAL_ERROR, it.message ?: "error") }
@@ -89,6 +125,11 @@ class PhoneServer private constructor(private val ctx: Context, private val toke
         .put("themes", JSONArray().apply {
             Backgrounds.THEMES.forEach { (k, v) -> put(JSONObject().put("id", k).put("label", v.first)) }
         })
+        .put("intro", prefs.intro)
+        .put("introVideo", Intro.videoFile(ctx)?.length() ?: 0L)
+        .put("introSource", prefs.introSource)
+        .put("icon", SettingsActivity.iconFile(ctx) != null)
+        .put("backdrop", SettingsActivity.backdropFile(ctx) != null)
         .put("mine", names(Wallpapers.MINE))
         .put("custom", names(Wallpapers.CUSTOM))
 
@@ -122,6 +163,66 @@ class PhoneServer private constructor(private val ctx: Context, private val toke
         return json(state().put("added", added))
     }
 
+    /** The boot animation: one video, kept in app storage (where [Intro.videoFile] looks first). */
+    private fun uploadIntro(session: IHTTPSession): Response {
+        val files = HashMap<String, String>()
+        session.parseBody(files)
+        val f = files.values.map { File(it) }.firstOrNull { it.exists() && it.length() in 1..MAX_INTRO }
+            ?: return json(state().put("ok", false))
+        // Only something Android can play as video; anything else would leave the intro black.
+        val video = runCatching {
+            MediaMetadataRetriever().run {
+                try { setDataSource(f.path); extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO) == "yes" } finally { release() }
+            }
+        }.getOrDefault(false)
+        if (!video) return json(state().put("ok", false))
+        val dest = File(ctx.filesDir, Intro.FILE)
+        val tmp = File(ctx.filesDir, Intro.FILE + ".part")
+        f.copyTo(tmp, overwrite = true)
+        // One pushed over adb would otherwise come back once this one is deleted.
+        introFiles().forEach { it.delete() }
+        tmp.renameTo(dest)
+        return json(state().put("ok", true))
+    }
+
+    /** The settings icon: any picture, kept as PNG, at most 960 px wide (a tile is drawn at 400 or so). */
+    private fun uploadIcon(session: IHTTPSession): Response {
+        val files = HashMap<String, String>()
+        session.parseBody(files)
+        val src = files.values.map { File(it) }.firstOrNull { it.exists() && it.length() in 1..MAX_UPLOAD }
+            ?.let { BitmapFactory.decodeFile(it.path) } ?: return json(state().put("ok", false))
+        val bmp = if (src.width > 960) Bitmap.createScaledBitmap(src, 960, src.height * 960 / src.width, true) else src
+        val tmp = File(ctx.filesDir, SettingsActivity.ICON_FILE + ".part")
+        tmp.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        iconFiles().forEach { it.delete() }
+        tmp.renameTo(File(ctx.filesDir, SettingsActivity.ICON_FILE))
+        prefs.ownIcon = true
+        return json(state().put("ok", true))
+    }
+
+    /** The settings page background: any picture, kept as JPEG at most 1920 px wide. */
+    private fun uploadBackdrop(session: IHTTPSession): Response {
+        val files = HashMap<String, String>()
+        session.parseBody(files)
+        val src = files.values.map { File(it) }.firstOrNull { it.exists() && it.length() in 1..MAX_UPLOAD }
+            ?.let { BitmapFactory.decodeFile(it.path) } ?: return json(state().put("ok", false))
+        val bmp = if (src.width > 1920) Bitmap.createScaledBitmap(src, 1920, src.height * 1920 / src.width, true) else src
+        val tmp = File(ctx.filesDir, SettingsActivity.BACKDROP_FILE + ".part")
+        tmp.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 92, it) }
+        backdropFiles().forEach { it.delete() }
+        tmp.renameTo(File(ctx.filesDir, SettingsActivity.BACKDROP_FILE))
+        prefs.settingsBg = true
+        return json(state().put("ok", true))
+    }
+
+    private fun backdropFiles() = listOfNotNull(File(ctx.filesDir, SettingsActivity.BACKDROP_FILE),
+        ctx.getExternalFilesDir(null)?.let { File(it, SettingsActivity.BACKDROP_FILE) })
+
+    private fun iconFiles() = listOfNotNull(File(ctx.filesDir, SettingsActivity.ICON_FILE),
+        ctx.getExternalFilesDir(null)?.let { File(it, SettingsActivity.ICON_FILE) })
+
+    private fun introFiles() = listOfNotNull(File(ctx.filesDir, Intro.FILE), ctx.getExternalFilesDir(null)?.let { File(it, Intro.FILE) })
+
     private fun form(session: IHTTPSession): Map<String, String> {
         session.parseBody(HashMap())
         return session.parameters.mapValues { it.value.firstOrNull().orEmpty() }
@@ -134,6 +235,7 @@ class PhoneServer private constructor(private val ctx: Context, private val toke
     companion object {
         const val PORT = 8790
         private const val MAX_UPLOAD = 40L * 1024 * 1024
+        private const val MAX_INTRO = 100L * 1024 * 1024
 
         @Volatile
         private var running: PhoneServer? = null
