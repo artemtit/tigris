@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Tigris">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#DCEAFF"/>
+      <stop offset="1" stop-color="#8FB0EA"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#0B0F16"/>
+  <path d="M16 19h32v6H37v22h-7V25H16z" fill="url(#g)"/>
+  <path d="M43 19l7 6-7 6z" fill="url(#g)" opacity="0.55"/>
+  <rect x="16" y="46" width="24" height="4" rx="2" fill="#B9D4FF" opacity="0.35"/>
+</svg>

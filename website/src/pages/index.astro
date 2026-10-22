@@ -1,0 +1,35 @@
+---
+import Base from "../layouts/Base.astro";
+import Header from "../components/Header.astro";
+import Hero from "../components/Hero.astro";
+import Aerial from "../components/Aerial.astro";
+import Features from "../components/Features.astro";
+import Compare from "../components/Compare.astro";
+import Gallery from "../components/Gallery.astro";
+import Install from "../components/Install.astro";
+import Compatibility from "../components/Compatibility.astro";
+import Faq from "../components/Faq.astro";
+import Footer from "../components/Footer.astro";
+import { getCopy } from "../data/copy";
+
+const locale = "zh" as const;
+const copy = getCopy(locale);
+---
+<Base copy={copy} locale={locale}>
+  <Header copy={copy} locale={locale} />
+  <main id="main">
+    <Hero copy={copy} locale={locale} />
+    <Aerial copy={copy} locale={locale} />
+    <Features copy={copy} locale={locale} />
+    <Compare copy={copy} locale={locale} />
+    <Gallery copy={copy} locale={locale} />
+    <Install copy={copy} locale={locale} />
+    <Compatibility copy={copy} />
+    <Faq copy={copy} locale={locale} />
+  </main>
+  <Footer copy={copy} />
+
+  <script>
+    import "../scripts/main";
+  </script>
+</Base>

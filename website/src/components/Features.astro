@@ -1,0 +1,159 @@
+---
+import { shots } from "../data/site";
+import type { Copy, Locale } from "../data/lang";
+
+interface Props {
+  copy: Copy;
+  locale: Locale;
+}
+
+const { copy, locale } = Astro.props;
+const f = copy.features;
+
+/* Feature sections. Each one uses an authentic capture; nothing is fabricated. */
+const items = [
+  {
+    num: "01",
+    kicker: "LIQUID GLASS DOCK",
+    title: locale === "zh" ? "沉下去的玻璃，浮起来的图标" : "A dock that sinks into the picture",
+    body:
+      locale === "zh"
+        ? "第一排 App 坐在一块沉底的玻璃板上，下一排只露出上沿。按下键展开全部 App；平时，把画面还给壁纸。"
+        : "The first row sits on a sunken glass plate; the next row shows only its top edge. Press Down to reveal every app, or leave the screen to the wallpaper.",
+    bullets:
+      locale === "zh"
+        ? [
+            "5 列 16:9 圆角图标，选中时放大、倾斜、带投影",
+            "长按进入编辑，用方向键把图标拖进 Dock 或任意位置",
+            "模糊、边缘折射和彩色高光随背景预计算，滚动不额外占用 GPU",
+          ]
+        : [
+            "Five 16:9 rounded tiles that scale and tilt with a soft shadow on focus",
+            "Long-press to edit, then move tiles into the dock with the D-pad",
+            "Blur, edge refraction and highlights are precomputed per wallpaper on the CPU",
+          ],
+    img: shots.home,
+    alt:
+      locale === "zh"
+        ? "液态玻璃 Dock 实拍：玻璃板上五个应用图标，玻璃边缘有折射与高光。"
+        : "Liquid-glass dock with five app tiles on a Sony BRAVIA.",
+    caption: locale === "zh" ? "主屏幕 · 索尼 BRAVIA 实拍" : "Home screen · Sony BRAVIA capture",
+    flip: false,
+  },
+  {
+    num: "02",
+    kicker: "TOP SHELF",
+    title: locale === "zh" ? "选中一个 App，上半屏开始播放它的世界" : "Focus an app and the top half starts living",
+    body:
+      locale === "zh"
+        ? "焦点落在 Dock 里的部分 App 时，上半屏轮播它的内容：正在直播的直播间、正在热门的视频，而不是一张静态海报。"
+        : "For supported dock apps, the upper half cycles through what is actually on: live rooms and trending videos, not a static poster.",
+    bullets:
+      locale === "zh"
+        ? ["云视听小电视：哔哩哔哩热门视频", "斗鱼：正在直播的热门直播间", "内容来自两个服务公开的网页接口，不需要登录"]
+        : [
+            "Bilibili trending videos through the 云视听小电视 TV app",
+            "Live rooms on Douyu",
+            "Read from the services' public web endpoints; no account needed",
+          ],
+    img: shots.shelf,
+    alt:
+      locale === "zh"
+        ? "Top Shelf 实拍：上半屏是哔哩哔哩热门视频的大幅画面与标题，下方是玻璃 Dock。"
+        : "Top Shelf showing a Bilibili video above the dock.",
+    caption: locale === "zh" ? "顶部内容 · 云视听小电视热门视频" : "Top Shelf · Bilibili trending",
+    flip: true,
+  },
+  {
+    num: "03",
+    kicker: "CONTROL CENTER",
+    title: locale === "zh" ? "按一下返回键，控制中心浮出来" : "One Back press away",
+    body:
+      locale === "zh"
+        ? "没有整块底板，只有一组独立悬浮的液态玻璃按钮。背后是实时模糊的桌面，前面是你此刻真正需要的开关。"
+        : "No enclosing panel — just floating liquid-glass controls over a live blur of the wallpaper.",
+    bullets:
+      locale === "zh"
+        ? [
+            "网络、待机、关机、重启、释放内存、相框、设置",
+            "亮度、音量与 HDMI 输入源按电视能力自动出现",
+            "Android 12+ 共享 GPU 模糊图层；较旧系统使用背景采样",
+          ]
+        : [
+            "Network, standby, power, restart, memory, photo frame, settings",
+            "Brightness, volume and HDMI input appear only where the TV exposes them",
+            "Android 12+ reuses a shared GPU blur layer; older systems sample the wallpaper",
+          ],
+    img: shots.cc,
+    alt:
+      locale === "zh"
+        ? "控制中心实拍：右侧悬浮着关机、待机、网络、亮度、音量与输入源等液态玻璃控件。"
+        : "Frosted Control Center with power, network, brightness and volume controls.",
+    caption: locale === "zh" ? "控制中心 · 独立悬浮玻璃按钮" : "Control Center · floating glass controls",
+    flip: false,
+  },
+  {
+    num: "04",
+    kicker: "WALLPAPER & FRAME",
+    title: locale === "zh" ? "电视不响的时候，让它成为一扇窗" : "When the TV is quiet, make it a window",
+    body:
+      locale === "zh"
+        ? "必应每日风景、Wallhaven 全年龄热门、手机上传的照片、自己的图片链接，或者一组纯色渐变。每 15 分钟到一天换一张。"
+        : "Bing daily landscapes, all-ages Wallhaven favourites, photos uploaded from a phone, your own image links, or a colour gradient — rotating every 15 minutes to once a day.",
+    bullets:
+      locale === "zh"
+        ? ["相框缓慢平移缩放，时间文字定时挪位，照顾 OLED", "也可以换成 Apple TV 航拍视频，详见上一节", "设为系统屏保，遥控器闲置 1–30 分钟后自动进入"]
+        : [
+            "The frame pans and zooms slowly, moving the clock to protect OLED panels",
+            "Optionally switch the content to Apple TV aerial films (see above)",
+            "Set it as the system screensaver after 1–30 minutes of idle time",
+          ],
+    img: shots.grid,
+    alt:
+      locale === "zh"
+        ? "展开全部 App 的网格实拍：多行 16:9 应用图标铺在壁纸上。"
+        : "All-apps grid capture over the wallpaper.",
+    caption: locale === "zh" ? "展开全部 App · 网格布局" : "All apps · grid layout",
+    flip: true,
+  },
+];
+---
+<section class="section" id="features">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <p class="eyebrow">{f.eyebrow}</p>
+      <h2>{f.title}</h2>
+      <p class="lede">{f.lede}</p>
+    </div>
+
+    {items.map((item) => (
+      <article class:list={["feature reveal", { "is-flipped": item.flip }]}>
+        <div class="feature-copy">
+          <p class="feature-kicker"><span class="num">{item.num}</span>{item.kicker}</p>
+          <h3>{item.title}</h3>
+          <p>{item.body}</p>
+          <ul class="feature-list">
+            {item.bullets.map((b) => <li>{b}</li>)}
+          </ul>
+        </div>
+        <figure class="feature-media">
+          <div class="tv-frame">
+            <div class="tv-screen">
+              <img
+                src={item.img.src}
+                srcset={`${item.img.small} 640w, ${item.img.src} 1280w`}
+                sizes="(max-width: 899px) 92vw, 52vw"
+                width="1280"
+                height="720"
+                loading="lazy"
+                decoding="async"
+                alt={item.alt}
+              />
+            </div>
+          </div>
+          <figcaption>{item.caption}</figcaption>
+        </figure>
+      </article>
+    ))}
+  </div>
+</section>

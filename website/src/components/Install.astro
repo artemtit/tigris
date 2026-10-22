@@ -1,0 +1,145 @@
+---
+import type { Copy, Locale } from "../data/lang";
+import type { Step } from "../data/interfaces";
+
+interface Props {
+  copy: Copy;
+  locale: Locale;
+}
+
+const { copy, locale } = Astro.props;
+const s = copy.install;
+const dl = locale === "zh" ? "下载" : "Download";
+---
+<section class="section install" id="install">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <p class="eyebrow">{s.eyebrow}</p>
+      <h2>{s.title}</h2>
+      <p class="lede">{s.lede}</p>
+    </div>
+
+    <div class="downloads reveal">
+      {s.packages.map((pkg) => (
+        <a class="download" href={pkg.href} rel="noopener">
+          <span class="name">{pkg.name}</span>
+          <span class="use">{pkg.use}</span>
+          <span class="arrow">{dl} <svg aria-hidden="true"><use href="#i-arrow"></use></svg></span>
+        </a>
+      ))}
+    </div>
+
+    <div class="prereq reveal">{s.prereq}</div>
+
+    <div class="agent-card reveal">
+      <h3><svg aria-hidden="true"><use href="#i-terminal"></use></svg>{s.agent.title}</h3>
+      <p>{s.agent.body}</p>
+      <div class="prompt-box">
+        <p id="cmd-agent">{s.agent.prompt}</p>
+        <button class="copy" type="button" data-copy="#cmd-agent">
+          <svg aria-hidden="true"><use href="#i-copy"></use></svg><span class="label"></span>
+        </button>
+      </div>
+      <p class="fine">{s.agent.note}</p>
+    </div>
+
+    <div class="table-wrap brand-table reveal">
+      <table>
+        <caption>{s.adbTable.caption}</caption>
+        <thead>
+          <tr>{s.adbTable.head.map((h) => <th scope="col">{h}</th>)}</tr>
+        </thead>
+        <tbody>
+          {s.adbTable.rows.map((row) => (
+            <tr>
+              <th scope="row">{row[0]}</th>
+              <td set:html={row[1]} />
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="windows-note reveal">{s.shellNote}</p>
+
+    {/* One switch for every snippet on the page; the choice is remembered. */}
+    <div class="shell-switch reveal" data-shell-switch aria-label={s.shellLabels.posix + " / " + s.shellLabels.powershell}>
+      {(["powershell", "posix"] as const).map((shell, i) => (
+        <button
+          type="button"
+          data-shell={shell}
+          aria-pressed={i === 0 ? "true" : "false"}
+          class:list={{ "is-on": i === 0 }}
+        >{s.shellLabels[shell]}</button>
+      ))}
+      <p class="shell-switch-note">{s.placeholderNote}</p>
+    </div>
+
+    <div class="tabs reveal" data-tabs>
+      <div class="tablist" role="tablist" aria-label={s.tabsLabel}>
+        {s.tabs.map((tab, i) => (
+          <button
+            type="button"
+            role="tab"
+            id={`tab-${tab.id}`}
+            aria-controls={`panel-${tab.id}`}
+            aria-selected={i === 0 ? "true" : "false"}
+            tabindex={i === 0 ? 0 : -1}
+          >{tab.label}</button>
+        ))}
+      </div>
+
+      {s.tabs.map((tab, i) => (
+        <div class="tabpanel" role="tabpanel" id={`panel-${tab.id}`} aria-labelledby={`tab-${tab.id}`} hidden={i !== 0}>
+          <h3>{tab.label}</h3>
+          {tab.intro && <p>{tab.intro}</p>}
+          {tab.danger && (
+            <div class="callout is-danger">
+              <svg aria-hidden="true"><use href="#i-warning"></use></svg>
+              <span set:html={tab.danger} />
+            </div>
+          )}
+          <ol class="steps">
+            {tab.steps.map((step: Step, si) => (
+              <li>
+                <h4>{step.title}</h4>
+                {step.body && <p>{step.body}</p>}
+                {step.cmd && (
+                  <div class="code">
+                    <pre><code id={`cmd-${tab.id}-${si}`} data-cmd={typeof step.cmd === "object" ? JSON.stringify(step.cmd) : undefined}>{typeof step.cmd === "string" ? step.cmd : step.cmd.powershell}</code></pre>
+                    <button class="copy" type="button" data-copy={`#cmd-${tab.id}-${si}`}>
+                      <svg aria-hidden="true"><use href="#i-copy"></use></svg><span class="label"></span>
+                    </button>
+                  </div>
+                )}
+                {step.note && <p class="fine" set:html={step.note} />}
+              </li>
+            ))}
+          </ol>
+        </div>
+      ))}
+    </div>
+
+    <details class="faq advanced reveal">
+      <summary>{s.advanced.title}</summary>
+      <div class="faq-body">
+        <p>{s.advanced.body}</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">{locale === "zh" ? "权限" : "Grant"}</th><th scope="col">{locale === "zh" ? "用途" : "Purpose"}</th></tr></thead>
+            <tbody>
+              {s.advanced.rows.map((r) => (
+                <tr><th scope="row">{r.name}</th><td>{r.use}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+    <div class="callout is-danger reveal">
+      <svg aria-hidden="true"><use href="#i-warning"></use></svg>
+      <span set:html={s.safety} />
+    </div>
+  </div>
+</section>

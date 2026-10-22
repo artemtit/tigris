@@ -1,0 +1,56 @@
+---
+import type { Copy } from "../data/lang";
+
+interface Props {
+  copy: Copy;
+}
+
+const { copy } = Astro.props;
+const c = copy.compatibility;
+
+/* Visual status for each cell: dash = not applicable, check = yes,
+   "cond" = conditional. Keeps the table honest at a glance. */
+const tone = (v: string) => (v === "—" ? "na" : /支持|Yes|standard|Android|Most|大多数|Plus|并显示|清理缓存|Cache only|One-time|需电脑/.test(v) && !/小米|Xiaomi|彻底|Kills|事后/.test(v) ? "ok" : "cond");
+---
+<section class="section compatibility-section" id="compatibility">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2>{c.title}</h2>
+      <p class="lede">{c.lede}</p>
+    </div>
+
+    <div class="table-wrap reveal">
+      <table>
+        <caption>{c.caption}</caption>
+        <thead>
+          <tr>{c.head.map((h) => <th scope="col">{h}</th>)}</tr>
+        </thead>
+        <tbody>
+          {c.rows.map((row) => (
+            <tr>
+              <th scope="row">{row.feature}</th>
+              <td class={tone(row.any)}>{row.any}</td>
+              <td class={tone(row.debug)}>{row.debug}</td>
+              <td class={tone(row.sony)}>{row.sony}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="notes reveal">
+      {c.notes.map((n) => (
+        <div class="note">
+          <strong>{n.title}</strong>
+          {n.body}
+        </div>
+      ))}
+    </div>
+
+    <div class="callout reveal">
+      <svg aria-hidden="true"><use href="#i-info"></use></svg>
+      <span set:html={c.scope} />
+    </div>
+  </div>
+</section>

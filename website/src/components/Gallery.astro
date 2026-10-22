@@ -1,0 +1,93 @@
+---
+import { clips, shots } from "../data/site";
+import type { Copy, Locale } from "../data/lang";
+import { uiStrings } from "../data/strings";
+
+interface Props {
+  copy: Copy;
+  locale: Locale;
+}
+
+const { copy, locale } = Astro.props;
+const t = uiStrings[locale];
+const g = copy.gallery;
+
+/* slot: the grid cell (two wide ones, then three). A clip plays in place and in the viewer. */
+const items = [
+  { slot: "home", clip: clips.intro, label: locale === "zh" ? "开机动画" : "Boot animation", file: "intro.mp4", alt: locale === "zh" ? "开机动画录屏：Tigris 字样放大进入主屏幕。" : "Boot animation recording: the Tigris wordmark zooms into the home screen." },
+  { slot: "shelf", img: shots.shelf, label: locale === "zh" ? "顶部内容" : "Top Shelf", file: "shelf.jpg", alt: locale === "zh" ? "Top Shelf 顶部内容实拍。" : "Top Shelf capture." },
+  { slot: "grid", clip: clips.settings, label: locale === "zh" ? "设置" : "Settings", file: "settings.mp4", alt: locale === "zh" ? "设置页录屏。" : "Settings page recording." },
+  { slot: "cc", clip: clips.cc, label: locale === "zh" ? "控制中心" : "Control Center", file: "cc.mp4", alt: locale === "zh" ? "控制中心录屏。" : "Control Center recording." },
+  { slot: "frame", img: shots.frame, label: locale === "zh" ? "相框屏保" : "Photo frame", file: "frame.jpg", alt: locale === "zh" ? "相框屏保实拍。" : "Photo frame capture." },
+];
+---
+<section class="section gallery-section" id="gallery">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <p class="eyebrow">{g.eyebrow}</p>
+      <h2>{g.title}</h2>
+      <p class="lede">{g.lede}</p>
+    </div>
+
+    <div class="gallery reveal">
+      {items.map((item, i) => (
+        <figure class={`g-${item.slot}`}>
+          <button
+            type="button"
+            data-lightbox-open
+            data-full={item.clip ? item.clip.src : item.img!.src}
+            data-video={item.clip ? "" : undefined}
+            data-caption={item.label}
+            data-alt={item.alt}
+            aria-label={item.label}
+          >
+            {item.clip ? (
+              <video
+                data-clip
+                src={item.clip.src}
+                poster={item.clip.poster}
+                width="1280"
+                height="720"
+                muted
+                loop
+                playsinline
+                preload="none"
+                aria-label={item.alt}
+              ></video>
+            ) : (
+              <img
+                src={item.img!.small}
+                srcset={`${item.img!.small} 640w, ${item.img!.src} 1280w`}
+                sizes={i < 2 ? "(max-width: 860px) 92vw, 48vw" : "(max-width: 860px) 46vw, 32vw"}
+                width="1280"
+                height="720"
+                loading="lazy"
+                decoding="async"
+                alt={item.alt}
+              />
+            )}
+          </button>
+          <figcaption>{item.label} <em>{item.file}</em></figcaption>
+        </figure>
+      ))}
+    </div>
+  </div>
+</section>
+
+<dialog class="lightbox" data-lightbox aria-label={t.viewer}>
+  <div class="lightbox-inner">
+    <button class="lightbox-close" type="button" data-close aria-label={t.close}>
+      <svg aria-hidden="true"><use href="#i-close"></use></svg>
+    </button>
+    <img alt="" hidden />
+    <video muted loop playsinline hidden></video>
+    <div class="lightbox-bar">
+      <span data-lightbox-caption></span>
+      <span data-lightbox-counter>1 / {items.length}</span>
+      <span class="nav-btns">
+        <button type="button" data-prev aria-label={t.prev}><svg aria-hidden="true" style="transform:rotate(180deg)"><use href="#i-chevron"></use></svg></button>
+        <button type="button" data-next aria-label={t.next}><svg aria-hidden="true"><use href="#i-chevron"></use></svg></button>
+      </span>
+    </div>
+  </div>
+</dialog>

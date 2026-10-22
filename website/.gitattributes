@@ -1,0 +1,8 @@
+# Keep every website source file as LF in the working tree, so a fresh clone
+# builds byte-identical output on Windows and on Linux/CI.
+* text=auto eol=lf
+
+# Binary assets must never be normalised.
+*.webp binary
+*.jpg binary
+*.png binary

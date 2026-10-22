@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" role="img" aria-label="通用 Android TV 桌面示意图，非实拍">
+  <title>通用 Android TV 桌面 · 示意插图（非实拍）</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#33404F"/>
+      <stop offset="0.55" stop-color="#232D3A"/>
+      <stop offset="1" stop-color="#161D27"/>
+    </linearGradient>
+    <radialGradient id="vig" cx="0.5" cy="0.42" r="0.75">
+      <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.45"/>
+    </radialGradient>
+    <linearGradient id="tileA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#495A6E"/><stop offset="1" stop-color="#33414F"/>
+    </linearGradient>
+    <pattern id="wm" width="360" height="200" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)">
+      <text x="0" y="110" font-family="'Microsoft YaHei','PingFang SC',sans-serif" font-size="26" fill="#FFFFFF" fill-opacity="0.055">示意图 · 非实拍</text>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect width="1280" height="720" fill="url(#wm)"/>
+  <rect width="1280" height="720" fill="url(#vig)"/>
+
+  <!-- generic status row -->
+  <g font-family="'Microsoft YaHei','PingFang SC',sans-serif" fill="#C9D1DC">
+    <text x="64" y="72" font-size="24" fill-opacity="0.85">19:04</text>
+    <g font-size="20" fill-opacity="0.55">
+      <text x="1010" y="70">HDMI 1</text>
+      <text x="1120" y="70">网络</text>
+      <text x="1190" y="70">设置</text>
+    </g>
+  </g>
+
+  <!-- generic app grid -->
+  <g>
+    <g transform="translate(64,170)">
+      <rect width="352" height="198" rx="8" fill="url(#tileA)"/>
+      <circle cx="48" cy="52" r="17" fill="#5B7089"/>
+      <text x="32" y="130" font-family="'Microsoft YaHei','PingFang SC',sans-serif" font-size="22" fill="#AEBBCA">视频</text>
+    </g>
+    <g transform="translate(440,170)">
+      <rect width="352" height="198" rx="8" fill="url(#tileA)"/>
+      <circle cx="48" cy="52" r="17" fill="#6B6076"/>
+      <text x="32" y="130" font-family="'Microsoft YaHei','PingFang SC',sans-serif" font-size="22" fill="#AEBBCA">直播</text>
+    </g>
+    <g transform="translate(816,170)">
+      <rect width="400" height="198" rx="8" fill="url(#tileA)"/>
+      <circle cx="48" cy="52" r="17" fill="#57687A"/>
+      <text x="32" y="130" font-family="'Microsoft YaHei','PingFang SC',sans-serif" font-size="22" fill="#AEBBCA">应用</text>
+    </g>
+
+    <g transform="translate(64,396)">
+      <rect width="352" height="198" rx="8" fill="url(#tileA)"/>
+      <circle cx="48" cy="52" r="17" fill="#6A5F55"/>
+      <text x="32" y="130" font-family="'Microsoft YaHei','PingFang SC',sans-serif" font-size="22" fill="#AEBBCA">游戏</text>
+    </g>
+    <g transform="translate(440,396)">
+      <rect width="352" height="198" rx="8" fill="url(#tileA)"/>
+      <circle cx="48" cy="52" r="17" fill="#4F6570"/>
+      <text x="32" y="130" font-family="'Microsoft YaHei','PingFang SC',sans-serif" font-size="22" fill="#AEBBCA">音乐</text>
+    </g>
+    <g transform="translate(816,396)">
+      <rect width="400" height="198" rx="8" fill="url(#tileA)"/>
+      <circle cx="48" cy="52" r="17" fill="#5E5E66"/>
+      <text x="32" y="130" font-family="'Microsoft YaHei','PingFang SC',sans-serif" font-size="22" fill="#AEBBCA">设置</text>
+    </g>
+  </g>
+
+  <rect x="0" y="640" width="1280" height="80" fill="#0A0D12" fill-opacity="0.55"/>
+  <text x="64" y="690" font-family="'Microsoft YaHei','PingFang SC',sans-serif" font-size="22" fill="#8D99A8">通用 Android TV 桌面布局 · 示意插图，非真实截图</text>
+</svg>

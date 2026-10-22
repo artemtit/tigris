@@ -1,0 +1,49 @@
+---
+import Base from "../layouts/Base.astro";
+import { getCopy } from "../data/copy";
+import { brand } from "../data/site";
+
+/* Static catch-all: one 404 body per language so a missing /en/… link reads
+   in English. Cloudflare Pages serves public/404.html with a real 404 status;
+   these files are the same page pre-rendered for direct links. */
+export function getStaticPaths() {
+  return [{ params: { lang: "en" } }, { params: { lang: "zh" } }];
+}
+
+const lang = Astro.params.lang === "en" ? "en" : "zh";
+const base = getCopy(lang);
+const desc = lang === "zh" ? "页面不存在。" : "Page not found.";
+const canonical = lang === "zh" ? "/404" : "/en/404";
+const copy = {
+  ...base,
+  meta: {
+    ...base.meta,
+    title: lang === "zh" ? "404 — 这一屏没有内容 | Tigris" : "404 — nothing on this screen | Tigris",
+    description: desc,
+    canonical,
+    ogTitle: desc,
+    ogDescription: desc,
+    alts: [{ hreflang: lang === "zh" ? "zh-CN" : "en", href: `${brand.site}${canonical}` }],
+  },
+};
+
+Astro.response.status = 404;
+Astro.response.headers.set("content-type", "text/html; charset=utf-8");
+---
+<Base copy={copy} locale={lang}>
+  <main class="error-page">
+    <div>
+      <p class="error-code" aria-hidden="true">404</p>
+      <h1>{lang === "zh" ? "这一屏没有内容。" : "Nothing on this screen."}</h1>
+      <p>
+        {lang === "zh"
+          ? "链接可能已经移动，或者从来没有存在过。回到主屏幕，那里有玻璃 Dock 和一片风景。"
+          : "The link may have moved, or never existed. Head back to the home screen — the glass dock and a landscape are waiting."}
+      </p>
+      <div class="hero-actions error-actions">
+        <a class="btn btn-primary" href={lang === "zh" ? "/" : "/en/"}>{lang === "zh" ? "回到首页" : "Back to home"}</a>
+        <a class="btn btn-ghost" href="https://github.com/lesnolie/Tigris" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </main>
+</Base>

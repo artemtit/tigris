@@ -1,0 +1,85 @@
+---
+import { brand, clips, shots } from "../data/site";
+import type { Copy, Locale } from "../data/lang";
+
+interface Props {
+  copy: Copy;
+  locale: Locale;
+}
+
+const { copy, locale } = Astro.props;
+const hero = copy.hero;
+---
+<section class="hero">
+  <div class="hero-aurora" aria-hidden="true">
+    <span class="aurora-blob blob-a"></span>
+    <span class="aurora-blob blob-b"></span>
+    <span class="aurora-blob blob-c"></span>
+  </div>
+
+  <div class="wrap hero-center">
+    <p class="eyebrow">{hero.eyebrow}</p>
+    <h1>
+      <span class="line">{hero.titleLines[0]}</span>
+      <span class="line accent">{hero.titleLines[1]}</span>
+    </h1>
+    <p class="hero-sub">{hero.sub}</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href={brand.apk} rel="noopener">
+        <svg aria-hidden="true"><use href="#i-download"></use></svg>
+        {hero.primary}
+      </a>
+      <a class="btn btn-ghost" href="#install">
+        {hero.secondary}
+        <svg aria-hidden="true"><use href="#i-arrow"></use></svg>
+      </a>
+    </div>
+    <ul class="hero-meta">
+      <li class="chip"><span class="dot"></span>{hero.chips[0]}</li>
+      {hero.chips.slice(1).map((chip) => <li class="chip">{chip}</li>)}
+    </ul>
+  </div>
+
+  <div class="wrap hero-stage">
+    <div class="tv-stage">
+      <div class="tv-glow" aria-hidden="true"></div>
+      <div class="tv-frame">
+        <div class="tv-screen">
+          <video
+            data-clip
+            src={clips.home.src}
+            poster={clips.home.poster}
+            width="1280"
+            height="720"
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            aria-label={hero.imageAlt}
+          ></video>
+        </div>
+      </div>
+      <div class="float-chip chip-shelf" aria-hidden="true">
+        <span class="glyph"><svg><use href="#i-play"></use></svg></span>
+        <span><strong>{hero.floating[1].title}</strong><small>{hero.floating[1].sub}</small></span>
+      </div>
+      <div class="float-chip chip-dock" aria-hidden="true">
+        <span class="glyph"><svg><use href="#i-check"></use></svg></span>
+        <span><strong>{hero.floating[0].title}</strong><small>{hero.floating[0].sub}</small></span>
+      </div>
+    </div>
+    <p class="tv-caption">
+      <span class="live">{locale === "zh" ? "实拍录屏" : "Real recording"} · Sony BRAVIA XR-55A80J · Android TV 12</span>
+      <span>1280 × 720</span>
+    </p>
+    <p class="hero-note">{hero.note}</p>
+  </div>
+</section>
+
+<div class="proof">
+  <div class="wrap proof-inner">
+    {copy.proof.map((item) => (
+      <span class="proof-item"><svg aria-hidden="true"><use href="#i-check"></use></svg>{item}</span>
+    ))}
+  </div>
+</div>

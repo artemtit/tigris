@@ -1,0 +1,39 @@
+---
+import type { Copy, Locale } from "../data/lang";
+import type { FaqItem } from "../data/interfaces";
+
+interface Props {
+  copy: Copy;
+  locale: Locale;
+}
+
+const { copy } = Astro.props;
+const f = copy.faq;
+---
+<section class="section faq-section" id="faq">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <p class="eyebrow">{f.eyebrow}</p>
+      <h2>{f.title}</h2>
+    </div>
+
+    <div class="faq-list reveal">
+      {f.items.map((item, idx) => (
+        <details class="faq">
+          <summary>{item.q}</summary>
+          <div class="faq-body">
+            {item.a.map((p) => <p>{p}</p>)}
+            {item.cmds?.map((block, i) => (
+              <div class="code">
+                <pre><code id={`cmd-faq-${idx}-${i}`} data-cmd={typeof block.text === "object" ? JSON.stringify(block.text) : undefined}>{typeof block.text === "string" ? block.text : block.text.powershell}</code></pre>
+                <button class="copy" type="button" data-copy={`#cmd-faq-${idx}-${i}`}>
+                  <svg aria-hidden="true"><use href="#i-copy"></use></svg><span class="label"></span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,59 @@
+---
+import { brand } from "../data/site";
+import type { Copy } from "../data/lang";
+
+interface Props {
+  copy: Copy;
+}
+
+const { copy } = Astro.props;
+const c = copy.finalCta;
+---
+<section class="final-cta">
+  <div class="wrap reveal">
+    <p class="eyebrow">{c.eyebrow}</p>
+    <h2>{c.title}</h2>
+    <p>{c.body}</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href={brand.apk} rel="noopener">
+        <svg aria-hidden="true"><use href="#i-download"></use></svg>
+        {c.primary}
+      </a>
+      <a class="btn btn-ghost" href={brand.repo} rel="noopener">
+        {c.secondary}
+        <svg aria-hidden="true"><use href="#i-arrow"></use></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href={copy.footer.langLink.href === "/en/" ? "/" : "/en/"}>
+          <img src="/img/favicon.svg" width="30" height="30" alt="" />
+          <span>{brand.name} <em>{brand.tagline}</em></span>
+        </a>
+        <p>{copy.footer.blurb}</p>
+      </div>
+      {copy.footer.cols.map((col) => (
+        <div class="footer-col">
+          <h4>{col.title}</h4>
+          <ul>
+            {col.links.map((link) => (
+              <li><a href={link.href} rel={link.href.startsWith("http") ? "noopener" : undefined}>{link.label}</a></li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <div class="footer-bottom">
+      <p class="legal">{copy.footer.legal}</p>
+      <p>
+        <a href={copy.footer.langLink.href} hreflang={copy.footer.langLink.lang} lang={copy.footer.langLink.lang}>{copy.footer.langLink.label}</a>
+      </p>
+    </div>
+  </div>
+</footer>

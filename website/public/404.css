@@ -1,0 +1,42 @@
+/* Standalone styles for the static 404 page. Kept separate from the Astro
+   bundle so the 404 works even if the main stylesheet is unavailable. */
+:root {
+  color-scheme: dark;
+  --ink: #070a10;
+  --gold: #b9d4ff;
+  --sea: #a79fee;
+  --muted: #a9b3c2;
+  --text: #f5f7fb;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(60% 50% at 50% 0%, rgba(56, 108, 180, 0.28), transparent 70%), var(--ink);
+  color: var(--text);
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.error-page { min-height: 100vh; display: grid; place-items: center; text-align: center; padding: 120px 24px; }
+.error-code {
+  margin: 0;
+  font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+  font-size: clamp(4rem, 16vw, 9rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  background: linear-gradient(120deg, #ffffff, var(--gold) 45%, var(--sea));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+h1 { font-size: clamp(1.6rem, 4vw, 2.4rem); margin: 16px 0 12px; }
+p { color: var(--muted); max-width: 44ch; margin-inline: auto; }
+.error-actions { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 30px; }
+.btn-primary, .btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 48px; padding: 0 24px; border-radius: 999px;
+  font-weight: 600; text-decoration: none;
+}
+.btn-primary { background: linear-gradient(180deg, #ffffff, #dfe8f7); color: #0a0f18; }
+.btn-ghost { border: 1px solid rgba(255, 255, 255, 0.16); color: var(--text); }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }

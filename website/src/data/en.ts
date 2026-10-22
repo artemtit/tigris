@@ -1,0 +1,456 @@
+import { brand, cmds } from "./site";
+import type { Cmd } from "./site";
+import type { Copy } from "./lang";
+
+const C: typeof cmds = cmds;
+
+export const en = {
+  skip: "Skip to content",
+  navLabel: "Main",
+  menuLabel: "Open menu",
+  menuCloseLabel: "Close menu",
+  nav: [
+    { href: "#features", label: "Features" },
+    { href: "#aerial", label: "Aerial" },
+    { href: "#compare", label: "Compare" },
+    { href: "#install", label: "Install" },
+    { href: "#compatibility", label: "Compatibility" },
+    { href: "#faq", label: "FAQ" },
+  ],
+  langSwitch: { href: "/", label: "中文", lang: "zh-CN" },
+  headerCta: "Download",
+  menuCta: "Download Tigris APK",
+  menuNote: "Android TV 9+ · no root · independent project, not affiliated with Apple",
+  copy: "Copy",
+  copied: "Copied",
+  copyFailed: "Copy failed",
+  compareLabel: "Compare the generic launcher illustration with a real Tigris capture",
+  compareValue: (p: number) => `Showing ${p}% of the before image`,
+  slideshow: { prev: "Previous", next: "Next" },
+  lightbox: { close: "Close", prev: "Previous", next: "Next", name: "Screenshot viewer" },
+  year: 2026,
+
+  meta: {
+    title: "Tigris — a tvOS-inspired Android TV launcher, with Apple TV aerials",
+    description:
+      "Tigris is an open-source Android TV launcher: liquid-glass dock, Top Shelf content, frosted Control Center, Apple TV aerial screensaver and landscape wallpapers. Android 9+, no root, verified on Sony BRAVIA.",
+    canonical: `${brand.site}/en/`,
+    alts: [
+      { hreflang: "zh-CN", href: `${brand.site}/` },
+      { hreflang: "en", href: `${brand.site}/en/` },
+      { hreflang: "x-default", href: `${brand.site}/` },
+    ],
+    ogLocale: "en_US",
+    ogLocaleAlt: "zh_CN",
+    ogTitle: "Tigris — a tvOS-inspired Android TV launcher",
+    ogDescription:
+      "Liquid-glass dock, Top Shelf, Control Center and Apple TV aerial screensavers. Open source, Android 9+, no root.",
+  },
+
+  hero: {
+    eyebrow: "TIGRIS · ANDROID TV LAUNCHER",
+    titleLines: ["Your TV home screen,", "worth opening again."],
+    sub: "Turn the Android TV you already own into something closer to tvOS: a sunken liquid-glass dock, a Top Shelf that actually plays something, and Apple TV aerial films drifting across the screen when the room goes quiet.",
+    primary: "Download free",
+    secondary: "See how to install",
+    chips: ["Android TV 9+", "No root", "Some features vary by brand"],
+    note: "An independent open-source project, not affiliated with Apple. “Apple TV” is a trademark of Apple Inc.",
+    imageAlt:
+      "Tigris home screen on a Sony BRAVIA TV: a landscape photo with a glass dock of app tiles.",
+    floating: [
+      { title: "Liquid Glass", sub: "Sunken glass dock" },
+      { title: "Aerial", sub: "Apple TV films" },
+    ],
+  },
+
+  proof: [
+    "Verified on Sony BRAVIA",
+    "Apple TV aerial screensaver",
+    "Standard and guard APKs",
+    "No root, fully reversible",
+  ],
+
+  compare: {
+    eyebrow: "BEFORE / AFTER",
+    title: "Drag to reveal the difference.",
+    lede: "The left side is an <strong>illustration of the before state, not a capture of the same TV</strong>. The right side is a <strong>real capture</strong> from Tigris on a Sony BRAVIA. Drag the divider.",
+    beforeLabel: "Before",
+    beforeSub: "Illustration · not the same TV",
+    afterLabel: "After",
+    afterSub: "Tigris · real capture",
+    beforeAlt: "Illustration of a generic Android TV grid, not a real screenshot.",
+    afterAlt: "Tigris home screen, real capture.",
+    hintKeys: "Drag, click, or focus the handle and use ← →. Hold Shift for larger steps; double-click to reset.",
+    disclaimer: "The before image is an illustration of a generic launcher, not a capture of the same TV.",
+  },
+
+  aerial: {
+    eyebrow: "AERIAL SCREENSAVER",
+    title: "Apple TV aerials, as your screensaver.",
+    lede: "When the TV goes quiet it drifts over the planet instead: coastlines, glaciers and city lights unfold with the location name following each shot. Use the arrow keys to change scene; offline it falls back to photos, and it never interrupts something already playing.",
+    bullets: [
+      "Choose aerial films as the screensaver content; they stream from Apple's servers at roughly 15–20 Mbps",
+      "Offline or on a failed buffer it falls back to the photo frame, without blocking the next idle transition",
+      "After 1–30 minutes of idle time the photo frame appears, with the clock and caption moving periodically to protect OLED panels",
+    ],
+    caption: "Photo frame · Bing daily photograph (photo mode shown; aerial films are video)",
+    frameAlt: "Photo frame screensaver: an underwater octopus photograph with the time and date in the corner.",
+    bulletsTitle: "How to enable it",
+    attribution:
+      "Aerial films stream from Apple's servers; Tigris ships no video files. “Apple TV” is a trademark of Apple Inc. This project is not affiliated with Apple.",
+  },
+
+  features: {
+    eyebrow: "FEATURES",
+    title: "Designed for ten feet, not for a phone.",
+    lede: "Bigger focus, fewer layers, quieter glass — laid out again for the room instead of scaled up from a handset.",
+  },
+
+  gallery: {
+    eyebrow: "SCREENSHOTS",
+    title: "Every image comes from a real TV.",
+    lede: "Sony BRAVIA XR-55A80J, Android TV 12, original 1280 × 720 captures and screen recordings. Select one to enlarge.",
+  },
+
+  install: {
+    eyebrow: "INSTALL",
+    title: "A better home screen, step by step.",
+    lede: "You need a computer on the same Wi-Fi as the TV, the TV's IP address and ADB debugging enabled. Android 9+, no root.",
+    packages: [
+      {
+        name: "Tigris.apk",
+        use: "Standard build: Sony BRAVIA, stock Android TV / Google TV, Xiaomi / Redmi, Hisense and most others.",
+        href: brand.apk,
+      },
+      {
+        name: "Tigris-guard.apk",
+        use: "Guard build: declares no home screen, for TCL / FFalcon firmware that rejects launcher APKs. Push it through T-Cast.",
+        href: brand.apkGuard,
+      },
+    ],
+    prereq:
+      "Before you start: the TV is on the same network as the computer, ADB debugging is enabled, and the first connection shows “Allow USB debugging?” — tick “Always allow”. The computer needs Android SDK Platform-Tools.",
+    shellNote:
+      "Every snippet has two forms — pick your system above. Windows PowerShell uses curl.exe instead of the curl alias and python instead of python3; macOS / Linux use the system curl and python3. No snippet relies on a shell variable and the package name is always written as com.leslie.tvhome in full, so a partial copy still runs.",
+    shellLabels: { posix: "macOS / Linux", powershell: "Windows PowerShell" },
+    placeholderNote:
+      "192.168.x.x is a placeholder for your TV's IP address. In the BRAVIA step, PIN is the four-digit code shown on the TV; type it in place of the placeholder.",
+    adbTable: {
+      caption: "Enabling ADB debugging by brand",
+      head: ["TV", "How to enable ADB"],
+      rows: [
+        [
+          "Xiaomi / Redmi",
+          "Settings → About → <strong>Product model</strong>: press OK until developer mode is on. Then Settings → Accounts &amp; security: enable <strong>ADB debugging</strong> and <strong>Install unknown apps</strong>.",
+        ],
+        [
+          "TCL / FFalcon",
+          "Settings → About → <strong>Device info</strong>: press <strong>Up, Down, Left, Right</strong> within one second. A <strong>More</strong> group appears; enable <strong>ADB</strong>.",
+        ],
+        [
+          "Sony BRAVIA",
+          "Settings → System → About → press OK on <strong>Build</strong> seven times. Then Settings → System → Developer options → <strong>USB debugging</strong>.",
+        ],
+        [
+          "Stock Android TV / Google TV",
+          "Settings → Device Preferences → About → press <strong>Build</strong> seven times. Then enable <strong>USB debugging</strong> (sometimes “Network debugging”).",
+        ],
+      ],
+    },
+    tabsLabel: "Choose your TV",
+    tabs: ([
+      {
+        id: "sony",
+        label: "Sony BRAVIA",
+        intro:
+          "The fully verified path, including brightness, TV volume and HDMI input status. Replace 192.168.x.x with the TV's IP.",
+        steps: [
+          { title: "Connect", body: "Accept “Allow USB debugging?” on the TV and tick “Always allow”.", cmd: C.connect },
+          {
+            title: "Record the original home, screensaver and accessibility services",
+            body: "You need them if you ever uninstall; save the output somewhere safe.",
+            cmd: C.snapshotBeforeInstall,
+          },
+          { title: "Download and install the standard build", cmd: C.installStandard, note: "Windows PowerShell: use `curl.exe -L -o Tigris.apk …`." },
+          {
+            title: "Make it the home screen and grant permissions",
+            body: "The three grants cover the guard and screensaver, reviving after the system kills the app, and opening the home screen from the background after boot.",
+            cmd: C.setHomeAndGrant,
+          },
+          {
+            title: "Optional: register BRAVIA IP control",
+            body: "Needed for brightness, TV volume and HDMI input status. The TV shows a four-digit PIN after the first command; use it in the second.",
+            cmd: C.braviaRegister,
+            note: "This step uses a shell variable, so it only works in the macOS / Linux terminal.",
+          },
+          {
+            title: "Allow on-device debugging",
+            body: "The first launch asks for on-device debugging, used for standby, power and deep memory cleanup. Tick “Always allow”, then open the Control Center and check the “本机调试未授权” line is gone.",
+          },
+          { title: "Verify", cmd: C.verify, note: "You should see a compact clock, two round controls and the glass dock." },
+        ],
+      },
+      {
+        id: "tcl",
+        label: "TCL / FFalcon",
+        intro:
+          "TCL firmware rejects every adb install and any APK that declares a home screen. Push the guard build through the TV's own T-Cast service instead.",
+        danger:
+          "Some TCL / FFalcon firmware has no usable backlight interface, so the brightness slider hides, and the input row opens TCL's own source picker. That is a firmware limit, not a failed install.",
+        steps: [
+          { title: "Connect", cmd: C.connect },
+          { title: "Record the original home, screensaver and accessibility services", cmd: C.snapshotBeforeInstall },
+          {
+            title: "Push the guard build with T-Cast",
+            body: "The script serves the APK on local port 8765 and connects to the TV on 6553. When “多屏互动：正在发起应用推送” appears on the TV, choose <strong>同意</strong> (Agree) with the remote.",
+            cmd: C.tclPush,
+            note: "Windows: use `curl.exe` and `python`, and allow inbound port 8765 if the firewall asks.",
+          },
+          { title: "Confirm it installed", cmd: C.packagePath },
+          {
+            title: "Grant permissions and enable the home guard",
+            body: "The guard build declares no home screen, so the home guard keeps it in front. TCL blocks third-party autostart by default, so both appops are required.",
+            cmd: C.tclGrants,
+          },
+          {
+            title: "Check the guard is running",
+            cmd: C.tclCheck,
+            note: "The output should list `com.leslie.tvhome/com.leslie.tvhome.HomeGuardService`, and the last line should be `com.leslie.tvhome/.HomeActivity`.",
+          },
+        ],
+      },
+      {
+        id: "xiaomi",
+        label: "Xiaomi / Redmi",
+        intro:
+          "Xiaomi accepts set-home-activity but the Home key can still return to PatchWall. Keep the stock launcher and use the home guard to bring Tigris back.",
+        danger:
+          "<strong>Never disable the stock Xiaomi launcher</strong> (com.mitv.tvhome). The TV then boots to a black screen that only ADB can recover.",
+        steps: [
+          { title: "Connect", cmd: C.connect },
+          { title: "Record the original home, screensaver and accessibility services", cmd: C.snapshotBeforeInstall },
+          { title: "Install the standard build", cmd: C.installStandard, note: "Windows PowerShell: use `curl.exe`." },
+          { title: "Make it the home screen and grant permissions", cmd: C.xiaomiSetup },
+          {
+            title: "Enable the home guard and keep ADB on",
+            body: "keep_adb true makes Tigris switch ADB back on after Xiaomi turns it off on wake; drop it if you do not want that.",
+            cmd: C.xiaomiGuard,
+          },
+          {
+            title: "Check",
+            body: "Press Home: the stock launcher may flash for about half a second, then Tigris returns. If the guard is not running, open Settings → 桌面守护 in Tigris (after the on-device debugging step).",
+          },
+        ],
+      },
+      {
+        id: "stock",
+        label: "Stock Android TV",
+        intro:
+          "The standard path. Tigris becomes the default home screen without modifying the system partition or uninstalling anything.",
+        steps: [
+          {
+            title: "Connect and check the Android version",
+            cmd: C.connect,
+            note: "Then run `adb -s 192.168.x.x:5555 shell getprop ro.build.version.sdk`; it must be at least 28 (Android 9).",
+          },
+          { title: "Record the original home, screensaver and accessibility services", cmd: C.snapshotBeforeInstall },
+          { title: "Install and set as home", cmd: C.stockInstall, note: "Windows PowerShell: use `curl.exe`." },
+          {
+            title: "Grant what only ADB can grant",
+            cmd: `adb -s 192.168.x.x:5555 shell pm grant com.leslie.tvhome android.permission.WRITE_SECURE_SETTINGS
+adb -s 192.168.x.x:5555 shell cmd notification allow_listener com.leslie.tvhome/com.leslie.tvhome.RevivalListener
+adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW allow`,
+          },
+          {
+            title: "If Home still returns to the stock launcher",
+            body: "Enable the home guard first. Only if the TV demonstrably does not depend on the vendor launcher, and only with your consent, disable it as a last resort — and keep the undo command.",
+            cmd: C.disableVendor,
+            note: "Never do this on Xiaomi / Redmi.",
+          },
+        ],
+      },
+    ]),
+    advanced: {
+      title: "Advanced: what those permissions do",
+      body: "The three grants in the commands are not available to ordinary apps. They work locally on the device and transmit nothing.",
+      rows: [
+        { name: "WRITE_SECURE_SETTINGS", use: "Switch the guard back on after the system turns it off, keep the photo frame as screensaver, keep ADB on after Xiaomi wake" },
+        { name: "Notification listener (RevivalListener)", use: "Restart Tigris about half a second after the system kills it and at boot; reads no notification" },
+        { name: "SYSTEM_ALERT_WINDOW", use: "Open the home screen from the background after boot; no overlays or ads" },
+        { name: "TCL APP_AUTO_START / APP_ASSOC_START", use: "TCL only; allows third-party apps to start at boot" },
+      ],
+    },
+    agent: {
+      title: "Let an AI agent do it (recommended)",
+      body: "Send this message with the repository link to an agent that can run commands (Codex, Claude Code and similar). It confirms your brand and IP, installs, verifies and keeps a way back to the stock home screen.",
+      prompt:
+        "Follow https://github.com/lesnolie/Tigris/blob/main/AGENTS.md and install Tigris on my Android TV. First confirm my TV brand and IP address, then install and verify step by step, and keep a documented way to restore the original home screen. Do not disable the system launcher without my confirmation.",
+      note: "The TV shows two or three permission dialogs; choose “Allow” with the remote. On TCL, choose “同意” when the T-Cast push prompt appears.",
+    },
+    safety:
+      "<strong>Never power off or restart the TV remotely without asking.</strong> A TV that is off can only be turned back on with its remote. Nothing in this install disables or uninstalls a system app.",
+  },
+
+  compatibility: {
+    eyebrow: "COMPATIBILITY",
+    title: "What your TV can actually do.",
+    lede: "Tigris tries the brand API first and falls back to standard Android. This is the current boundary, not marketing.",
+    caption: "Android TV 9+ · standard and guard builds behave identically apart from the home declaration",
+    head: ["Feature", "Any Android TV", "On-device debugging", "Sony BRAVIA only"],
+    rows: [
+      { feature: "Home screen, dock, glass, shadows", any: "Yes", debug: "—", sony: "—" },
+      { feature: "Top Shelf (Bilibili / Douyu)", any: "With the matching TV app", debug: "—", sony: "—" },
+      { feature: "Landscape wallpapers, photo frame", any: "Yes", debug: "—", sony: "—" },
+      { feature: "Apple TV aerial screensaver", any: "Yes, needs internet", debug: "—", sony: "—" },
+      { feature: "Control Center, clock", any: "Yes", debug: "—", sony: "—" },
+      { feature: "Memory cleanup", any: "Cache only", debug: "Kills background apps", sony: "—" },
+      { feature: "Remove preinstalled apps", any: "—", debug: "Yes", sony: "—" },
+      { feature: "Standby, power off, restart", any: "—", debug: "Yes", sony: "—" },
+      { feature: "Frame as system screensaver, idle time", any: "—", debug: "Yes", sony: "—" },
+      { feature: "Volume slider", any: "Android standard", debug: "—", sony: "TV volume" },
+      { feature: "HDMI input switching", any: "Most TVs", debug: "—", sony: "Plus input status" },
+      { feature: "Brightness slider", any: "Xiaomi, after ADB grant", debug: "—", sony: "Yes" },
+      { feature: "Home guard, revival after kill", any: "One-time ADB grant", debug: "Yes", sony: "—" },
+    ],
+    notes: [
+      { title: "On-device debugging", body: "Tigris talks to the TV's own 127.0.0.1:5555 to run system commands. The TV asks “Allow debugging?”; tick “Always allow”. The same mechanism works on every brand." },
+      { title: "Sony BRAVIA", body: "After IP-control registration, brightness, volume and inputs use the TV's own API and the input row can show the current source." },
+      { title: "TCL / FFalcon China firmware", body: "No standard input registration, so the input row opens TCL's picker; no usable backlight interface, so the brightness slider hides; needs the guard build." },
+      { title: "Xiaomi / Redmi China firmware", body: "Backlight through picture_backlight and inputs through Xiaomi's player; never disable the stock launcher, use the home guard." },
+      { title: "Other brands", body: "Volume through AudioManager and inputs through TvInputManager. Android has no standard backlight API, so the brightness slider hides." },
+      { title: "Receivers / ARC · eARC", body: "Standard volume may control the TV rather than the receiver; CEC volume behaviour depends on the TV and receiver firmware." },
+    ],
+    scope:
+      "<strong>Verified scope:</strong> fully tested only on a Sony BRAVIA XR-55A80J (Android TV 12). TCL / FFalcon and Xiaomi support is ported from community device notes and has not been verified on every firmware.",
+  },
+
+  faq: {
+    eyebrow: "FAQ",
+    title: "Before you install.",
+    items: [
+      {
+        q: "Does it need root? Will it void my warranty?",
+        a: [
+          "No root and no system partition changes. The standard build only sets itself as the default home screen through ADB and requests a few permissions an ordinary app cannot get.",
+          "Warranty terms are up to the manufacturer. The real risk comes from misusing ADB commands, such as disabling the Xiaomi stock launcher.",
+        ],
+      },
+      {
+        q: "How do I restore the original launcher?",
+        a: [
+          "Everything here runs on your computer, in the same PowerShell or terminal you used to install. Replace the angle-bracket placeholders with the values you recorded in the install step “Record the original home, screensaver and accessibility services”.",
+          "1. Turn the home guard off, so the accessibility service list returns to what it was. 2. Restore the screensaver: if the recorded value was not empty, put it back; if it was empty (no screensaver was set), delete the setting rather than typing a placeholder. 3. Uninstall Tigris. Afterwards press Home once; the stock launcher comes back, so if nothing happens, choose your launcher again in the TV system settings.",
+          "Never disable or uninstall a vendor launcher on Xiaomi / Redmi (com.mitv.tvhome): those TVs boot to a black screen. If you disabled a vendor launcher on another brand earlier, re-enable it with the last command and reboot the TV once.",
+        ],
+        cmds: [
+          { text: cmds.uninstall },
+          { text: cmds.restoreScreensaver },
+          { text: cmds.uninstallPackage },
+          { text: cmds.reenableVendor },
+        ],
+      },
+      {
+        q: "Why must I not disable the Xiaomi stock launcher?",
+        a: [
+          "PatchWall (com.mitv.tvhome) is enforced by a system whitelist, and the fallback home also refuses third-party launchers, so disabling it leaves a black screen.",
+          "Tigris uses a home guard instead: when the stock launcher comes to the front, Tigris returns within about half a second. No system app is disabled or removed.",
+        ],
+      },
+      {
+        q: "TCL says INSTALL_FAILED_VERIFICATION_FAILURE",
+        a: [
+          "TCL's verifier rejects every adb install. Use Tigris-guard.apk and push it through the TV's own T-Cast (多屏互动) service; the commands are in the TCL tab above.",
+          "If the script cannot reach port 6553, that model has no T-Cast service. Push the APK to /sdcard/Download/ and install it with a file manager on the TV.",
+        ],
+      },
+      {
+        q: "Why is there no brightness slider?",
+        a: [
+          "Android has no standard backlight API. Sony BRAVIA exposes brightness through its own IP-control API, and Xiaomi China firmware through picture_backlight (needs the ADB grant). On other brands the slider hides instead of showing a control that does nothing.",
+        ],
+      },
+      {
+        q: "Why is the volume wrong with a receiver on ARC / eARC?",
+        a: [
+          "The standard Android volume stream may control the TV rather than the receiver. Sony can use the TV-side volume API instead; CEC behaviour ultimately depends on the TV and receiver firmware.",
+        ],
+      },
+      {
+        q: "ADB keeps saying unauthorized",
+        a: [
+          "The TV has not accepted this computer yet. On the TV, tick “Always allow from this computer” and press Allow. Xiaomi turns ADB off on every wake; Tigris's “keep ADB on” option switches it back on (Xiaomi only).",
+        ],
+      },
+      {
+        q: "Does the home guard read my screen or notifications?",
+        a: [
+          "No. It watches window changes only, to notice when the stock launcher comes forward. The notification listener exists solely so Android can rebind Tigris after it is killed, and it reads nothing.",
+        ],
+      },
+      {
+        q: "How do I update?",
+        a: [
+          "Download the latest APK and install it with adb install -r over the existing app; settings and layout are kept. Every download link points at GitHub releases/latest, never a pinned version.",
+        ],
+      },
+      {
+        q: "Does the site or the app collect data?",
+        a: [
+          "The website is static: no cookies, no third-party analytics, no ad scripts, and system fonts only.",
+          "The app needs the network for wallpapers (Bing, Wallhaven) and Top Shelf content (public Bilibili and Douyu web endpoints); aerial films stream from Apple's servers. There is no account system.",
+        ],
+      },
+      {
+        q: "Is this affiliated with Apple?",
+        a: [
+          "No. Tigris is an independent open-source project, not affiliated with or endorsed by Apple, Sony, Xiaomi, TCL, Bilibili or Douyu. The design language is inspired by tvOS but includes no Apple code, fonts or assets.",
+        ],
+      },
+    ],
+  },
+
+  finalCta: {
+    eyebrow: "GET TIGRIS",
+    title: "Make every TV moment feel new.",
+    body: "Download the APK, enable ADB, and follow the guide or hand it to an agent. Android 9+, no root, reversible.",
+    primary: "Download free",
+    secondary: "View source on GitHub",
+  },
+
+  footer: {
+    blurb:
+      "The third project in an open-source zodiac series: the tiger. A home screen with tvOS-like glass and Apple TV aerials.",
+    cols: [
+      {
+        title: "Product",
+        links: [
+          { href: "#features", label: "Features" },
+          { href: "#aerial", label: "Aerial screensaver" },
+          { href: brand.releases, label: "Releases" },
+          { href: brand.repo, label: "GitHub" },
+        ],
+      },
+      {
+        title: "Install",
+        links: [
+          { href: "#install", label: "Guide" },
+          { href: "#compatibility", label: "Compatibility" },
+          { href: "#faq", label: "FAQ" },
+          { href: brand.agents, label: "AGENTS.md" },
+        ],
+      },
+      {
+        title: "Project",
+        links: [
+          { href: brand.readme, label: "README" },
+          { href: brand.issues, label: "Issues" },
+          { href: brand.license, label: "MIT license" },
+          { href: brand.notices, label: "Third-party notices" },
+        ],
+      },
+    ],
+    legal:
+      "© 2026 Tigris · independent open-source project. Not affiliated with, endorsed by or sponsored by Apple, Sony, Xiaomi, TCL, Bilibili or Douyu. “Apple TV” is a trademark of Apple Inc., named here only to describe the optional aerial screensaver. Third-party artwork, photos and app icons remain the property of their owners. Aerial films stream from Apple's servers; this project ships no video files. Install and use at your own risk.",
+    langLink: { href: "/", label: "中文", lang: "zh-CN" },
+  },
+} satisfies Copy;
