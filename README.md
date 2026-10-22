@@ -115,7 +115,19 @@ Tigris 的做法来自 [Aerial](https://github.com/pengchujin/aerial-tv) 在小�
 
 ### 想兼容其他品牌电视
 
-这三项都在 [`TvControls.kt`](app/src/main/java/com/leslie/tvhome/TvControls.kt) 里：先试索尼接口，不行再用 Android 标准接口。要支持某个品牌自己的接口（比如背光），在这里加一个分支就行。
+这三项都在 [`tv/`](app/src/main/java/com/leslie/tvhome/tv/) 目录里，每个品牌一个适配器：
+
+```
+tv/
+├── TvControls.kt      # 统一调度：选第一个认出这台电视的适配器
+├── AndroidAdapter.kt  # 通用接口 + Android 标准实现，各品牌都继承它
+├── SonyAdapter.kt
+├── TclAdapter.kt
+├── XiaomiAdapter.kt
+└── CoocaaAdapter.kt   # 酷开 / 创维：目前只适配了输入源，还没在真机上测过
+```
+
+要支持一个新品牌，新建 `<品牌>Adapter.kt` 继承 `AndroidAdapter`，只重写这个品牌不一样的部分（比如背光），再加进 `TvControls` 的列表。没重写的功能自动走 Android 标准接口。
 
 不会写代码也没关系。把下面这句话发给 Agent，它会按 [AGENTS.md 的"适配"一节](AGENTS.md#9-adapting-tigris-to-a-tv-that-isnt-fully-supported)，在你的电视上查找可用的接口、改代码、编译、安装并验证：
 

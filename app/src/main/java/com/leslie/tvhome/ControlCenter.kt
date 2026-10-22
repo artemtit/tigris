@@ -23,6 +23,9 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.leslie.tvhome.tv.Input
+import com.leslie.tvhome.tv.Level
+import com.leslie.tvhome.tv.TvControls
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
@@ -156,7 +159,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
     private val volume: Slider
     private val inputModule: GlassButton
     private val networkModule: GlassButton
-    private var inputs: List<Bravia.Input> = emptyList()
+    private var inputs: List<Input> = emptyList()
     private var volumeTarget = "speaker"
     private val status = ctx.text(11f, Color.argb(190, 255, 255, 255))
     private val focusables = ArrayList<View>()
@@ -604,7 +607,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
             set(null)
         }
 
-        fun set(level: Bravia.Level?) {
+        fun set(level: Level?) {
             // An asynchronous read started before a key press must not overwrite its newer target.
             if (ready && (sending || android.os.SystemClock.uptimeMillis() - lastInteraction < 600)) return
             // The panel polls every 2 s; an unchanged reading must not relayout and redraw the panel.
@@ -779,6 +782,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
             val v = tv.volume()
             val list = tv.inputs()
             val cur = tv.currentInput()
+            val summary = tv.inputSummary(list)
             host.post {
                 refreshing = false
                 if (destroyed) return@post
@@ -788,13 +792,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
                 volume.set(v)
                 inputs = list
                 inputModule.sub.visibility = View.VISIBLE
-                inputModule.sub.text = list.firstOrNull { it.uri == cur }?.name
-                    ?: when {
-                        list.isEmpty() -> "无法读取电视的输入源"
-                        list.first().uri.startsWith("tcl-input://") -> "TCL 信号源选择器"
-                        list.first().uri.startsWith("extInput:") -> "当前：主屏幕"
-                        else -> "${list.size} 个 HDMI 输入"  // Android can't tell which one is showing
-                    }
+                inputModule.sub.text = list.firstOrNull { it.uri == cur }?.name ?: summary
             }
         }
     }

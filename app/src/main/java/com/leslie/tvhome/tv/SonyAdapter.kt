@@ -1,5 +1,7 @@
-package com.leslie.tvhome
+package com.leslie.tvhome.tv
 
+import android.content.Context
+import android.os.Build
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
@@ -7,21 +9,55 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
+ * Sony BRAVIA: backlight, volume and HDMI inputs through the TV's own BRAVIA IP-control API.
+ * Each falls back to standard Android when the API doesn't answer (IP control switched off).
+ */
+class SonyAdapter(ctx: Context) : AndroidAdapter(ctx) {
+    private var apiVolume = false
+
+    override fun matches() = Build.MANUFACTURER.equals("Sony", true)
+
+    override fun brightness() = Bravia.brightness()
+
+    override fun setBrightness(v: Int) = Bravia.setBrightness(v)
+
+    override fun volume(): Level? {
+        Bravia.volume()?.let { apiVolume = true; return it }
+        apiVolume = false
+        return super.volume()
+    }
+
+    override fun setVolume(target: String, v: Int) =
+        if (apiVolume) Bravia.setVolume(target, v) else super.setVolume(target, v)
+
+    override fun inputs() = Bravia.inputs().ifEmpty { super.inputs() }
+
+    override fun currentInput() = Bravia.currentInput()
+
+    override fun setInput(i: Input) {
+        if (i.uri.startsWith(URI_PREFIX)) Bravia.setInput(i.uri) else super.setInput(i)
+    }
+
+    /** Sony reports the input being shown, so with Sony's inputs listed and none current, the TV is on the home screen. */
+    override fun inputSummary(list: List<Input>) =
+        if (list.firstOrNull()?.uri?.startsWith(URI_PREFIX) == true) "当前：主屏幕" else super.inputSummary(list)
+
+    private companion object {
+        const val URI_PREFIX = "extInput:"
+    }
+}
+
+/**
  * The TV's own BRAVIA IP-control API on 127.0.0.1:80. Reads work without
  * auth; writes need the "auth" cookie, which a registered client gets back
  * from actRegister without a PIN. ("tvhome:1" was registered once with the
  * PIN shown on screen.)
  */
-object Bravia {
+private object Bravia {
     private const val BASE = "http://127.0.0.1/sony/"
     private const val CLIENT = "tvhome:1"
     private var cookie: String? = null
     private var cookieAt = 0L
-
-    data class Input(val uri: String, val title: String, val label: String, val connected: Boolean) {
-        val name get() = if (label.isNotEmpty()) "$title · $label" else title
-    }
-    data class Level(val value: Int, val min: Int, val max: Int, val target: String = "")
 
     fun volume(): Level? = call("audio", "getVolumeInformation")?.optJSONArray(0)?.let { list ->
         val o = (0 until list.length()).map { list.getJSONObject(it) }

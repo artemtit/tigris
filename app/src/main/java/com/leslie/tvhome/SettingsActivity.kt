@@ -15,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import com.leslie.tvhome.tv.TvControls
 
 /**
  * tvOS-style settings: the title centred on top, a large icon on the left with a

@@ -16,6 +16,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.util.LruCache
 import androidx.palette.graphics.Palette
+import com.leslie.tvhome.tv.Input
 import java.text.Collator
 import java.util.Locale
 
@@ -25,7 +26,7 @@ data class AppEntry(
     val component: ComponentName,
     val leanback: Boolean,
     /** Set for a TV input pinned to the grid; then [pkg] is its [InputTile.key]. */
-    val input: Bravia.Input? = null,
+    val input: Input? = null,
 )
 
 /** A TV input (HDMI) pinned to the home grid from the Control Center's input list. */
@@ -33,15 +34,15 @@ object InputTile {
     private const val PREFIX = "input:"
     private const val SEP = "\u001f"
 
-    fun key(i: Bravia.Input) = PREFIX + i.uri
+    fun key(i: Input) = PREFIX + i.uri
     fun isInput(pkg: String) = pkg.startsWith(PREFIX)
 
     /** How it is kept in [Prefs.pinnedInputs]. */
-    fun encode(i: Bravia.Input) = listOf(i.uri, i.title, i.label).joinToString(SEP)
+    fun encode(i: Input) = listOf(i.uri, i.title, i.label).joinToString(SEP)
 
-    fun decode(s: String): Bravia.Input? {
+    fun decode(s: String): Input? {
         val p = s.split(SEP)
-        return if (p.size == 3) Bravia.Input(p[0], p[1], p[2], false) else null
+        return if (p.size == 3) Input(p[0], p[1], p[2], false) else null
     }
 }
 
@@ -215,7 +216,7 @@ class AppRepo(private val ctx: Context) {
     }
 
     /** An input tile: a dark glass card with the input glyph and its name, like tvOS's own inputs. */
-    private fun drawInputTile(c: Canvas, i: Bravia.Input) {
+    private fun drawInputTile(c: Canvas, i: Input) {
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
         p.shader = android.graphics.LinearGradient(0f, 0f, TILE_W.toFloat(), TILE_H.toFloat(),
             Color.rgb(58, 64, 82), Color.rgb(22, 24, 32), android.graphics.Shader.TileMode.CLAMP)

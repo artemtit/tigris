@@ -20,6 +20,8 @@ import android.service.notification.NotificationListenerService
 import android.util.Log
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
+import com.leslie.tvhome.tv.TclAdapter
+import com.leslie.tvhome.tv.XiaomiAdapter
 
 /**
  * Keeping Tigris the home screen on firmwares that pin Home to their own launcher, without
@@ -60,9 +62,9 @@ object Guard {
     private fun service(ctx: Context) = ComponentName(ctx, HomeGuardService::class.java).flattenToString()
 
     /** Xiaomi switches ADB off on every wake, so "keep ADB on" is offered there only. */
-    fun isXiaomi() = Build.MANUFACTURER.equals("Xiaomi", true) || Build.BRAND.equals("Xiaomi", true) || Build.BRAND.equals("Redmi", true)
+    fun isXiaomi() = XiaomiAdapter.isXiaomi()
 
-    private fun isTcl() = Build.MANUFACTURER.equals("TCL", true) || Build.BRAND.equals("FFALCON", true)
+    private fun isTcl() = TclAdapter.isTcl()
 
     /**
      * Whether this TV needs the guard: Xiaomi and TCL (Xiaomi reports Tigris as the default home

@@ -36,6 +36,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.leslie.tvhome.tv.Input
+import com.leslie.tvhome.tv.TvControls
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -613,14 +615,14 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     }
 
     /** Pins a TV input to the grid, or takes it off. */
-    fun pinInput(i: Bravia.Input, on: Boolean) {
+    fun pinInput(i: Input, on: Boolean) {
         val enc = InputTile.encode(i)
         prefs.pinnedInputs = prefs.pinnedInputs.filter { InputTile.decode(it)?.uri != i.uri }.toSet() + if (on) setOf(enc) else emptySet()
         if (on) prefs.hidden = prefs.hidden - InputTile.key(i)
         reload()
     }
 
-    fun isPinned(i: Bravia.Input) = prefs.pinnedInputs.any { InputTile.decode(it)?.uri == i.uri }
+    fun isPinned(i: Input) = prefs.pinnedInputs.any { InputTile.decode(it)?.uri == i.uri }
 
     private fun reload(changed: String? = null) {
         io.execute {

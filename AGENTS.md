@@ -195,10 +195,24 @@ Do this only when the user asks for it, or agrees after you report what doesn't 
 - The volume slider moves but the sound doesn't change, for example when audio goes to an amplifier over ARC.
 - The input row says "无法读取电视的输入源", or picking an HDMI input does nothing.
 
-All three live in [`TvControls.kt`](app/src/main/java/com/leslie/tvhome/TvControls.kt). It tries Sony's API first, then standard Android. A new brand is one more branch there, usually gated on `Build.MANUFACTURER`. Don't change the Sony or standard paths. Two brands already have a branch:
+All three live in the [`tv/`](app/src/main/java/com/leslie/tvhome/tv/) package, one adapter per brand:
 
-- TCL / FFalcon China firmware (the `Tcl` object): inputs open LiveTV's own source picker, settings open `com.tcl.settings`, and brightness stays hidden.
-- Xiaomi China firmware (the `Xiaomi` object): backlight through `Settings.Global picture_backlight` (needs the `WRITE_SECURE_SETTINGS` grant), inputs through Xiaomi's player (`EXTSRC_PLAY`), settings and Wi-Fi through `com.xiaomi.mitv.settings`.
+```
+tv/
+├── TvControls.kt      # picks the first adapter whose matches() is true
+├── AndroidAdapter.kt  # the TvAdapter interface + standard Android, which every brand extends
+├── SonyAdapter.kt     # BRAVIA IP-control API on 127.0.0.1
+├── XiaomiAdapter.kt
+├── TclAdapter.kt
+└── CoocaaAdapter.kt   # Skyworth / Coocaa: inputs only, untested on a real TV
+```
+
+A new brand is a new `<Brand>Adapter.kt` that extends `AndroidAdapter`, overrides `matches()` (usually `Build.MANUFACTURER` / `Build.BRAND`) and only what the firmware does differently, and is listed in `TvControls.brands`. Don't change other brands' adapters or `AndroidAdapter`'s behavior. What the existing ones do:
+
+- Sony (`SonyAdapter`): backlight, volume and inputs through the BRAVIA API; each falls back to standard Android when the API doesn't answer.
+- TCL / FFalcon China firmware (`TclAdapter`): inputs open LiveTV's own source picker, settings open `com.tcl.settings`, and brightness stays hidden.
+- Xiaomi China firmware (`XiaomiAdapter`): backlight through `Settings.Global picture_backlight` (needs the `WRITE_SECURE_SETTINGS` grant), inputs through Xiaomi's player (`EXTSRC_PLAY`), settings and Wi-Fi through `com.xiaomi.mitv.settings`.
+- Skyworth / Coocaa (`CoocaaAdapter`): inputs open the launcher's source picker (`SourceDialogActivity`) when no standard inputs exist; not yet tested on a real TV, and brightness and settings are still standard Android.
 
 ### 9.1 Set up a build
 
@@ -217,7 +231,7 @@ Work from adb. Before you write anything, note each value you read; restore the 
 
 ### 9.3 Implement and verify
 
-- Add the branch to `TvControls.kt`. `brightness()` returning a non-null `Bravia.Level(value, min, max)` makes the slider appear; `setBrightness` is then called with values in that range. All of these run on a background thread, so blocking I/O is fine.
+- Write the brand's adapter in `tv/` and list it in `TvControls.brands`. `brightness()` returning a non-null `Level(value, min, max)` makes the slider appear; `setBrightness` is then called with values in that range. All of these except the two intents run on a background thread, so blocking I/O is fine. Pinned input tiles call `setInput` with uris saved earlier, so keep a brand's uri format stable.
 - Writing settings: secure and global settings can be written directly once `WRITE_SECURE_SETTINGS` is granted (step 4; check with `Guard.hasSecureSettings`). For the system table, grant `WRITE_SETTINGS` with `adb shell appops set com.leslie.tvhome WRITE_SETTINGS allow`, or run the command through the app's own local adb, `LocalAdb.shell(ctx, "settings put …")` in `Cleaner.kt`, which works once the user has allowed local debugging.
 - Build, install, open the Control Center (Back on the home screen), and `screencap`. Move to the slider with D-pad keys, checking the focused element first (step 6). Then read the value back the same way as in 9.2 to confirm the change.
 
