@@ -323,7 +323,8 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
       { title: "Sony BRAVIA", body: "After IP-control registration, brightness, volume and inputs use the TV's own API and the input row can show the current source." },
       { title: "TCL / FFalcon China firmware", body: "No standard input registration, so the input row opens TCL's picker; no usable backlight interface, so the brightness slider hides; needs the guard build." },
       { title: "Xiaomi / Redmi China firmware", body: "Backlight through picture_backlight and inputs through Xiaomi's player; never disable the stock launcher, use the home guard." },
-      { title: "Other brands", body: "Volume through AudioManager and inputs through TvInputManager. Android has no standard backlight API, so the brightness slider hides." },
+      { title: "Coocaa / Skyworth", body: "When no standard inputs are registered, the input row opens the Coocaa launcher's own source picker; brightness and settings stay on standard Android. Not yet verified on a real TV." },
+      { title: "Other brands", body: "Volume through AudioManager and inputs through TvInputManager. Android has no standard backlight API, so the brightness slider hides. Each brand is one adapter file in tv/; pull requests for your TV are welcome." },
       { title: "Receivers / ARC · eARC", body: "Standard volume may control the TV rather than the receiver; CEC volume behaviour depends on the TV and receiver firmware." },
     ],
     scope:

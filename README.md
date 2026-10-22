@@ -6,9 +6,15 @@
 
 **已在索尼 BRAVIA XR-55A80J（Android TV 12）上完整验证。** 其他品牌的电视，交给 AI Agent 按 [AGENTS.md](AGENTS.md) 安装和适配，见下文。
 
-![主屏幕](docs/screenshots/home.jpg)
+官网：**[tigris-tv.pages.dev](https://tigris-tv.pages.dev)**
+
+[![Tigris 宣传片](docs/screenshots/film.jpg)](https://tigris-tv.pages.dev/#film)
+
+▶ [观看 42 秒宣传片](https://tigris-tv.pages.dev/#film)（在官网播放，有声音）
 
 ## 效果图
+
+![主屏幕](docs/screenshots/home.jpg)
 
 | 顶部内容（Top Shelf） | 展开全部 App |
 |---|---|

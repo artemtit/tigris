@@ -385,8 +385,12 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
           body: "背光走 picture_backlight，输入源走小米播放器；不要停用自带桌面，用桌面守护。",
         },
         {
+          title: "酷开 / 创维",
+          body: "没有标准输入源时，输入源会打开酷开桌面自己的信号源选择器；亮度和设置仍走 Android 标准接口。尚未实机验证。",
+        },
+        {
           title: "其他品牌",
-          body: "音量用 AudioManager，输入源用 TvInputManager。Android 没有标准背光接口，亮度滑条会隐藏。",
+          body: "音量用 AudioManager，输入源用 TvInputManager。Android 没有标准背光接口，亮度滑条会隐藏。每个品牌是 tv/ 目录里的一个适配器文件，欢迎提交你电视的适配。",
         },
         {
           title: "功放 / ARC · eARC",
