@@ -49,7 +49,7 @@ export const clips = {
   settings: { src: "/video/settings.mp4", poster: "/img/settings-poster.webp" },
   cc: { src: "/video/cc.mp4", poster: "/img/cc-poster.webp" },
   /* The promo film: motion graphics around the same recordings, with sound; plays only when asked. */
-  trailer: { src: "/video/trailer.mp4", poster: "/img/trailer-poster.webp" },
+  trailer: { src: "/video/tigris-ad.mp4", poster: "/img/tigris-ad-poster.webp" },
 } as const;
 
 export const assets = {

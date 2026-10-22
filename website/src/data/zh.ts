@@ -109,8 +109,8 @@ export const zh = {
 
     film: {
       eyebrow: "FILM",
-      title: "40 秒，看懂 Tigris。",
-      lede: "小老虎带你逛一遍：开机动画、tvOS 式聚焦、全部 App、控制中心和设置。画面全部是电视实录。",
+      title: "42 秒，认识 Tigris。",
+      lede: "看看 Tigris 如何让你的电视桌面焕然一新。点击播放，开启声音。",
       label: "播放 Tigris 介绍片（有声音）",
     },
     gallery: {

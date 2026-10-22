@@ -15,7 +15,7 @@ const f = Astro.props.copy.film;
       <h2>{f.title}</h2>
       <p class="lede">{f.lede}</p>
     </div>
-    <div class="film reveal">
+    <figure class="film reveal">
       <video
         src={clips.trailer.src}
         poster={clips.trailer.poster}
@@ -25,7 +25,13 @@ const f = Astro.props.copy.film;
         playsinline
         preload="none"
         aria-label={f.label}
+        aria-describedby="film-music-credit"
       ></video>
-    </div>
+      <figcaption id="film-music-credit" class="film-credit">
+        Music by <a href="https://www.bensound.com/royalty-free-music">Bensound.com/royalty-free-music</a><br />
+        Artist: Marcus P.<br />
+        License code: 55KIM7QUNXBISK9H
+      </figcaption>
+    </figure>
   </div>
 </section>

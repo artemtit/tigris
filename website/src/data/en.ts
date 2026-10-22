@@ -108,8 +108,8 @@ export const en = {
 
   film: {
     eyebrow: "FILM",
-    title: "Tigris in 40 seconds.",
-    lede: "A tiger cub walks you through the boot animation, tvOS-style focus, all apps, Control Center and settings. Every screen is recorded on a real TV.",
+    title: "Tigris in 42 seconds.",
+    lede: "See how Tigris gives your TV home screen a fresh start. Press play with sound on.",
     label: "Play the Tigris film (with sound)",
   },
   gallery: {

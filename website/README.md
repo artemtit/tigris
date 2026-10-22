@@ -59,6 +59,11 @@ public/404.html         static 404 served by Cloudflare Pages
 
 ## Content rules (do not regress)
 
+- **Promo film**: `public/video/tigris-ad.mp4` is the unchanged
+  `promo/tigris-ad.mp4` supplied by the owner. Its visible description in
+  `Film.astro` must retain all three Bensound attribution lines in both locales.
+  License `55KIM7QUNXBISK9H` covers this video only; do not reuse it for another video.
+
 - **Screenshots** come from `TVHome/docs/screenshots/{home,grid,shelf,cc,frame}.jpg`
   and are converted by `scripts/build-assets.py`. Never substitute a generated
   image for a capture.
