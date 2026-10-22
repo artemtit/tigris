@@ -48,6 +48,8 @@ export const clips = {
   intro: { src: "/video/intro.mp4", poster: "/img/intro-poster.webp" },
   settings: { src: "/video/settings.mp4", poster: "/img/settings-poster.webp" },
   cc: { src: "/video/cc.mp4", poster: "/img/cc-poster.webp" },
+  /* The promo film: motion graphics around the same recordings, with sound; plays only when asked. */
+  trailer: { src: "/video/trailer.mp4", poster: "/img/trailer-poster.webp" },
 } as const;
 
 export const assets = {

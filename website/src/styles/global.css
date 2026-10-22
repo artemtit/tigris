@@ -2428,3 +2428,60 @@ details.advanced .table-wrap {
     color: #111;
   }
 }
+
+/* ---------- film ---------- */
+.film {
+  max-width: 1080px;
+  margin: 0 auto;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.film video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+/* ---------- hero recording pause button ---------- */
+.clip-toggle {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(20, 22, 28, 0.55);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.2s ease;
+}
+
+.clip-toggle:hover,
+.clip-toggle:focus-visible {
+  opacity: 1;
+}
+
+.clip-toggle svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.clip-toggle .i-play,
+.clip-toggle[aria-pressed="true"] .i-pause {
+  display: none;
+}
+
+.clip-toggle[aria-pressed="true"] .i-play {
+  display: inline;
+}

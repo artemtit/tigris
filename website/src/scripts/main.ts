@@ -349,22 +349,37 @@
     });
   }
 
-  /* ---------- recordings: play while on screen, never with reduced motion ---------- */
+  /* ---------- recordings: muted, play only while on screen; the hero button pauses them all ----------
+     They are the product itself, so they also play with reduced motion (often just Windows with
+     animation effects off); the button is the way to stop them. */
   const clipEls = Array.from(doc.querySelectorAll<HTMLVideoElement>("video[data-clip]"));
-  if (clipEls.length && "IntersectionObserver" in window &&
-      !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const clipToggle = doc.querySelector<HTMLButtonElement>("[data-clip-toggle]");
+  let clipsPaused = false;
+  const onScreen = new Set<HTMLVideoElement>();
+  if (clipEls.length && "IntersectionObserver" in window) {
     const watch = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           const v = entry.target as HTMLVideoElement;
-          if (entry.intersectionRatio >= 0.2) v.play().catch(() => {});
-          else v.pause();
+          if (entry.intersectionRatio >= 0.2) {
+            onScreen.add(v);
+            if (!clipsPaused) v.play().catch(() => {});
+          } else {
+            onScreen.delete(v);
+            v.pause();
+          }
         });
       },
       { threshold: [0, 0.2] },
     );
     clipEls.forEach((v) => watch.observe(v));
   }
+  clipToggle?.addEventListener("click", () => {
+    clipsPaused = !clipsPaused;
+    clipToggle.setAttribute("aria-pressed", String(clipsPaused));
+    clipToggle.setAttribute("aria-label", (clipsPaused ? clipToggle.dataset.labelPlay : clipToggle.dataset.labelPause) || "");
+    clipEls.forEach((v) => (clipsPaused ? v.pause() : onScreen.has(v) && v.play().catch(() => {})));
+  });
 
   /* ---------- reveal on scroll ---------- */
   const items = Array.from(doc.querySelectorAll<HTMLElement>(".reveal"));

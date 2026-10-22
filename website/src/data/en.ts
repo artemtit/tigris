@@ -59,7 +59,7 @@ export const en = {
       "Tigris home screen on a Sony BRAVIA TV: a landscape photo with a glass dock of app tiles.",
     floating: [
       { title: "Liquid Glass", sub: "Sunken glass dock" },
-      { title: "Aerial", sub: "Apple TV films" },
+      { title: "Aerial screensaver", sub: "The Apple TV aerial films" },
     ],
   },
 
@@ -106,6 +106,12 @@ export const en = {
     lede: "Bigger focus, fewer layers, quieter glass — laid out again for the room instead of scaled up from a handset.",
   },
 
+  film: {
+    eyebrow: "FILM",
+    title: "Tigris in 40 seconds.",
+    lede: "A tiger cub walks you through the boot animation, tvOS-style focus, all apps, Control Center and settings. Every screen is recorded on a real TV.",
+    label: "Play the Tigris film (with sound)",
+  },
   gallery: {
     eyebrow: "SCREENSHOTS",
     title: "Every image comes from a real TV.",

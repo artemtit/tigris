@@ -60,7 +60,7 @@ export const zh = {
         "Tigris 主屏幕实拍：风景壁纸上是液态玻璃 Dock，排列着云视听小电视、云视听极光、芒果 TV 与斗鱼等应用图标。",
       floating: [
         { title: "Liquid Glass", sub: "沉底玻璃 Dock" },
-        { title: "Aerial", sub: "航拍视频屏保" },
+        { title: "航拍屏保", sub: "Apple TV 同款航拍视频" },
       ],
     },
 
@@ -107,6 +107,12 @@ export const zh = {
       lede: "不是把手机界面放大，而是为客厅重新排版：更大的焦点、更少的层级、更安静的玻璃。",
     },
 
+    film: {
+      eyebrow: "FILM",
+      title: "40 秒，看懂 Tigris。",
+      lede: "小老虎带你逛一遍：开机动画、tvOS 式聚焦、全部 App、控制中心和设置。画面全部是电视实录。",
+      label: "播放 Tigris 介绍片（有声音）",
+    },
     gallery: {
       eyebrow: "SCREENSHOTS",
       title: "全部来自一台真实的电视。",

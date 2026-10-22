@@ -6,6 +6,7 @@ import Aerial from "../components/Aerial.astro";
 import Features from "../components/Features.astro";
 import Compare from "../components/Compare.astro";
 import Gallery from "../components/Gallery.astro";
+import Film from "../components/Film.astro";
 import Install from "../components/Install.astro";
 import Compatibility from "../components/Compatibility.astro";
 import Faq from "../components/Faq.astro";
@@ -19,6 +20,7 @@ const copy = getCopy(locale);
   <Header copy={copy} locale={locale} />
   <main id="main">
     <Hero copy={copy} locale={locale} />
+    <Film copy={copy} />
     <Aerial copy={copy} locale={locale} />
     <Features copy={copy} locale={locale} />
     <Compare copy={copy} locale={locale} />

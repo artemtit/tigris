@@ -65,7 +65,7 @@ public/404.html         static 404 served by Cloudflare Pages
 - **Recordings** in `public/video/` (home, intro, settings, cc) are `adb shell screenrecord`
   clips from the same TV, re-encoded to 1280x720 H.264 without sound; each poster in
   `public/img/*-poster.webp` is a frame of its clip. They play only while on screen and
-  not at all with reduced motion. The boot animation shown is the Tigris wordmark, never a
+  also with reduced motion (the hero button pauses them all). The boot animation shown is the Tigris wordmark, never a
   trademarked video.
 - **The "before" pane** of the comparison is an SVG illustration and is labelled
   「安装前示意图（非同一设备实拍）」 / "illustration, not the same TV" in the UI.

@@ -17,6 +17,8 @@ export interface UiStrings {
   next: string;
   close: string;
   viewer: string;
+  pauseClips: string;
+  playClips: string;
 }
 
 export const uiStrings: Record<Locale, UiStrings> = {
@@ -34,6 +36,8 @@ export const uiStrings: Record<Locale, UiStrings> = {
     next: "下一张",
     close: "关闭",
     viewer: "截图查看器",
+    pauseClips: "暂停录屏",
+    playClips: "播放录屏",
   },
   en: {
     skip: "Skip to content",
@@ -49,5 +53,7 @@ export const uiStrings: Record<Locale, UiStrings> = {
     next: "Next",
     close: "Close",
     viewer: "Screenshot viewer",
+    pauseClips: "Pause recordings",
+    playClips: "Play recordings",
   },
 };

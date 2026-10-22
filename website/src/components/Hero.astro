@@ -1,5 +1,6 @@
 ---
 import { brand, clips, shots } from "../data/site";
+import { uiStrings } from "../data/strings";
 import type { Copy, Locale } from "../data/lang";
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 
 const { copy, locale } = Astro.props;
 const hero = copy.hero;
+const t = uiStrings[locale];
 ---
 <section class="hero">
   <div class="hero-aurora" aria-hidden="true">
@@ -57,6 +59,10 @@ const hero = copy.hero;
             preload="metadata"
             aria-label={hero.imageAlt}
           ></video>
+          <button class="clip-toggle" type="button" data-clip-toggle aria-pressed="false"
+            aria-label={t.pauseClips} data-label-pause={t.pauseClips} data-label-play={t.playClips}>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><rect class="i-pause" x="4" y="3" width="3" height="10" rx="1"/><rect class="i-pause" x="9" y="3" width="3" height="10" rx="1"/><path class="i-play" d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg>
+          </button>
         </div>
       </div>
       <div class="float-chip chip-shelf" aria-hidden="true">
