@@ -1,0 +1,108 @@
+name: Tigris v2.0.3 preview release
+
+on:
+  push:
+    branches:
+      - release/v2.0.3-preview
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tigris-v2-0-3-preview
+  cancel-in-progress: false
+
+jobs:
+  release-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify preview branch and expected source
+        run: |
+          test "$GITHUB_REF_NAME" = "release/v2.0.3-preview"
+          grep -Fq 'versionCode = 9' app/build.gradle.kts
+          grep -Fq 'versionName = "2.0.3"' app/build.gradle.kts
+          test -f docs/releases/v2.0.3-preview.md
+          if gh release view v2.0.3 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "v2.0.3 release exists; refusing to overwrite, retag, or re-upload."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK API 36
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager -print -quit)"
+          test -n "$SDKMANAGER"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Test, build two release APKs, and Android lint
+        run: |
+          bash ./gradlew --no-daemon \
+            :app:testStandardDebugUnitTest \
+            :app:testGuardDebugUnitTest \
+            :app:assembleStandardRelease \
+            :app:assembleGuardRelease \
+            :app:lintStandardRelease --stacktrace
+
+      - name: Verify APK metadata and package IDs
+        run: |
+          set -euo pipefail
+          AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          test -x "$AAPT"
+          mkdir -p dist
+          cp app/build/outputs/apk/standard/release/app-standard-release.apk dist/Tigris.apk
+          cp app/build/outputs/apk/guard/release/app-guard-release.apk dist/Tigris-guard.apk
+          for apk in dist/Tigris.apk dist/Tigris-guard.apk; do
+            dump="$("$AAPT" dump badging "$apk" | head -n 1)"
+            echo "$apk: $dump"
+            [[ "$dump" == *"name='com.leslie.tvhome'"* ]]
+            [[ "$dump" == *"versionCode='9'"* ]]
+            [[ "$dump" == *"versionName='2.0.3'"* ]]
+            "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" | grep -E '(Signer #1 certificate SHA-256 digest|Verifies)' || true
+          done
+          (cd dist && sha256sum Tigris.apk Tigris-guard.apk > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
+
+      - name: Upload preview build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tigris-v2.0.3-preview
+          path: |
+            dist/Tigris.apk
+            dist/Tigris-guard.apk
+            dist/SHA256SUMS.txt
+            app/build/test-results/
+            app/build/reports/tests/
+            app/build/reports/lint-results-*
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish PRE-RELEASE only after all checks succeed
+        run: |
+          set -euo pipefail
+          if gh release view v2.0.3 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release v2.0.3 already exists. Not modifying it."
+            exit 1
+          fi
+          gh release create v2.0.3 \
+            dist/Tigris.apk \
+            dist/Tigris-guard.apk \
+            dist/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Tigris v2.0.3 — Preview (TV testing)" \
+            --notes-file docs/releases/v2.0.3-preview.md \
+            --prerelease \
+            --verify-tag=false
+        env:
+          GH_TOKEN: ${{ github.token }}
