@@ -10,17 +10,17 @@
 - **Apple Root CA** (`app/src/main/res/raw/apple_root_ca.pem`) — Apple's public root certificate, trusted only for `sylvan.apple.com`, which serves the aerial films.
 
 
-## Presentation assets
+## 2.0.4 bundled presentation assets
 
-From 2.0.5, the default startup animation uses the Tigris wordmark. No Apple
-startup video is bundled or served as a website preview. User-uploaded videos
+The project owner supplied `app/src/main/res/raw/default_intro.mp4` (Apple TV
+startup animation, 1080p) and `app/src/main/res/drawable-nodpi/default_settings_bg.png`
+(Apple-branded settings artwork) for bundling. Apple names and logos remain
+their owners' trademarks; these files are not covered by Tigris's source-code
+license. Tigris is independent and not endorsed by Apple. User-uploaded videos
 remain the responsibility of their uploader and retain their original rights.
-Version 2.0.4 previously bundled an owner-supplied Apple startup clip.
 
-The owner supplied `app/src/main/res/drawable-nodpi/default_settings_bg.png`.
-This Apple-branded settings artwork is not covered by Tigris's code license.
-Apple names and logos remain their owners' trademarks. Tigris is independent
-and not endorsed by Apple.
+The website does not serve the bundled startup clip as a preview. Its startup
+preview is an original Tigris wordmark illustration.
 
 The website comparison animates an owner-supplied screenshot of a Chinese-market
 TV launcher. It is not an interaction recording or a same-device before/after
