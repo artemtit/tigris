@@ -46,7 +46,7 @@ const dl = locale === "zh" ? "下载" : "Download";
 
     <InstallQuick locale={locale} />
     <details class="manual-install"><summary>{locale === "zh" ? "手动安装 · 按电视品牌查看步骤" : "Manual installation · choose your TV brand"}</summary>
-    <div class="table-wrap brand-table reveal">
+    <div class="table-wrap brand-table">
       <table>
         <caption>{s.adbTable.caption}</caption>
         <thead>
@@ -63,10 +63,10 @@ const dl = locale === "zh" ? "下载" : "Download";
       </table>
     </div>
 
-    <p class="windows-note reveal">{s.shellNote}</p>
+    <p class="windows-note">{s.shellNote}</p>
 
     {/* One switch for every snippet on the page; the choice is remembered. */}
-    <div class="shell-switch reveal" data-shell-switch aria-label={s.shellLabels.posix + " / " + s.shellLabels.powershell}>
+    <div class="shell-switch" data-shell-switch aria-label={s.shellLabels.posix + " / " + s.shellLabels.powershell}>
       {(["powershell", "posix"] as const).map((shell, i) => (
         <button
           type="button"
@@ -78,7 +78,20 @@ const dl = locale === "zh" ? "下载" : "Download";
       <p class="shell-switch-note">{s.placeholderNote}</p>
     </div>
 
-    <div class="tabs reveal" data-tabs>
+    <div class="shell-guide" data-shell-panel="powershell">
+      <h3>{locale === "zh" ? "Windows：打开 PowerShell" : "Windows: open PowerShell"}</h3>
+      <p>{locale === "zh" ? "在开始菜单搜索 PowerShell 并打开。先安装 Android SDK Platform-Tools，并把 adb 加入 PATH；TCL 推送还需要 Python 3。运行下面的检查，再选择电视品牌。" : "Open PowerShell from Start. Install Android SDK Platform-Tools and add adb to PATH; TCL push also requires Python 3. Check the tools, then choose your TV brand."}</p>
+      <div class="code"><pre><code>{"adb version\ncurl.exe --version"}</code></pre></div>
+      <p>{locale === "zh" ? "TCL / 雷鸟还需运行 python --version，确认是 Python 3。" : "For TCL, also run python --version and confirm Python 3."}</p>
+    </div>
+    <div class="shell-guide" data-shell-panel="posix" hidden>
+      <h3>{locale === "zh" ? "macOS / Linux：打开终端" : "macOS / Linux: open Terminal"}</h3>
+      <p>{locale === "zh" ? "先安装 Android SDK Platform-Tools（提供 adb）。TCL 推送还需要 Python 3。运行下面的检查，再按电视品牌逐条执行；不要把这些命令粘贴到 Windows PowerShell。" : "Install Android SDK Platform-Tools for adb. TCL push also requires Python 3. Check the tools, then follow your TV's steps in Terminal."}</p>
+      <div class="code"><pre><code>{"adb version\ncurl --version"}</code></pre></div>
+      <p>{locale === "zh" ? "TCL / 雷鸟还需运行 python3 --version。" : "For TCL, also run python3 --version."}</p>
+    </div>
+    <h3 class="manual-brand-heading">{locale === "zh" ? "选择电视品牌，按顺序执行" : "Choose your TV and follow each step"}</h3>
+    <div class="tabs" data-tabs>
       <div class="tablist" role="tablist" aria-label={s.tabsLabel}>
         {s.tabs.map((tab, i) => (
           <button

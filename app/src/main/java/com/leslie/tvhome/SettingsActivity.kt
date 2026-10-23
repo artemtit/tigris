@@ -236,7 +236,7 @@ class SettingsActivity : Activity() {
         section("开机动画")
         val video = Intro.videoFile(this) != null
         row("开机动画", "开机后第一次显示主屏幕时播放，最后标志放大进入桌面。按任意键可以跳过。" +
-            if (video) "" else "\n默认播放内置开机视频，也可上传自己的视频。", {
+            if (video) "" else "\n默认播放 Tigris 字样动画，也可上传有权使用的视频。", {
             when (prefs.intro) { Prefs.INTRO_BOOT -> "开机时"; Prefs.INTRO_WAKE -> "开机和唤醒时"; else -> "关" }
         }) {
             val opts = listOf(Prefs.INTRO_OFF, Prefs.INTRO_BOOT, Prefs.INTRO_WAKE)
@@ -244,9 +244,9 @@ class SettingsActivity : Activity() {
             // This boot counts as played: turning it on doesn't start it on the next return home.
             prefs.introBoot = Intro.bootStamp(this)
         }
-        row("动画内容", "上传的视频：比如 Apple TV 的开机动画，结尾的标志放大进入桌面。Tigris 字样：Tigris 字样淡入后放大。" +
-            if (video) "" else "\n没有上传视频时，视频模式使用内置动画。", {
-            if (prefs.introSource == Prefs.INTRO_WORDMARK) "Tigris 字样" else if (video) "上传的视频" else "内置视频"
+        row("动画内容", "自定义视频：请仅上传有权使用的素材，版权归原权利人。Tigris 字样：Tigris 字样淡入后放大。" +
+            if (video) "" else "\n没有上传视频时，使用 Tigris 字样动画。", {
+            if (prefs.introSource == Prefs.INTRO_WORDMARK) "Tigris 字样" else if (video) "上传的视频" else "Tigris 字样"
         }) {
             prefs.introSource = if (prefs.introSource == Prefs.INTRO_WORDMARK) Prefs.INTRO_VIDEO else Prefs.INTRO_WORDMARK
         }

@@ -196,6 +196,9 @@
 
   const applyShell = (shell: "posix" | "powershell") => {
     currentShell = shell;
+    doc.querySelectorAll<HTMLElement>("[data-shell-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.shellPanel !== shell;
+    });
     doc.querySelectorAll<HTMLElement>("[data-cmd]").forEach((code) => {
       try {
         const parsed = JSON.parse(code.dataset.cmd || "{}") as Record<string, string>;

@@ -24,7 +24,7 @@ export const zh = {
     copy: "复制",
     copied: "已复制",
     copyFailed: "复制失败",
-    compareLabel: "对比小米 PatchWall 官方图与 Tigris 电视实录",
+    compareLabel: "对比国产电视桌面截图与 Tigris 电视实录",
     compareValue: (p: number) => `显示 ${p}% 的安装前画面`,
     slideshow: { prev: "上一张", next: "下一张" },
     lightbox: { close: "关闭", prev: "上一张", next: "下一张", name: "截图查看器" },
@@ -73,15 +73,15 @@ export const zh = {
     compare: {
       eyebrow: "BEFORE / AFTER",
       title: "左右滑动，看见改变。",
-      lede: "左边是小米官方展示的 <strong>PatchWall 桌面</strong>，右边是 Tigris 的<strong>电视实录</strong>。拖动分界线，看看两种桌面的不同。",
+      lede: "左边是用户提供的<strong>国产电视桌面截图</strong>，右边是 Tigris 的<strong>电视实录</strong>。拖动分界线，看看两种桌面的不同。",
       beforeLabel: "安装前",
-      beforeSub: "小米官方图 · 动态展示",
+      beforeSub: "国产电视 · 截图动态展示",
       afterLabel: "安装后",
       afterSub: "Tigris · 电视实录",
-      beforeAlt: "小米官方 PatchWall 桌面图片，轻微平移缩放展示。",
+      beforeAlt: "用户提供的国产电视桌面截图，轻微平移缩放展示。",
       afterAlt: "Tigris 主屏幕实拍，风景照片上是液态玻璃 Dock。",
       hintKeys: "拖动、点击或聚焦把手后用 ← → 调整，Shift 加速，双击回到中间。",
-      disclaimer: "左侧为小米官网图片的动态展示，不是操作录像；两侧不是同一设备。",
+      disclaimer: "左侧为用户提供的截图的动态展示，不是操作录像；两侧不是同一设备。",
     },
 
     aerial: {
@@ -115,7 +115,7 @@ export const zh = {
     gallery: {
       eyebrow: "IN MOTION",
       title: "让细节，动起来。",
-      lede: "桌面、控制中心和航拍来自索尼 BRAVIA 实录；开机动画为内置素材预览。点击放大，观看完整片段。",
+      lede: "桌面、控制中心和航拍来自索尼 BRAVIA 实录；开机动画为 Tigris 字样效果示意。点击放大，观看完整片段。",
     },
 
     install: {
@@ -137,7 +137,7 @@ export const zh = {
       prereq:
         "开始之前：电脑与电视在同一个局域网；电视已打开 ADB 调试；首次连接时电视会询问「允许 USB 调试吗？」，请勾选「始终允许」。电脑需要 Android SDK Platform-Tools。",
       shellNote:
-        "每条命令都有两套写法，先在上面选你的系统：Windows PowerShell 会自动把下载换成 curl.exe、把 python3 换成 python；macOS / Linux 使用系统自带的 curl 与 python3。命令里不含变量，包名一律写成 com.leslie.tvhome，所以复制其中一部分也能直接运行。",
+        "先选择电脑系统，查看对应的准备步骤；再选择电视品牌。下方命令会同步切换，按顺序逐条运行。",
       shellLabels: { posix: "macOS / Linux", powershell: "Windows PowerShell" },
       placeholderNote:
         "示例中的 192.168.x.x 是占位符，请换成电视的实际 IP；BRAVIA 注册步骤里的 PIN 是电视屏幕上显示的四位数字，请按提示替换。",
@@ -184,7 +184,7 @@ export const zh = {
             {
               title: "下载并安装标准版",
               cmd: C.installStandard,
-              note: "Windows PowerShell 用 `curl.exe -L -o Tigris.apk …`。",
+              note: "命令已适配上方选择的电脑系统。",
             },
             {
               title: "设为默认桌面并授权",
@@ -195,7 +195,7 @@ export const zh = {
               title: "可选：注册 BRAVIA IP 控制",
               body: "要用亮度、电视音量和 HDMI 输入源，需要注册一次。第一条命令后电视会显示 4 位 PIN，用它完成第二条。",
               cmd: C.braviaRegister,
-              note: "这一条含 shell 变量，仅适用于 macOS / Linux 终端。",
+              note: "此步骤分两次执行；看到电视上的 PIN 后，再替换 PIN 执行第二次请求。",
             },
             {
               title: "允许本机调试",
@@ -226,7 +226,7 @@ export const zh = {
               title: "用多屏互动推送 guard 版",
               body: "脚本通过本机 8765 端口提供 APK，并连接电视的 6553 端口。电视角落出现「多屏互动：正在发起应用推送」时，用遥控器选择「同意」。",
               cmd: C.tclPush,
-              note: "Windows：把 `curl` 换成 `curl.exe`，把 `python3` 换成 `python`；防火墙提示请允许 8765 端口。",
+              note: "命令已适配所选电脑系统；防火墙提示请允许局域网访问 8765 端口。",
             },
             {
               title: "确认已安装",
@@ -260,7 +260,7 @@ export const zh = {
             {
               title: "安装标准版",
               cmd: C.installStandard,
-              note: "Windows PowerShell 用 `curl.exe`。",
+              note: "命令已适配上方选择的电脑系统。",
             },
             {
               title: "设为默认桌面并授权",
@@ -295,7 +295,7 @@ export const zh = {
             {
               title: "安装并设为默认桌面",
               cmd: C.stockInstall,
-              note: "Windows PowerShell 用 `curl.exe`。",
+              note: "命令已适配上方选择的电脑系统。",
             },
             {
               title: "授予只有 ADB 能给的权限",

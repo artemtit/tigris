@@ -14,6 +14,6 @@ const items = zh ? [
 ];
 ---
 <section class="release-strip wrap" aria-label={zh ? "本次更新" : "Latest update"}>
-  <a class="release-pill" href={`${brand.releases}/tag/v2.0.4`}><span class="dot"></span>2.0.4 <span>{zh ? "现已推出" : "Now available"} ↗</span></a>
+  <a class="release-pill" href={`${brand.releases}/latest`}><span class="dot"></span>{zh ? "最新版本" : "Latest release"} ↗</a>
   <div class="release-grid">{items.map(([n,title,body]) => <article><span class="release-number">{n}</span><h3>{title}</h3><p>{body}</p></article>)}</div>
 </section>

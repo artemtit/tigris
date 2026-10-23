@@ -67,14 +67,13 @@ public/404.html         static 404 served by Cloudflare Pages
 - **Product media** now uses muted video loops. Home, Top Shelf, Control Center,
   update center and aerial clips were captured on the owner's Sony BRAVIA with
   `adb screenrecord` on 2026-10-24. Posters are frames from each recording.
-- **Startup video** previews the owner-supplied bundled default animation.
-- **Comparison** uses a cropped official Xiaomi PatchWall image with gentle
-  pan/zoom, explicitly labelled as an animated image rather than a recording.
-  Source: https://in.event.mi.com/in/PatchWall . The two sides are different TVs.
+- **Startup preview** illustrates the Tigris wordmark; no Apple startup clip is served.
+- **Comparison** uses the owner-supplied Chinese-market TV screenshot with gentle
+  pan/zoom, labelled as an image rather than a recording. The two sides are different TVs.
 - **Aerial** shows actual TV playback, not an illustration; Apple retains the
   rights to its footage. The APK contains stream addresses, not aerial films.
-- **Bundled settings artwork and startup video** are owner-supplied third-party
-  assets, not original Tigris artwork; see the repository's asset provenance.
+- **Bundled settings artwork** is an owner-supplied third-party
+  asset, not original Tigris artwork; see the repository's asset provenance.
 
 - **Commands have two OS variants.** `com.leslie.tvhome` is always written in
   full, so no snippet depends on a shell variable. The install section has one

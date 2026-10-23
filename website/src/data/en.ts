@@ -23,7 +23,7 @@ export const en = {
   copy: "Copy",
   copied: "Copied",
   copyFailed: "Copy failed",
-  compareLabel: "Compare the Xiaomi PatchWall official image with a Tigris TV recording",
+  compareLabel: "Compare a user-supplied TV screenshot with a Tigris TV recording",
   compareValue: (p: number) => `Showing ${p}% of the before image`,
   slideshow: { prev: "Previous", next: "Next" },
   lightbox: { close: "Close", prev: "Previous", next: "Next", name: "Screenshot viewer" },
@@ -72,15 +72,15 @@ export const en = {
   compare: {
     eyebrow: "BEFORE / AFTER",
     title: "Drag to reveal the difference.",
-    lede: "Xiaomi’s official <strong>PatchWall image</strong> on the left. A <strong>Tigris recording</strong> on the right. Drag the divider to compare the two interfaces.",
+    lede: "User-supplied Chinese-market <strong>TV launcher screenshot</strong> on the left. A <strong>Tigris recording</strong> on the right. Drag the divider to compare the two interfaces.",
     beforeLabel: "Before",
-    beforeSub: "Xiaomi image · animated view",
+    beforeSub: "TV screenshot · animated view",
     afterLabel: "After",
     afterSub: "Tigris · TV recording",
-    beforeAlt: "Official Xiaomi PatchWall image with a gentle pan and zoom.",
+    beforeAlt: "User-supplied Chinese-market TV screenshot with a gentle pan and zoom.",
     afterAlt: "Tigris home screen, real capture.",
     hintKeys: "Drag, click, or focus the handle and use ← →. Hold Shift for larger steps; double-click to reset.",
-    disclaimer: "The left side animates an official Xiaomi image; it is not an interaction recording. These are different devices.",
+    disclaimer: "The left side animates a user-supplied TV screenshot; it is not an interaction recording. These are different devices.",
   },
 
   aerial: {
@@ -114,7 +114,7 @@ export const en = {
   gallery: {
     eyebrow: "IN MOTION",
     title: "See the details in motion.",
-    lede: "Home, Control Center and aerial clips were recorded on a Sony BRAVIA. The startup clip previews the bundled video. Select a clip to enlarge.",
+    lede: "Home, Control Center and aerial clips were recorded on a Sony BRAVIA. The startup clip illustrates the Tigris wordmark animation. Select a clip to enlarge.",
   },
 
   install: {
@@ -136,7 +136,7 @@ export const en = {
     prereq:
       "Before you start: the TV is on the same network as the computer, ADB debugging is enabled, and the first connection shows “Allow USB debugging?” — tick “Always allow”. The computer needs Android SDK Platform-Tools.",
     shellNote:
-      "Every snippet has two forms — pick your system above. Windows PowerShell uses curl.exe instead of the curl alias and python instead of python3; macOS / Linux use the system curl and python3. No snippet relies on a shell variable and the package name is always written as com.leslie.tvhome in full, so a partial copy still runs.",
+      "Choose your computer system for setup instructions, then choose your TV brand. Commands below adapt to your selection. Run them in order.",
     shellLabels: { posix: "macOS / Linux", powershell: "Windows PowerShell" },
     placeholderNote:
       "192.168.x.x is a placeholder for your TV's IP address. In the BRAVIA step, PIN is the four-digit code shown on the TV; type it in place of the placeholder.",
@@ -176,7 +176,7 @@ export const en = {
             body: "You need them if you ever uninstall; save the output somewhere safe.",
             cmd: C.snapshotBeforeInstall,
           },
-          { title: "Download and install the standard build", cmd: C.installStandard, note: "Windows PowerShell: use `curl.exe -L -o Tigris.apk …`." },
+          { title: "Download and install the standard build", cmd: C.installStandard, note: "Commands match the computer system selected above." },
           {
             title: "Make it the home screen and grant permissions",
             body: "The three grants cover the guard and screensaver, reviving after the system kills the app, and opening the home screen from the background after boot.",
@@ -186,7 +186,7 @@ export const en = {
             title: "Optional: register BRAVIA IP control",
             body: "Needed for brightness, TV volume and HDMI input status. The TV shows a four-digit PIN after the first command; use it in the second.",
             cmd: C.braviaRegister,
-            note: "This step uses a shell variable, so it only works in the macOS / Linux terminal.",
+            note: "Run the registration in two stages; replace PIN after the TV displays it.",
           },
           {
             title: "Allow on-device debugging",
@@ -209,7 +209,7 @@ export const en = {
             title: "Push the guard build with T-Cast",
             body: "The script serves the APK on local port 8765 and connects to the TV on 6553. When “多屏互动：正在发起应用推送” appears on the TV, choose <strong>同意</strong> (Agree) with the remote.",
             cmd: C.tclPush,
-            note: "Windows: use `curl.exe` and `python`, and allow inbound port 8765 if the firewall asks.",
+            note: "Commands match your selected system. Allow local-network access to port 8765 if prompted.",
           },
           { title: "Confirm it installed", cmd: C.packagePath },
           {
@@ -234,7 +234,7 @@ export const en = {
         steps: [
           { title: "Connect", cmd: C.connect },
           { title: "Record the original home, screensaver and accessibility services", cmd: C.snapshotBeforeInstall },
-          { title: "Install the standard build", cmd: C.installStandard, note: "Windows PowerShell: use `curl.exe`." },
+          { title: "Install the standard build", cmd: C.installStandard, note: "Commands match the computer system selected above." },
           { title: "Make it the home screen and grant permissions", cmd: C.xiaomiSetup },
           {
             title: "Enable the home guard and keep ADB on",
@@ -259,7 +259,7 @@ export const en = {
             note: "Then run `adb -s 192.168.x.x:5555 shell getprop ro.build.version.sdk`; it must be at least 28 (Android 9).",
           },
           { title: "Record the original home, screensaver and accessibility services", cmd: C.snapshotBeforeInstall },
-          { title: "Install and set as home", cmd: C.stockInstall, note: "Windows PowerShell: use `curl.exe`." },
+          { title: "Install and set as home", cmd: C.stockInstall, note: "Commands match the computer system selected above." },
           {
             title: "Grant what only ADB can grant",
             cmd: `adb -s 192.168.x.x:5555 shell pm grant com.leslie.tvhome android.permission.WRITE_SECURE_SETTINGS

@@ -84,7 +84,7 @@ The [installation guide for agents](AGENTS.md) covers connecting, choosing the A
 
 ## 2.0.4
 
-App folders, phone avatar uploads, a glass update center for Tigris and MiracastReceiver, and frosted app scrolling. The Dock and top-right controls scroll away naturally. Bundled startup video and settings artwork are defaults; existing customizations take priority.
+App folders, phone avatar uploads, a glass update center for Tigris and MiracastReceiver, and frosted app scrolling. The Dock and top-right controls scroll away naturally. The built-in Tigris wordmark animation and settings artwork are defaults; existing customizations take priority.
 
 Updates: Control Center → Settings → Software updates & casting. The installer supports configuration-preserving upgrades and restoring the original launcher.
 

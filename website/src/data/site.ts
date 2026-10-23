@@ -47,9 +47,9 @@ export const clips = {
   aerial: { src: "/video/aerial.mp4", poster: "/img/aerial-poster.webp" },
   shelf: { src: "/video/shelf.mp4", poster: "/img/shelf-poster.webp" },
   updates: { src: "/video/updates.mp4", poster: "/img/updates-poster.webp" },
-  patchwall: { src: "/video/patchwall.mp4", poster: "/img/patchwall-poster.webp" },
+  patchwall: { src: "/video/domestic-launcher.mp4", poster: "/img/domestic-launcher-poster.webp" },
   home: { src: "/video/home.mp4", poster: "/img/home-poster.webp" },
-  intro: { src: "/video/intro.mp4", poster: "/img/intro-poster.webp" },
+  intro: { src: "/video/tigris-intro.mp4", poster: "/img/tigris-intro-poster.webp" },
   settings: { src: "/video/settings.mp4", poster: "/img/settings-poster.webp" },
   cc: { src: "/video/cc.mp4", poster: "/img/cc-poster.webp" },
   /* The promo film: motion graphics around the same recordings, with sound; plays only when asked. */

@@ -89,7 +89,7 @@
 <p style="margin-top:12px"><label class="primary" id="pickIntro">上传动画视频<input type="file" id="introFile" accept="video/*" hidden></label></p>
 <p class="hint" id="introHint"></p>
 <div class="seg" id="introSource" style="margin-top:12px">
-  <button data-source="video">内置 / 上传视频</button>
+  <button data-source="video">自定义视频</button>
   <button data-source="wordmark">Tigris 字样</button>
 </div>
 
@@ -190,7 +190,7 @@ function render(s) {
     hint.innerHTML = '已上传（' + (s.introVideo / 1048576).toFixed(1) + ' MB）。<a href="#" id="introDel">删除</a>';
     $('introDel').onclick = e => { e.preventDefault(); post('api/intro/delete', {}).then(() => toast('已删除动画视频')); };
   } else {
-    hint.textContent = '最好是结尾停在黑底标志上的短视频：标志会放大，带你进入主屏幕。没有上传视频时使用内置开机动画。';
+    hint.textContent = '最好是结尾停在黑底标志上的短视频：标志会放大，带你进入主屏幕。没有上传视频时使用 Tigris 字样动画。请仅上传有权使用的素材，版权归原权利人。';
   }
   if (document.activeElement !== $('links')) $('links').value = s.links;
   photos($('mine'), 'mine', s.mine);
