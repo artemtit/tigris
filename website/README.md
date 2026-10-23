@@ -25,7 +25,7 @@ Upload the built folder, never the sources:
 ```sh
 pnpm exec astro build
 cd dist
-wrangler pages deploy . --project-name tigris-tv --branch main
+CLOUDFLARE_ACCOUNT_ID=1b14747dd35d66e9f7941beaf412c3fe wrangler pages deploy . --project-name tigris-tv --branch main
 ```
 
 Build policy (intentionally simple, so a deploy is one command):
@@ -92,3 +92,6 @@ public/404.html         static 404 served by Cloudflare Pages
 - Adding a UI string means adding it to `zh.ts`, `en.ts` and, if the client
   script uses it, `strings.ts`; `astro check` fails on drift.
 
+
+Production account: `1b14747dd35d66e9f7941beaf412c3fe` (migrated 2026-10-24).
+Production URL: https://tigris-tv.pages.dev . Set the account explicitly; old Wrangler caches may point to the previous account.
