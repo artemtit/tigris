@@ -10,8 +10,8 @@ android {
         applicationId = "com.leslie.tvhome"
         minSdk = 28
         targetSdk = 31
-        versionCode = 9
-        versionName = "2.0.3"
+        versionCode = 10
+        versionName = "2.0.4"
     }
 
     // standard declares itself a home screen. guard does not: TCL's package verifier refuses any
@@ -23,12 +23,22 @@ android {
         create("guard") { dimension = "home" }
     }
 
+    signingConfigs {
+        if (System.getenv("TIGRIS_KEYSTORE") != null) {
+            create("stable") {
+                storeFile = file(System.getenv("TIGRIS_KEYSTORE"))
+                storePassword = System.getenv("TIGRIS_STORE_PASSWORD")
+                keyAlias = System.getenv("TIGRIS_KEY_ALIAS")
+                keyPassword = System.getenv("TIGRIS_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("stable") ?: signingConfigs.getByName("debug")
         }
     }
 

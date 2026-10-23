@@ -27,6 +27,7 @@ data class AppEntry(
     val leanback: Boolean,
     /** Set for a TV input pinned to the grid; then [pkg] is its [InputTile.key]. */
     val input: Input? = null,
+    val folder: AppFolder? = null,
 )
 
 /** A TV input (HDMI) pinned to the home grid from the Control Center's input list. */
@@ -95,7 +96,11 @@ class AppRepo(private val ctx: Context) {
 
     /** Visible apps in user order; new apps go to the end. */
     fun orderedVisible(): List<AppEntry> {
-        val apps = allApps()
+        val folders = Folders(ctx).read()
+        val grouped = folders.flatMap { it.members }.toSet()
+        val apps = allApps().filter { it.pkg !in grouped } + folders.map {
+            AppEntry(it.id, it.name, ComponentName(ctx, HomeActivity::class.java), false, folder = it)
+        }
         val hidden = prefs.hidden
         var order = prefs.order
         if (order.isEmpty()) order = Prefs.DEFAULT_ORDER
@@ -153,6 +158,22 @@ class AppRepo(private val ctx: Context) {
         tiles.get(key)?.let { return it }
         val bmp = Bitmap.createBitmap(TILE_W, TILE_H, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
+        app.folder?.let { f ->
+            c.drawColor(Color.rgb(56, 62, 82))
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+            val members = allApps().associateBy { it.pkg }
+            f.members.filter { it !in prefs.hidden }.take(4).forEachIndexed { index, pkg ->
+                members[pkg]?.let { member ->
+                    val left = 84f + (index % 2) * 122f
+                    val top = 14f + (index / 2) * 76f
+                    c.drawBitmap(tile(member), null, RectF(left, top, left + 110f, top + 62f), paint)
+                }
+            }
+            paint.color = Color.WHITE; paint.textSize = 26f; paint.textAlign = Paint.Align.CENTER
+            c.drawText(android.text.TextUtils.ellipsize(f.name, android.text.TextPaint(paint), 360f,
+                android.text.TextUtils.TruncateAt.END).toString(), 200f, 207f, paint)
+            tiles.put(key, bmp); return bmp
+        }
         app.input?.let { drawInputTile(c, it); tiles.put(key, bmp); return bmp }
         val own = if (app.component.className == SettingsActivity::class.java.name)
             SettingsActivity.customIcon(ctx)?.let { SettingsActivity.decodeIcon(it, TILE_W) }?.let { BitmapDrawable(ctx.resources, it) }

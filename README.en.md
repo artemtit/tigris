@@ -82,6 +82,20 @@ Give a command-capable agent such as Codex or Claude Code:
 
 The [installation guide for agents](AGENTS.md) covers connecting, choosing the APK, configuring the launcher, requesting permissions and Sony-specific setup. Approve any on-TV prompts yourself. On TCL, accept the **T-Cast / 多屏互动** installation prompt.
 
+## 2.0.4
+
+App folders, phone avatar uploads, a glass update center for Tigris and MiracastReceiver, and frosted app scrolling. The Dock and top-right controls scroll away naturally. Bundled startup video and settings artwork are defaults; existing customizations take priority.
+
+Updates: Control Center → Settings → Software updates & casting. The installer supports configuration-preserving upgrades and restoring the original launcher.
+
+```sh
+curl -fsSL https://tigris-tv.pages.dev/install.sh | KEEP_ADB=1 TV=192.168.1.20 bash
+# Restore using the original computer and saved snapshot:
+curl -fsSL https://tigris-tv.pages.dev/install.sh | TV=192.168.1.20 bash -s -- restore
+```
+
+Use a desktop agent that can execute commands on Windows, following [agent.md](https://tigris-tv.pages.dev/agent.md). Phone chat alone cannot run ADB.
+
 ## Features
 
 - **tvOS-style home screen:** docked 16:9 app tiles, focus zoom, directional tilt, animated light sweep and shadow; optional portrait icon; compact clock, large clock with date, or no clock; 12/24-hour time.
@@ -176,3 +190,10 @@ Tigris is licensed under [MIT](LICENSE). See [third-party notices](THIRD_PARTY_N
 Home-guard ideas, TCL T-Cast installation, Apple TV aerial catalogs and the phone-based setup draw on [Aerial](https://github.com/pengchujin/aerial-tv) (MIT; © 2026 pengchujin). Community device compatibility work is credited in the linked Issues and PRs, including FFalcon [#1](https://github.com/lesnolie/Tigris/pull/1), Coocaa [#4](https://github.com/lesnolie/Tigris/pull/4), and focus rendering [#10](https://github.com/lesnolie/Tigris/pull/10) / [#11](https://github.com/lesnolie/Tigris/pull/11).
 
 This project is not affiliated with Apple, Sony, Xiaomi, TCL, Bilibili or Douyu. Apple TV aerial videos stream from Apple's servers; the app does not distribute those videos. Wallpaper and screenshot media belong to their respective rights holders.
+
+
+## Installer and personalization
+
+See the [installation and restore guide](docs/installation.md) and [agent instructions](AGENTS.md). The Bash installer requires adb, curl and Python 3; it snapshots the original HOME on the computer, verifies APK checksums and stops on signature mismatch without uninstalling. Restore requires that snapshot.
+
+Desktop folders, profile avatar uploads and install.sh are available from **2.0.4**. Avatar upload is in Settings → 上传头像; scan the QR code, upload or reset the portrait, and return Home. Updates are in Control Center → Settings → Software updates & casting.

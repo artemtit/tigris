@@ -89,7 +89,7 @@
 <p style="margin-top:12px"><label class="primary" id="pickIntro">上传动画视频<input type="file" id="introFile" accept="video/*" hidden></label></p>
 <p class="hint" id="introHint"></p>
 <div class="seg" id="introSource" style="margin-top:12px">
-  <button data-source="video">上传的视频</button>
+  <button data-source="video">内置 / 上传视频</button>
   <button data-source="wordmark">Tigris 字样</button>
 </div>
 
@@ -97,6 +97,10 @@
 <label class="primary" id="pickBackdrop">上传设置页背景<input type="file" id="backdropFile" accept="image/*" hidden></label>
 <p class="hint" id="backdropHint"></p>
 
+<h2 id="avatar">头像</h2>
+<label class="primary">上传头像<input type="file" id="avatarFile" accept="image/*" hidden></label>
+<p class="hint">图片会居中裁成正方形，显示为桌面右上角的圆形头像；返回桌面后生效。</p>
+<p class="hint" id="avatarHint"></p>
 <h2>设置图标</h2>
 <label class="primary" id="pickIcon">上传设置图标<input type="file" id="iconFile" accept="image/*" hidden></label>
 <p class="hint" id="iconHint"></p>
@@ -167,7 +171,13 @@ function render(s) {
     $('backdropHint').innerHTML = '设置页正在用这张图，电视上可以在设置里切换成普通背景。<a href="#" id="backdropDel">删除这张图</a>';
     $('backdropDel').onclick = e => { e.preventDefault(); post('api/backdrop/delete', {}).then(() => toast('已删除')); };
   } else {
-    $('backdropHint').textContent = '整个设置页的背景，16:9 横图；图左边放主体（比如一台电视），右边留给设置项。';
+    $('backdropHint').textContent = '当前使用内置背景。可上传整个设置页的背景，16:9 横图；图左边放主体（比如一台电视），右边留给设置项。';
+  }
+  $('avatarHint').textContent = s.avatar ? '已使用自定义头像。' : '正在使用默认头像。';
+  if (s.avatar) {
+    const reset = document.createElement('button'); reset.textContent = '恢复默认头像';
+    reset.onclick = () => post('api/avatar/delete', {}).then(() => toast('已恢复默认头像'));
+    $('avatarHint').appendChild(reset);
   }
   if (s.icon) {
     $('iconHint').innerHTML = '主屏幕和设置页正在用这张图。<a href="#" id="iconDel">换回默认齿轮</a>';
@@ -180,7 +190,7 @@ function render(s) {
     hint.innerHTML = '已上传（' + (s.introVideo / 1048576).toFixed(1) + ' MB）。<a href="#" id="introDel">删除</a>';
     $('introDel').onclick = e => { e.preventDefault(); post('api/intro/delete', {}).then(() => toast('已删除动画视频')); };
   } else {
-    hint.textContent = '最好是结尾停在黑底标志上的短视频：标志会放大，带你进入主屏幕。没有视频时显示 Tigris 字样。';
+    hint.textContent = '最好是结尾停在黑底标志上的短视频：标志会放大，带你进入主屏幕。没有上传视频时使用内置开机动画。';
   }
   if (document.activeElement !== $('links')) $('links').value = s.links;
   photos($('mine'), 'mine', s.mine);
@@ -227,6 +237,16 @@ $('iconFile').onchange = async e => {
   try {
     const fd = new FormData(); fd.append('icon', f, f.name);
     const s = await (await fetch(base + 'api/icon/upload', { method: 'POST', body: fd })).json(); render(s);
+    toast(s.ok ? '已换上，回到主屏幕就能看到' : '不是可用的图片');
+  } catch (err) { toast('上传失败：' + err.message); }
+  e.target.value = '';
+};
+
+$('avatarFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const fd = new FormData(); fd.append('avatar', f, f.name);
+    const s = await (await fetch(base + 'api/avatar/upload', { method: 'POST', body: fd })).json(); render(s);
     toast(s.ok ? '已换上，回到主屏幕就能看到' : '不是可用的图片');
   } catch (err) { toast('上传失败：' + err.message); }
   e.target.value = '';

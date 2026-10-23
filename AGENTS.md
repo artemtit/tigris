@@ -276,6 +276,26 @@ Only on request. Tigris's long-press menu can delete preinstalled apps that appe
 - Never remove settings, launchers, input-method, TV player/tuner/`tvinput`, system UI, update, Google Play services, or anything you can't identify. On Chinese TVs, also keep licensing services ("播控" such as `com.newtv.*`, CIBN, ktcp-related). Licensed video apps stop playing without them.
 - After removing, reboot only if the user agrees, then check that the TV still starts, HDMI inputs work and video apps play.
 
+## Restore
+
+Keep Tigris installed unless explicitly asked to uninstall. For installs made with `install.sh`, use `TV=<TV_IP> bash install.sh restore` on the original computer with the original snapshot directory. Do not guess a vendor launcher if the snapshot is missing or already points at Tigris.
+
+For manual installs, use the original HOME component recorded in step 2. If unavailable, enumerate HOME activities with `cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.HOME`, identify the installed vendor launcher, and ask if ambiguous. Disable Tigris guard and keep_adb using the CONFIG broadcast below; set HOME with `cmd package set-home-activity <ORIGINAL_HOME_COMPONENT>`, then force-stop Tigris. Restore the recorded screensaver only if the current screensaver points at Tigris. Preserve other accessibility services; never overwrite the current full list with an old snapshot. Remove Tigris's notification listener only if added by this installation. Press HOME, wait two seconds and verify the original launcher is foreground. Paste the raw accessibility and current-focus outputs described below.
+
+## Verification / 验收
+
+Run all commands with `adb -s <TV_IP>:5555 shell`. Paste their raw output to the user:
+
+1. `cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME`
+2. `settings get secure enabled_accessibility_services`
+3. Send `input keyevent KEYCODE_HOME`, wait two seconds, then `dumpsys window | grep mCurrentFocus`.
+
+After installation, actual foreground should contain `com.leslie.tvhome`; guard installations may retain the vendor HOME resolver. Report installation, Home-key behavior, standby/wake and boot separately. Never claim an untested check passed. Do not reboot/sleep/power off without consent.
+
+## Avatar uploads
+
+Settings → 上传头像 opens the phone-upload QR page at the avatar section. Upload or restore the default there, then return Home. The private `profile_avatar.png` is separate from the settings tile image. This requires an APK containing the new avatar change; do not claim earlier releases support it.
+
 ## Uninstall
 
 First turn the guard off, so the accessibility list goes back to what it was (the value noted in step 2), and put the original screensaver back if the photo frame was made the screensaver:

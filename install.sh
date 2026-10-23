@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# Tigris installer. Requires bash 3.2+, adb, curl, python3.
+set -euo pipefail
+PKG=com.leslie.tvhome
+REPO=https://github.com/lesnolie/Tigris
+MODE=install
+FLAVOR=standard
+UNINSTALL=0
+while (($#)); do
+  case "$1" in
+    install|restore) MODE=$1 ;;
+    --uninstall) UNINSTALL=1 ;;
+    -s|--flavor) shift; FLAVOR=${1:?Missing standard or guard} ;;
+    *) echo "Unknown argument: $1" >&2; exit 2 ;;
+  esac
+  shift
+done
+fail() { echo "ERROR: $*" >&2; exit 1; }
+[[ "$FLAVOR" == standard || "$FLAVOR" == guard ]] || fail 'Use -s standard or -s guard'
+[[ "$MODE" == restore || "$UNINSTALL" == 0 ]] || fail '--uninstall is only for restore'
+: "${TV:?Set TV to your TV IPv4 address, for example TV=192.168.1.20}"
+[[ "$TV" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(:[0-9]+)?$ ]] || fail 'TV must be an IPv4 address, optionally with :port'
+SERIAL=$TV
+[[ "$SERIAL" == *:* ]] || SERIAL="$SERIAL:5555"
+for tool in adb python3; do command -v "$tool" >/dev/null || fail "Install $tool first"; done
+ad() { adb -s "$SERIAL" "$@"; }
+shread() { ad shell "$@" | tr -d '\r'; }
+adb connect "$SERIAL"
+[[ "$(ad get-state)" == device ]] || fail 'Enable network ADB, then allow debugging on the TV and retry'
+SDK=$(shread getprop ro.build.version.sdk)
+[[ "$SDK" =~ ^[0-9]+$ ]] && (( SDK >= 28 )) || fail 'Tigris requires Android 9 / API 28 or newer'
+STATE=${STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/tigris/$SERIAL}
+mkdir -p "$STATE"
+chmod 700 "$STATE"
+HOME_QUERY=(cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME)
+verify() {
+  echo '=== default HOME ==='; ad shell "${HOME_QUERY[@]}"
+  echo '=== accessibility services ==='; ad shell settings get secure enabled_accessibility_services
+  ad shell input keyevent KEYCODE_HOME
+  sleep 2
+  echo '=== focus after HOME ==='; ad shell dumpsys window | grep -E 'mCurrentFocus|mFocusedApp' || true
+}
+if [[ "$MODE" == restore ]]; then
+  [[ -f "$STATE/home" ]] || fail "No saved original launcher at $STATE. Follow AGENTS.md; do not guess the original launcher."
+  ORIGINAL=$(cat "$STATE/home")
+  [[ "$ORIGINAL" == */* && "$ORIGINAL" != *"$PKG"* && "$ORIGINAL" =~ ^[a-zA-Z0-9._/]+$ ]] || fail 'Saved original launcher is invalid; restore manually with AGENTS.md'
+  ad shell am broadcast -a "$PKG.CONFIG" -n "$PKG/.ConfigReceiver" --ez guard false --ez keep_adb false
+  CURRENT_SAVER=$(shread settings get secure screensaver_components)
+  if [[ "$CURRENT_SAVER" == *"$PKG"* && -f "$STATE/screensaver" ]]; then
+    SAVER=$(cat "$STATE/screensaver")
+    if [[ "$SAVER" == null || -z "$SAVER" ]]; then ad shell settings delete secure screensaver_components
+    else
+      [[ "$SAVER" =~ ^[a-zA-Z0-9._/:]+$ ]] || fail 'Invalid saved screensaver'
+      ad shell settings put secure screensaver_components "$SAVER"
+    fi
+  fi
+  ad shell cmd package set-home-activity "$ORIGINAL"
+  if [[ -f "$STATE/listeners" ]] && ! grep -q "$PKG" "$STATE/listeners"; then
+    ad shell cmd notification disallow_listener "$PKG/$PKG.RevivalListener"
+  fi
+  ad shell am force-stop "$PKG"
+  verify
+  if (( UNINSTALL )); then ad uninstall "$PKG"; fi
+  echo 'Restore commands completed. Verify that mCurrentFocus names your original launcher.'
+  exit 0
+fi
+KEEP_ADB=${KEEP_ADB:-0}
+[[ "$KEEP_ADB" == 0 || "$KEEP_ADB" == 1 ]] || fail 'KEEP_ADB must be 0 or 1'
+command -v curl >/dev/null || fail 'Install curl first'
+# Never overwrite the first snapshot during an upgrade.
+if [[ ! -f "$STATE/home" ]]; then
+  shread "${HOME_QUERY[@]}" | tail -n 1 > "$STATE/home"
+  shread settings get secure screensaver_components > "$STATE/screensaver"
+  shread settings get secure enabled_accessibility_services > "$STATE/accessibility"
+  shread settings get secure enabled_notification_listeners > "$STATE/listeners"
+fi
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+ASSET=Tigris.apk
+[[ "$FLAVOR" == guard ]] && ASSET=Tigris-guard.apk
+# APK is also useful for offline tests; no package is downloaded in that mode.
+if [[ -n "${APK:-}" ]]; then
+  [[ -f "$APK" ]] || fail 'APK file not found'
+  cp "$APK" "$TMP/$ASSET"
+else
+  VERSION=${VERSION:-latest}
+  if [[ "$VERSION" == latest ]]; then BASE="$REPO/releases/latest/download"
+  else
+    [[ "$VERSION" =~ ^[a-zA-Z0-9._-]+$ ]] || fail 'Invalid VERSION tag'
+    BASE="$REPO/releases/download/$VERSION"
+  fi
+  curl -fLsS "$BASE/$ASSET" -o "$TMP/$ASSET"
+  curl -fLsS "$BASE/SHA256SUMS.txt" -o "$TMP/SHA256SUMS.txt"
+  python3 - "$TMP/$ASSET" "$TMP/SHA256SUMS.txt" "$ASSET" <<'PY'
+import hashlib, pathlib, sys
+apk, manifest, name = sys.argv[1:]
+expected = [line.split()[0].lower() for line in pathlib.Path(manifest).read_text().splitlines()
+            if len(line.split()) == 2 and line.split()[1].lstrip('*') == name]
+actual = hashlib.sha256(pathlib.Path(apk).read_bytes()).hexdigest()
+if expected != [actual]: raise SystemExit('SHA256 check failed; installation stopped')
+PY
+fi
+if ! ad install -r "$TMP/$ASSET"; then
+  fail 'Installation failed; nothing uninstalled. Signature mismatch requires the original signing key. TCL verification failure: use Guard APK via tools/tcast-push.py (see AGENTS.md).'
+fi
+ad shell pm grant "$PKG" android.permission.WRITE_SECURE_SETTINGS
+ad shell cmd notification allow_listener "$PKG/$PKG.RevivalListener"
+ad shell appops set "$PKG" SYSTEM_ALERT_WINDOW allow
+BRAND=$(shread getprop ro.product.manufacturer | tr '[:upper:]' '[:lower:]')
+if [[ "$BRAND" == *tcl* || "$BRAND" == *ffalcon* ]]; then
+  ad shell appops set "$PKG" APP_AUTO_START allow || true
+  ad shell appops set "$PKG" APP_ASSOC_START allow || true
+fi
+GUARD=false
+if [[ "$FLAVOR" == standard ]]; then
+  ad shell cmd package set-home-activity "$PKG/.HomeActivity" || GUARD=true
+else GUARD=true
+fi
+case "$BRAND" in *xiaomi*|*redmi*|*tcl*|*ffalcon*) GUARD=true ;; esac
+[[ "$(shread "${HOME_QUERY[@]}")" == *"$PKG"* ]] || GUARD=true
+# An upgrade never turns off a guard the user previously enabled.
+CONFIG=(--ez keep_adb "$([[ "$KEEP_ADB" == 1 ]] && echo true || echo false)")
+[[ "$GUARD" == true ]] && CONFIG+=(--ez guard true)
+ad shell am broadcast -a "$PKG.CONFIG" -n "$PKG/.ConfigReceiver" "${CONFIG[@]}"
+ad shell am start -n "$PKG/.HomeActivity"
+verify
+echo "Original launcher snapshot: $STATE (keep this directory for restore)."
+echo 'Check mCurrentFocus for com.leslie.tvhome. Standby/wake and reboot require separate TV testing; installation alone does not prove boot takeover.'

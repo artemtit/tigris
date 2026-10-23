@@ -108,6 +108,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
 
     /** Liquid Glass slab behind the first row, the "dock". */
     private lateinit var dock: ImageView
+    private lateinit var frost: ImageView
+    private lateinit var scrollGlass: FrostGlass
     private val dockRect = Rect()
     private var dockRadius = 0f
     /** The glass baked over the home picture, kept for when the shelf goes away. */
@@ -283,7 +285,10 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         dockRect.set(side - pad, firstRowY - pad, sw - side + pad, firstRowY + tileH + pad)
         dockRadius = dp(11) + pad.toFloat()
         buildShelf(side)
+        frost = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; alpha = 0f }
+        scene.addView(frost, match())
         dock = ImageView(this).apply { scaleType = ImageView.ScaleType.FIT_XY }
+        scrollGlass = FrostGlass(dock, dockRadius)
         scene.addView(dock, FrameLayout.LayoutParams(dockRect.width(), dockRect.height()).apply {
             leftMargin = dockRect.left; topMargin = dockRect.top
         })
@@ -341,7 +346,12 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         })
         listOf(netButton, ccButton, avatar).forEach { b ->
             b.setOnKeyListener { _, code, e ->
-                if (e.action == KeyEvent.ACTION_DOWN && code == KeyEvent.KEYCODE_DPAD_DOWN) { focusAt(focusedPos); true } else false
+                if (e.action != KeyEvent.ACTION_DOWN) false else when {
+                    code == KeyEvent.KEYCODE_DPAD_DOWN -> { focusAt(focusedPos); true }
+                    code == KeyEvent.KEYCODE_DPAD_RIGHT && b == ccButton && avatar.visibility == View.VISIBLE -> { avatar.requestFocus(); true }
+                    code == KeyEvent.KEYCODE_DPAD_LEFT && b == avatar -> { ccButton.requestFocus(); true }
+                    else -> false
+                }
             }
         }
         netButton.nextFocusRightId = View.generateViewId().also { ccButton.id = it }
@@ -390,11 +400,18 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 // move the grid with dy = 0, so a running sum of dy drifts away from the truth.
                 scrollY = gridOffset() ?: (scrollY + dy)
                 val off = scrollY.toFloat()
-                // The glass was baked for its resting place, so it fades out quickly once it moves.
+                // Keep the glass with the first row and sample the wallpaper at its current position.
+                val expansion = (off / (rowPitch * 0.7f)).coerceIn(0f, 1f)
                 dock.translationY = -off
-                dock.alpha = (1f - off / (rowPitch * 0.7f)).coerceIn(0f, 1f)
+                icons.translationY = -off
+                // Off-screen controls must also leave remote-control focus navigation.
+                icons.visibility = if (off > 0f && off >= icons.bottom) View.INVISIBLE else View.VISIBLE
+                dock.alpha = 1f
+                frost.alpha = expansion
+                if (off > 0f) { dock.setImageDrawable(scrollGlass); scrollGlass.invalidateSelf() }
+                else dock.setImageDrawable(dockShown)
                 // The large clock gives way to the rows coming up under it.
-                if (!shelfShown) bigClock.alpha = dock.alpha
+                if (!shelfShown) bigClock.alpha = 1f - expansion
             }
         })
         scene.addView(grid, match())
@@ -427,8 +444,11 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         io.execute {
             val bmp = photo?.let { Wallpapers(this, Wallpapers.sourceFor(theme)).forHome(it) } ?: Backgrounds.render(if (Wallpapers.isPhoto(theme)) "green" else theme)
             val glass = LiquidGlass.bake(bmp, sw, sh, dockRect, dockRadius).also { it.prepareToDraw() }
+            val blurred = Wallpapers.blurred(bmp, darken = 0.22f)
             homeDock = glass
             main.post {
+                frost.setImageBitmap(blurred)
+                scrollGlass.texture(blurred)
                 if (!shelfShown) setDock(glass, 1200)
                 val old = bgPhoto
                 val next = android.graphics.drawable.BitmapDrawable(resources, bmp)
@@ -459,6 +479,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             fade.startTransition(fadeMs)
         }
         dockShown = next
+        if (scrollY > 0) dock.setImageDrawable(scrollGlass)
     }
 
     // ------------------------------------------------------------------- shelf
@@ -606,6 +627,18 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     /** The home scene alone, without the control center or any dialog; the glass controls sample it. */
     val sceneView: View get() = scene
 
+    /** An opaque wallpaper base prevents transitional scene alpha from baking black into glass. */
+    fun drawGlassScene(canvas: Canvas): Boolean {
+        val bitmap = (bgPhoto as? BitmapDrawable)?.bitmap ?: return false
+        val scale = maxOf(scene.width.toFloat() / bitmap.width, scene.height.toFloat() / bitmap.height)
+        val left = (scene.width - bitmap.width * scale) / 2f
+        val top = (scene.height - bitmap.height * scale) / 2f
+        canvas.drawBitmap(bitmap, null, android.graphics.RectF(left, top, left + bitmap.width * scale, top + bitmap.height * scale),
+            Paint(Paint.FILTER_BITMAP_FLAG))
+        scene.draw(canvas)
+        return true
+    }
+
     private fun updateNetworkIcon() {
         val cm = getSystemService(ConnectivityManager::class.java)
         val caps = try { cm.getNetworkCapabilities(cm.activeNetwork) } catch (e: SecurityException) { null }
@@ -624,7 +657,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
 
     fun isPinned(i: Input) = prefs.pinnedInputs.any { InputTile.decode(it)?.uri == i.uri }
 
-    private fun reload(changed: String? = null) {
+    private fun reload(changed: String? = null, forceFocus: Boolean = false) {
         io.execute {
             val list = repo.orderedVisible()
             main.post {
@@ -634,7 +667,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 grid.post {
                     // On first show the header buttons grab default focus; the grid should have it.
                     val headerOk = header.hasFocus() && !firstFocus
-                    if (!grid.hasFocus() && !headerOk && sheets.isEmpty() && !control.isOpen) focusAt(idx)
+                    if ((forceFocus || (!grid.hasFocus() && !headerOk)) && sheets.isEmpty() && !control.isOpen) focusAt(idx)
                     firstFocus = false
                     // A new list can leave the grid between rows; put the focused row back where it belongs.
                     grid.post { grid.focusedChild?.let { grid.layoutManager?.requestChildRectangleOnScreen(grid, it, Rect(), false, true) } }
@@ -680,6 +713,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     override fun onTileClicked(pos: Int, cell: TileCell) {
         if (moving >= 0) { endMove(); return }
         val app = adapter.apps.getOrNull(pos) ?: return
+        app.folder?.let { openFolder(it); return }
         app.input?.let { i -> io.execute { tv.setInput(i) }; return }
         // The stock launcher (Xiaomi's PatchWall) can only be opened through the system Home action.
         if (HomeGuardService.isStockHome(app.pkg) && HomeGuardService.openStockLauncher()) {
@@ -706,6 +740,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     override fun onTileLongPressed(pos: Int, cell: TileCell) {
         if (moving >= 0) return
         val app = adapter.apps.getOrNull(pos) ?: return
+        app.folder?.let { manageFolder(it, pos); return }
         app.input?.let { i ->
             showSheet(Sheet(root).title(app.label).message(null)
                 .button("编辑主屏幕") { startMove(pos) }
@@ -715,6 +750,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         }
         val s = Sheet(root).title(app.label).message(null)
             .button("编辑主屏幕") { startMove(pos) }
+            .button("移入文件夹") { chooseFolder(app) }
             .button("隐藏") {
                 prefs.hidden = prefs.hidden + app.pkg
                 reload()
@@ -737,6 +773,84 @@ class HomeActivity : Activity(), TileAdapter.Listener {
      * won't let go of ("pm uninstall --user 0": the APK stays on the system
      * partition, so it can be restored from settings).
      */
+    private fun foldersChanged() { repo.invalidate(); reload(forceFocus = true) }
+
+    private fun folderName(initial: String, save: (String) -> Unit) {
+        val input = android.widget.EditText(this).apply {
+            setSingleLine(); setText(initial); selectAll()
+            filters = arrayOf(android.text.InputFilter.LengthFilter(30))
+        }
+        val dialog = android.app.AlertDialog.Builder(this).setTitle("文件夹名称").setView(input)
+            .setPositiveButton("保存", null).setNegativeButton("取消", null).create()
+        dialog.setOnShowListener {
+            input.requestFocus()
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val name = input.text.toString().trim()
+                if (name.isEmpty()) input.error = "请输入名称"
+                else { save(name); dialog.dismiss() }
+            }
+        }
+        dialog.show()
+    }
+
+    private fun chooseFolder(app: AppEntry) {
+        val store = Folders(this)
+        val folders = store.read()
+        android.app.AlertDialog.Builder(this).setTitle("移入文件夹")
+            .setItems((listOf("新建文件夹…") + folders.map { it.name }).toTypedArray()) { _, index ->
+                if (index == 0) folderName("新文件夹") { name ->
+                    val folder = store.create(name, app.pkg)
+                    val order = adapter.apps.map { if (it.pkg == app.pkg) folder.id else it.pkg }
+                    prefs.order = (order + prefs.order).distinct()
+                    foldersChanged()
+                } else { store.move(app.pkg, folders[index - 1].id); foldersChanged() }
+            }.setNegativeButton("取消", null).show()
+    }
+
+    private fun openFolder(folder: AppFolder) {
+        val all = repo.allApps().associateBy { it.pkg }
+        val apps = folder.members.filter { it !in prefs.hidden }.mapNotNull { all[it] }
+        val dialog = android.app.AlertDialog.Builder(this).setTitle(folder.name)
+            .setItems(apps.map { it.label }.toTypedArray()) { _, index ->
+                val app = apps[index]
+                try {
+                    val intent = repo.launchIntent(app) ?: return@setItems
+                    if (!HomeGuardService.isStockHome(app.pkg) || !HomeGuardService.openStockLauncher()) startActivity(intent)
+                    rememberOpened(folder.id)
+                } catch (_: Exception) { Toast.makeText(this, "无法打开 ${app.label}", Toast.LENGTH_SHORT).show() }
+            }.setNeutralButton("管理") { _, _ -> manageFolder(folder, focusedPos) }
+            .setNegativeButton("返回", null).create()
+        if (apps.isEmpty()) dialog.setMessage("文件夹为空，可长按桌面应用移入。")
+        dialog.show()
+    }
+
+    private fun manageFolder(folder: AppFolder, pos: Int) {
+        val store = Folders(this)
+        android.app.AlertDialog.Builder(this).setTitle(folder.name)
+            .setItems(arrayOf("重命名", "移出应用", "编辑主屏幕", "解散文件夹")) { _, index ->
+                when (index) {
+                    0 -> folderName(folder.name) { name ->
+                        store.save(store.read().map { if (it.id == folder.id) it.copy(name = name) else it })
+                        foldersChanged()
+                    }
+                    1 -> {
+                        val all = repo.allApps().associateBy { it.pkg }
+                        val members = store.read().find { it.id == folder.id }?.members.orEmpty()
+                        android.app.AlertDialog.Builder(this).setTitle("移回桌面")
+                            .setItems(members.map { all[it]?.label ?: it }.toTypedArray()) { _, i ->
+                                store.move(members[i], null); foldersChanged()
+                            }.setNegativeButton("取消", null).show()
+                    }
+                    2 -> startMove(pos)
+                    3 -> android.app.AlertDialog.Builder(this).setTitle("解散 ${folder.name}？")
+                        .setMessage("应用图标将回到桌面，不会卸载应用。")
+                        .setPositiveButton("解散") { _, _ ->
+                            store.save(store.read().filter { it.id != folder.id }); foldersChanged()
+                        }.setNegativeButton("取消", null).show()
+                }
+            }.setNegativeButton("取消", null).show()
+    }
+
     private fun confirmDelete(app: AppEntry, pos: Int) {
         val system = repo.isSystem(app.pkg)
         if (!prefs.adbAuthorized) {
@@ -864,6 +978,12 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         // Any key skips the intro to its closing zoom; nothing behind it reacts meanwhile.
         intro?.let { if (event.action == KeyEvent.ACTION_UP) it.skip(); return true }
         val code = event.keyCode
+        if (event.action == KeyEvent.ACTION_DOWN && code == KeyEvent.KEYCODE_DPAD_RIGHT &&
+            sheets.isEmpty() && control.isOpen && avatar.isShown && control.atRightEdge()) {
+            control.close()
+            avatar.requestFocus()
+            return true
+        }
         if (event.action == KeyEvent.ACTION_UP && (code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_MENU)) {
             when {
                 sheets.isNotEmpty() -> sheets.last().dismiss()
@@ -903,6 +1023,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     override fun onResume() {
         super.onResume()
         avatar.visibility = if (prefs.showAvatar) View.VISIBLE else View.GONE
+        avatar.setPortrait(SettingsActivity.avatarFile(this)?.let { SettingsActivity.decodeIcon(it, 96) })
         adapter.tvosFocus = prefs.focusTvos(this)
         applyClockStyle()
         control.applyStyle()
@@ -997,6 +1118,10 @@ class IconButton(ctx: Context, icon: Int, private val portrait: Boolean = false,
             if (!portrait) img.setColorFilter(if (f) Color.BLACK else Color.WHITE)
             tweenScale(if (f) 1.1f else 1f, 150)
         }
+    }
+
+    fun setPortrait(bitmap: Bitmap?) {
+        if (bitmap == null) img.setImageResource(R.drawable.profile_avatar) else img.setImageBitmap(bitmap)
     }
 
     fun setIcon(res: Int) = img.setImageResource(res)

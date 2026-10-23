@@ -64,19 +64,18 @@ public/404.html         static 404 served by Cloudflare Pages
   `Film.astro` must retain all three Bensound attribution lines in both locales.
   License `55KIM7QUNXBISK9H` covers this video only; do not reuse it for another video.
 
-- **Screenshots** come from `TVHome/docs/screenshots/{home,grid,shelf,cc,frame}.jpg`
-  and are converted by `scripts/build-assets.py`. Never substitute a generated
-  image for a capture.
-- **Recordings** in `public/video/` (home, intro, settings, cc) are `adb shell screenrecord`
-  clips from the same TV, re-encoded to 1280x720 H.264 without sound; each poster in
-  `public/img/*-poster.webp` is a frame of its clip. They play only while on screen and
-  also with reduced motion (the hero button pauses them all). The boot animation shown is the Tigris wordmark, never a
-  trademarked video.
-- **The "before" pane** of the comparison is an SVG illustration and is labelled
-  「安装前示意图（非同一设备实拍）」 / "illustration, not the same TV" in the UI.
-- **The aerial screensaver** is shown as a labelled motion illustration. No
-  fabricated aerial frame is claimed to be a real capture; the photo frame next
-  to it *is* a real capture.
+- **Product media** now uses muted video loops. Home, Top Shelf, Control Center,
+  update center and aerial clips were captured on the owner's Sony BRAVIA with
+  `adb screenrecord` on 2026-10-24. Posters are frames from each recording.
+- **Startup video** previews the owner-supplied bundled default animation.
+- **Comparison** uses a cropped official Xiaomi PatchWall image with gentle
+  pan/zoom, explicitly labelled as an animated image rather than a recording.
+  Source: https://in.event.mi.com/in/PatchWall . The two sides are different TVs.
+- **Aerial** shows actual TV playback, not an illustration; Apple retains the
+  rights to its footage. The APK contains stream addresses, not aerial films.
+- **Bundled settings artwork and startup video** are owner-supplied third-party
+  assets, not original Tigris artwork; see the repository's asset provenance.
+
 - **Commands have two OS variants.** `com.leslie.tvhome` is always written in
   full, so no snippet depends on a shell variable. The install section has one
   PowerShell / macOS·Linux switch that swaps every block (and what the copy

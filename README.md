@@ -72,22 +72,115 @@
 
 电脑第一次连接时，电视会问「允许 USB 调试吗？」，选 **允许** 并勾上「始终允许」。小米每次待机唤醒都会自动关掉 ADB，装好 Tigris 后可以在设置里打开「保持 ADB 调试开启」。
 
-### 第二步：交给 Agent
+### 2. 安装
 
-把下面这句话和仓库链接发给 Codex、Claude Code 这类能执行命令的 Agent 即可：
+**让 Agent 装（推荐）**：把这段发给能在电脑上执行命令、且已授权访问本机的 Agent，例如 Codex、Claude Code，或具备命令执行能力的 WorkBuddy、豆包电脑版/工作版、千问电脑版、Trae：
 
-> 按 https://github.com/lesnolie/Tigris 的 AGENTS.md 把 Tigris 装到我的电视上，电视 IP 是 192.168.x.x
+```text
+请帮我把开源电视桌面 Tigris 装到电视上，并设置默认桌面或桌面守护。
+电视 IP：<电视IP>
+保持 ADB 常开：要
 
-Agent 会按 [AGENTS.md](AGENTS.md) 一步步完成：连接电视、安装、设为默认桌面、授权，以及索尼电视的额外配置。过程中电视上会弹出两三次确认框，需要你用遥控器点"允许"。TCL 电视上会弹出「多屏互动：正在发起应用推送」，选「同意」。
+安装说明：https://github.com/lesnolie/Tigris/blob/main/AGENTS.md
+打不开时：https://raw.githubusercontent.com/lesnolie/Tigris/main/AGENTS.md
+
+请先完整阅读安装说明，再在我的电脑上亲自运行命令，不要只告诉我步骤。
+需要我在电视上操作时提醒我。不要擅自重启、卸载旧版、清空配置或停用原厂桌面。
+签名不匹配时先寻找旧版签名密钥，不要自动卸载。
+最后按「验收」原样贴出以下输出，每条 adb 都加 -s <电视IP>:5555：
+- adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME
+- adb shell settings get secure enabled_accessibility_services
+- 按主页键并等待两秒后，adb shell "dumpsys window | grep mCurrentFocus"
+安装成功、主页键生效、待机唤醒和开机测试请分别说明；没有测过的不要说通过。
+```
+
+关键是 Agent **能在你的电脑上执行命令**。仅聊天的手机 App 或网页不会替你安装，具体取决于版本和授权能力。看验收的 `mCurrentFocus` 是否包含 **`com.leslie.tvhome`**，不能只看 Agent 说“装好了”。守护模式下默认 HOME 可能仍是原厂桌面，以按主页后的前台为准。
+
+**一行命令（macOS / Linux）**：先安装 Android Platform-Tools（`adb`）、`curl` 和 Python 3，把 IP 换成自己的电视：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lesnolie/Tigris/main/install.sh | KEEP_ADB=1 TV=192.168.1.20 bash
+```
+
+默认下载最新**正式版**并校验 SHA-256，不自动安装预发布。指定版本可加 `VERSION=v2.0.4`；Guard 版末尾用 `bash -s -- -s guard`。TCL 拒绝 ADB 安装时，脚本停止，按 [多屏互动说明](AGENTS.md#3-install) 推送 Guard 包。
+
+
+**手动**：下载 [Tigris.apk](https://github.com/lesnolie/Tigris/releases/latest/download/Tigris.apk)，逐条执行，遇到失败先处理再继续：
+
+```bash
+adb connect 192.168.1.20:5555
+# 保存原桌面输出，便于还原。
+adb -s 192.168.1.20:5555 shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME
+adb -s 192.168.1.20:5555 install -r Tigris.apk
+adb -s 192.168.1.20:5555 shell pm grant com.leslie.tvhome android.permission.WRITE_SECURE_SETTINGS
+adb -s 192.168.1.20:5555 shell cmd notification allow_listener com.leslie.tvhome/com.leslie.tvhome.RevivalListener
+adb -s 192.168.1.20:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW allow
+adb -s 192.168.1.20:5555 shell cmd package set-home-activity com.leslie.tvhome/.HomeActivity
+adb -s 192.168.1.20:5555 shell am start -n com.leslie.tvhome/.HomeActivity
+```
+
+Windows 用 Agent 或逐条运行上述 ADB 命令，无需 Bash。小米/TCL 等仍被原桌面接管时按 [守护说明](AGENTS.md#10-tvs-whose-system-fights-third-party-launchers-the-home-guard) 配置。
+
+**没有电脑**：项目没有逐一验证手机上的 ADB 工具。只用 U 盘装 APK 不等于设好了默认桌面和开机进入，建议用电脑完成验收。
+
+**升级**：再次执行安装命令，`adb install -r` 在签名一致时保留配置。2.0.4 起提供电视端更新中心：主屏幕设置 → 软件更新与投屏；已发布旧版仍需重新运行安装命令。2.0.4 起发布流程使用固定签名；旧预发布包可能使用不同密钥，`INSTALL_FAILED_UPDATE_INCOMPATIBLE` 表示要用旧密钥重新签名，不要自动卸载。
+
+## 还原
+
+使用原来安装时的电脑、电视地址和 `STATE_DIR`（若自定义过）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lesnolie/Tigris/main/install.sh | TV=192.168.1.20 bash -s -- restore
+```
+
+脚本关闭 Tigris 守护和保持 ADB 开启，恢复记录的原桌面；仅当前屏保为 Tigris 时恢复原屏保。默认保留 App 和配置；显式添加 `--uninstall`（`bash -s -- restore --uninstall`）才卸载。
+
+原桌面记录默认在电脑的 `~/.local/state/tigris/<电视IP>:5555/`，设过 `XDG_STATE_HOME` 时跟随该目录。升级不覆盖记录。记录缺失或已是 Tigris 时脚本停止，按 [人工还原](AGENTS.md#restore) 查明原桌面，不猜包名。
+
+交给 Agent 还原可复制：
+
+```text
+请完整阅读 https://github.com/lesnolie/Tigris/blob/main/AGENTS.md 的 Restore 部分，
+把电视（IP：<电视IP>）恢复到原桌面，Tigris 先不卸载。
+请在我的电脑上亲自执行，保留其他无障碍服务，不要猜原桌面包名。
+最后原样贴出 enabled_accessibility_services 和按主页键后的 mCurrentFocus 输出。
+```
+
+## 常见问题
+
+- **只装 APK，主页键还是原桌面**：还需要默认 HOME 或桌面守护配置。
+- **TCL / 雷鸟拒绝安装**：用 Guard 包和多屏互动，电视弹出提示时选择「同意」。
+- **`KEEP_ADB=1`**：明确启用“保持 ADB 调试开启”，用于固件待机后关闭 ADB 的情况。默认不启用，还原时关闭。
+- **系统太旧**：官方包最低 Android 9，`INSTALL_FAILED_OLDER_SDK` 无法靠更换安装器解决。LG webOS、三星 Tizen 等非 Android 系统不能安装。
+- **原桌面、账号、会员还在吗**：安装器不卸载或停用原桌面，不清除其他应用数据。固件开机广告不属于桌面，不能承诺去除。
+- **安装成功却不能开机进入**：主页、待机唤醒和开机要分别验证，重启需用户同意；机型范围见 README。
+
+## 它怎么接管桌面
+
+原生 Android TV 通常直接设为默认桌面。部分国产固件需要无障碍守护检测前台窗口，将原厂桌面切回 Tigris；通知监听帮助被系统清理后的恢复。守护不读取屏幕内容，通知监听不读取通知内容。安装器不会关闭原厂桌面，也不会自动重启或关闭电视。
+
+
+## 2.0.4 更新
+
+- 新增应用文件夹、手机上传头像，以及 Tigris / MiracastReceiver 统一更新中心。
+- 下滑渐入磨砂背景，Dock 和右上角随列表自然移出屏幕；修正控制中心玻璃闪黑与头像焦点。
+- 内置默认开机视频和设置页背景，设置图像向左偏移，为按钮留出空间。自定义素材优先，已有设置保留。
+- 安装脚本支持保留配置升级、记录原桌面和还原；官网提供 Agent 安装指令及动态实录。
 
 ## 功能
+
+- **展开全部应用**：下滑时背景渐变为磨砂虚化，第一排液态玻璃 Dock 保留玻璃底板，随应用列表向上滚动并自然离开屏幕，不吸顶。
+- **统一更新中心**：主屏幕设置 → 软件更新与投屏。每 6 小时联网检查 Tigris 与 [MiracastReceiver](https://github.com/weekdayjast/MiracastReceiver) 的 GitHub 正式版并通知；可开启自动下载及安装尝试。投屏组件作为独立应用安装，支持在更新中心打开。电视可能要求一次性安装来源授权或每次确认，无法保证全机型静默更新。检查包名、系统版本、递增版本号和签名，不自动卸载、不清数据、不接受降级。首次安装投屏包固定验证官方 v1.2.7 的签名证书，后续必须保持签名一致。
+
+- **桌面文件夹**：长按应用 → 移入文件夹，支持新建、改名、移出和解散。
+- **头像上传**：主屏幕设置 → 上传头像，手机扫码上传或恢复默认，返回桌面后生效。
 
 - **主屏幕**：右上角显示时间、网络和可开关的 Apple 风格默认头像，选中头像可打开主屏幕设置；底部是 5 列 16:9 圆角图标。选中时图标像 tvOS 一样弹性放大、顺着移动方向倾斜，表面滑过一道光，并带投影。时间可选 12 / 24 小时制，位置可选右上角、左上角带日期的大时钟或不显示。
 - **主屏幕设置**：仿 tvOS 设置的布局，左边是大图标和当前选项的说明，右边分组列出各项。每个视觉效果都能单独开关；聚焦动画和控制中心样式默认「自动」，配置较低的电视（内存不到 2.5 GB、Android 10 以下或 CPU 少于 4 核）自动用更省性能的样式。
 - **最近打开排第一**：从桌面成功打开一个 App 后，它自动移到第一个位置，其余图标保持相对顺序，重启后仍保留。打开失败、只移动焦点或切换 HDMI 输入不会改变应用顺序。
 - **编辑主屏幕**：长按图标进入编辑，用方向键调整位置。下一次打开 App 时，该 App 仍会自动移到最前面。
 - **删除 App，包括预装的**：长按菜单可以直接删除 App，连电视预装、系统设置里删不掉的也可以（`pm uninstall --user 0`，系统分区里的安装包还在）。删掉的预装 App 不再出现，也不会在后台运行；随时可以在"主屏幕设置 → 已删除的预装 App"里恢复。电视运行必需的组件（设置、电视播放器、输入源、桌面）不提供删除。
-- **Liquid Glass Dock**：第一排 App 放在沉底的玻璃板上，下一排只露出上沿，按下键展开全部 App。玻璃的模糊、边缘折射和彩色高光在 CPU 上按当前背景预先算好（Android 12 没有运行时着色器），所以滚动时不额外占用 GPU。
+- **Liquid Glass Dock**：第一排 App 放在沉底的玻璃板上，下一排只露出上沿，按下键展开全部 App。静止时预先生成模糊、边缘折射和彩色高光；滚动时复用模糊壁纸，按屏幕位置绘制玻璃底板，随第一排自然滑出屏幕。
 - **顶部内容**：选中 Dock 里的部分 App 时，上半屏轮播它的内容：
   - 云视听小电视：哔哩哔哩热门视频
   - 斗鱼：正在直播的热门直播间
@@ -128,7 +221,7 @@ Agent 会按 [AGENTS.md](AGENTS.md) 一步步完成：连接电视、安装、�
 
 - **本机调试授权**：App 会连接电视自己的 adb（`127.0.0.1:5555`，基于 [dadb](https://github.com/mobile-dev-inc/dadb)）来执行系统命令。前提是电视在开发者选项里打开了"网络调试 / ADB 调试"。首次使用时电视会弹出"允许调试吗？"，勾选"始终允许"即可。这个机制在各品牌电视上都通用。
 - **索尼**：电视有 BRAVIA IP 控制接口（`http://127.0.0.1/sony/`）时，亮度、音量和输入源都走这个接口。
-- **TCL / 雷鸟国行固件**（社区在雷鸟 75R685C 上验证，[#1](https://github.com/lesnolie/Tigris/pull/1)）：系统没有注册标准输入源，输入源一栏会打开 TCL 自己的信号源选择器；"系统设置"打开 TCL 设置；没有可用的背光接口，亮度滑条隐藏。这类固件拒绝 `adb install`（`INSTALL_FAILED_VERIFICATION_FAILURE`），另一个第三方桌面保持启用时，冷启动后可能弹出桌面选择，用 `pm disable-user` 停用它即可。
+- **TCL / 雷鸟国行固件**（社区在雷鸟 75R685C 上验证，[#1](https://github.com/lesnolie/Tigris/pull/1)）：系统没有注册标准输入源，输入源一栏会打开 TCL 自己的信号源选择器；"系统设置"打开 TCL 设置；没有可用的背光接口，亮度滑条隐藏。这类固件拒绝 `adb install`（`INSTALL_FAILED_VERIFICATION_FAILURE`），另一个第三方桌面保持启用时，冷启动后可能弹出桌面选择；先检查默认桌面和守护，不要自动停用原厂桌面。
 - **小米 / Redmi 国行固件**（按 [Aerial](https://github.com/pengchujin/aerial-tv) 的机型笔记移植，我们没有实机验证）：背光走 `picture_backlight`，输入源走小米播放器，"系统设置"和 Wi-Fi 打开小米自己的设置；小米应用商店、高清播放器、米家这些没有标准启动入口的系统 App 也会出现在主屏幕上。小米显示自己的（带广告的）屏保而不是 Android 的，Tigris 会在它出现前 15 秒先打开相框。
 - **其他品牌**：自动改用 Android 标准接口。音量用 `AudioManager`；输入源用 `TvInputManager` 列出 HDMI 口，再交给系统的电视播放器切换。Android 没有调背光的标准接口，所以亮度滑条会隐藏。用功放（ARC/eARC）时，标准音量调的可能是电视本身而不是功放。
 

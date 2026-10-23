@@ -1,5 +1,5 @@
 ---
-import { assets, shots } from "../data/site";
+import { clips } from "../data/site";
 import type { Copy, Locale } from "../data/lang";
 import { uiStrings } from "../data/strings";
 
@@ -23,26 +23,10 @@ const c = copy.compare;
     <div class="compare-wrap reveal">
       <div class="compare" data-compare>
         <div class="compare-after">
-          <img
-            src={shots.home.src}
-            srcset={`${shots.home.small} 640w, ${shots.home.src} 1280w`}
-            sizes="(max-width: 900px) 96vw, 1140px"
-            width="1280"
-            height="720"
-            loading="lazy"
-            decoding="async"
-            alt={c.afterAlt}
-          />
+          <video data-clip src={clips.home.src} poster={clips.home.poster} width="1280" height="720" muted loop playsinline preload="none" aria-label={c.afterAlt}></video>
         </div>
         <div class="compare-before">
-          <img
-            src={assets.beforeIllustration}
-            width="1280"
-            height="720"
-            loading="lazy"
-            decoding="async"
-            alt={c.beforeAlt}
-          />
+          <video data-clip src={clips.patchwall.src} poster={clips.patchwall.poster} width="1280" height="720" muted loop playsinline preload="none" aria-label={c.beforeAlt}></video>
         </div>
 
         <div class="compare-label is-before">{c.beforeLabel}<span>{c.beforeSub}</span></div>
@@ -70,7 +54,7 @@ const c = copy.compare;
 
     <div class="compare-hint reveal">
       <span>{c.hintKeys}</span>
-      <span>{c.disclaimer}</span>
+      <span>{c.disclaimer} <a href="https://in.event.mi.com/in/PatchWall" target="_blank" rel="noopener">Xiaomi · PatchWall ↗</a></span>
     </div>
   </div>
 </section>

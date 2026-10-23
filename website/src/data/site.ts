@@ -44,6 +44,10 @@ export const shots = {
 /* Real screen recordings (adb screenrecord on the same Sony BRAVIA), 1280x720 H.264 without
    sound, each with a poster frame taken from the clip itself. Never replace with rendered video. */
 export const clips = {
+  aerial: { src: "/video/aerial.mp4", poster: "/img/aerial-poster.webp" },
+  shelf: { src: "/video/shelf.mp4", poster: "/img/shelf-poster.webp" },
+  updates: { src: "/video/updates.mp4", poster: "/img/updates-poster.webp" },
+  patchwall: { src: "/video/patchwall.mp4", poster: "/img/patchwall-poster.webp" },
   home: { src: "/video/home.mp4", poster: "/img/home-poster.webp" },
   intro: { src: "/video/intro.mp4", poster: "/img/intro-poster.webp" },
   settings: { src: "/video/settings.mp4", poster: "/img/settings-poster.webp" },

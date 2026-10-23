@@ -1,5 +1,5 @@
 ---
-import { shots } from "../data/site";
+import { clips } from "../data/site";
 import type { Copy, Locale } from "../data/lang";
 
 interface Props {
@@ -25,14 +25,14 @@ const items = [
         ? [
             "5 列 16:9 圆角图标，选中时放大、倾斜、带投影",
             "长按进入编辑，用方向键把图标拖进 Dock 或任意位置",
-            "模糊、边缘折射和彩色高光随背景预计算，滚动不额外占用 GPU",
+            "下滑渐入磨砂背景，Dock 与右上角随列表自然滑出屏幕",
           ]
         : [
             "Five 16:9 rounded tiles that scale and tilt with a soft shadow on focus",
             "Long-press to edit, then move tiles into the dock with the D-pad",
             "Blur, edge refraction and highlights are precomputed per wallpaper on the CPU",
           ],
-    img: shots.home,
+    clip: clips.home,
     alt:
       locale === "zh"
         ? "液态玻璃 Dock 实拍：玻璃板上五个应用图标，玻璃边缘有折射与高光。"
@@ -56,7 +56,7 @@ const items = [
             "Live rooms on Douyu",
             "Read from the services' public web endpoints; no account needed",
           ],
-    img: shots.shelf,
+    clip: clips.shelf,
     alt:
       locale === "zh"
         ? "Top Shelf 实拍：上半屏是哔哩哔哩热门视频的大幅画面与标题，下方是玻璃 Dock。"
@@ -77,14 +77,14 @@ const items = [
         ? [
             "网络、待机、关机、重启、释放内存、相框、设置",
             "亮度、音量与 HDMI 输入源按电视能力自动出现",
-            "Android 12+ 共享 GPU 模糊图层；较旧系统使用背景采样",
+            "提前准备背景采样，玻璃控件自然淡入",
           ]
         : [
             "Network, standby, power, restart, memory, photo frame, settings",
             "Brightness, volume and HDMI input appear only where the TV exposes them",
-            "Android 12+ reuses a shared GPU blur layer; older systems sample the wallpaper",
+            "Prepares wallpaper samples ahead of time for a smooth glass reveal",
           ],
-    img: shots.cc,
+    clip: clips.cc,
     alt:
       locale === "zh"
         ? "控制中心实拍：右侧悬浮着关机、待机、网络、亮度、音量与输入源等液态玻璃控件。"
@@ -108,12 +108,12 @@ const items = [
             "Optionally switch the content to Apple TV aerial films (see above)",
             "Set it as the system screensaver after 1–30 minutes of idle time",
           ],
-    img: shots.grid,
+    clip: clips.aerial,
     alt:
       locale === "zh"
-        ? "展开全部 App 的网格实拍：多行 16:9 应用图标铺在壁纸上。"
-        : "All-apps grid capture over the wallpaper.",
-    caption: locale === "zh" ? "展开全部 App · 网格布局" : "All apps · grid layout",
+        ? "电视实际播放的地球航拍屏保。"
+        : "Aerial screensaver playing on the TV.",
+    caption: locale === "zh" ? "航拍屏保 · 电视实际播放录屏" : "Aerial screensaver · recorded on TV",
     flip: true,
   },
 ];
@@ -139,16 +139,7 @@ const items = [
         <figure class="feature-media">
           <div class="tv-frame">
             <div class="tv-screen">
-              <img
-                src={item.img.src}
-                srcset={`${item.img.small} 640w, ${item.img.src} 1280w`}
-                sizes="(max-width: 899px) 92vw, 52vw"
-                width="1280"
-                height="720"
-                loading="lazy"
-                decoding="async"
-                alt={item.alt}
-              />
+              <video data-clip src={item.clip.src} poster={item.clip.poster} width="1280" height="720" muted loop playsinline preload="none" aria-label={item.alt}></video>
             </div>
           </div>
           <figcaption>{item.caption}</figcaption>

@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'app/**'
+      - 'install.sh'
+      - 'tools/test-install.sh'
       - 'gradle/**'
       - '*.gradle.kts'
       - '.github/workflows/android.yml'
@@ -14,6 +16,8 @@ on:
       - main
     paths:
       - 'app/**'
+      - 'install.sh'
+      - 'tools/test-install.sh'
       - 'gradle/**'
       - '*.gradle.kts'
       - '.github/workflows/android.yml'
@@ -49,6 +53,9 @@ jobs:
 
       - name: JVM unit tests - standard and guard
         run: bash ./gradlew --no-daemon :app:testStandardDebugUnitTest :app:testGuardDebugUnitTest --stacktrace
+
+      - name: Installer safety and restore contracts
+        run: bash tools/test-install.sh
 
       - name: Build both release APK flavors
         run: bash ./gradlew --no-daemon :app:assembleStandardRelease :app:assembleGuardRelease --stacktrace

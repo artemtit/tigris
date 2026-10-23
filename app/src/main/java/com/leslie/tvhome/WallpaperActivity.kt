@@ -130,7 +130,7 @@ class WallpaperActivity : Activity() {
         stopLater.removeCallbacks(stop)
         address.text = "正在启动…"
         io.execute {
-            val url = PhoneServer.start(this)
+            val url = PhoneServer.start(this)?.let { if (intent.getBooleanExtra("upload_avatar", false)) it + "#avatar" else it }
             val bmp = url?.let { PhoneServer.qr(it) }
             main.post {
                 address.text = url ?: "电视没有连上网络，连上后再打开这里。"

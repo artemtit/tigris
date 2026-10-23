@@ -8,3 +8,22 @@
 - **ZXing core** (build dependency) — Copyright ZXing authors, Apache License 2.0.
 - **Aerial** (https://github.com/pengchujin/aerial-tv) — MIT License, Copyright (c) 2026 pengchujin. Tigris ports its home guard and revival (`Guard.kt`), Xiaomi device details (`tv/XiaomiAdapter.kt`, `AppRepo.kt`), the phone page (`PhoneServer.kt`, `assets/web/index.html`, restyled), `tools/tcast-push.py`, and ships its aerial film catalogue `app/src/main/assets/aerials.json` (addresses and place names from Apple's public tvOS aerial resources; the films themselves stream from Apple and are not included).
 - **Apple Root CA** (`app/src/main/res/raw/apple_root_ca.pem`) — Apple's public root certificate, trusted only for `sylvan.apple.com`, which serves the aerial films.
+
+
+## 2.0.4 bundled presentation assets
+
+The project owner supplied `app/src/main/res/raw/default_intro.mp4` (Apple TV
+startup animation, 1080p) and `app/src/main/res/drawable-nodpi/default_settings_bg.png`
+(Apple-branded settings artwork) for bundling. Apple names and logos remain
+their owners' trademarks; these files are not covered by Tigris's source-code
+license. Tigris is independent and not endorsed by Apple.
+
+The website comparison's `patchwall.mp4` animates a cropped Xiaomi official
+PatchWall marketing image; it is not an operation recording or a same-device
+before/after test. Source: https://in.event.mi.com/in/PatchWall ; original image:
+https://i03.appmifile.com/113_operator_in/16/04/2024/738607ef96ffbbe88e80a800c851085d.png .
+Xiaomi and depicted media retain their respective rights.
+
+The website aerial preview is a short recording of the owner's television
+playing the existing Apple-hosted screensaver, with the Tigris clock and place
+caption. It does not change the app's streaming-only aerial implementation.

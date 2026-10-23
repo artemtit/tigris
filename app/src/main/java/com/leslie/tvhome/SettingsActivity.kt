@@ -25,6 +25,8 @@ import com.leslie.tvhome.tv.TvControls
 class SettingsActivity : Activity() {
     companion object {
         const val SONY_DREAM = "com.sony.dtv.braviashow/com.sony.dtv.braviashow.BraviaDayDreamService"
+        const val AVATAR_FILE = "profile_avatar.png"
+        fun avatarFile(ctx: android.content.Context) = java.io.File(ctx.filesDir, AVATAR_FILE).takeIf { it.isFile }
         const val ICON_FILE = "settings_icon.png"
         const val BACKDROP_FILE = "settings_bg.jpg"
 
@@ -70,6 +72,7 @@ class SettingsActivity : Activity() {
     private lateinit var icon: ImageView
     private lateinit var backdrop: ImageView
     private lateinit var scroll: ScrollView
+    private var bundledBackdrop = false
     private var page = Page.MAIN
     /** The main-page row that opened the current sub-page, focused again on the way back. */
     private var opener = 0
@@ -148,11 +151,14 @@ class SettingsActivity : Activity() {
 
     /** The uploaded background, whose TV stands in for the big icon; or the plain dark page. RGB_565: half the memory. */
     private fun showBackdrop() {
-        val bmp = (if (prefs.settingsBg) backdropFile(this) else null)?.let {
+        val file = if (prefs.settingsBg) backdropFile(this) else null
+        bundledBackdrop = prefs.settingsBg && file == null
+        val bmp = file?.let {
             android.graphics.BitmapFactory.decodeFile(it.path, android.graphics.BitmapFactory.Options().apply {
                 inPreferredConfig = android.graphics.Bitmap.Config.RGB_565
             })
-        }
+        } ?: if (bundledBackdrop) android.graphics.BitmapFactory.decodeResource(resources, R.drawable.default_settings_bg,
+            android.graphics.BitmapFactory.Options().apply { inPreferredConfig = android.graphics.Bitmap.Config.RGB_565 }) else null
         backdrop.setImageBitmap(bmp)
         placeBackdrop(backdrop)
         icon.visibility = if (bmp != null) android.view.View.INVISIBLE else android.view.View.VISIBLE
@@ -168,7 +174,8 @@ class SettingsActivity : Activity() {
     private fun placeBackdrop(v: ImageView) {
         val d = v.drawable ?: return
         if (v.width == 0 || d.intrinsicWidth <= 0) return
-        val s = maxOf(v.width / d.intrinsicWidth.toFloat(), v.height / d.intrinsicHeight.toFloat()) * 1.08f
+        // The bundled artwork sits further left, clear of the focused right-hand buttons.
+        val s = maxOf(v.width / d.intrinsicWidth.toFloat(), v.height / d.intrinsicHeight.toFloat()) * if (bundledBackdrop) 1.12f else 1.08f
         v.imageMatrix = android.graphics.Matrix().apply {
             setScale(s, s)
             postTranslate(v.width - d.intrinsicWidth * s, (v.height - d.intrinsicHeight * s) / 2)
@@ -184,6 +191,10 @@ class SettingsActivity : Activity() {
         heading.text = "主屏幕设置"
         about.text = ""
 
+        section("软件")
+        row("软件更新与投屏", "检查 Tigris 和 MiracastReceiver 的新版本，安装投屏组件或开启自动更新。", { "打开" }) {
+            startActivity(Intent(this, UpdateActivity::class.java))
+        }
         section("外观")
         row("时间格式", "主屏幕和控制中心里的时间用 12 小时制（11:49 AM）还是 24 小时制（23:49）。",
             { if (prefs.clock24) "24 小时" else "12 小时" }) { prefs.clock24 = !prefs.clock24 }
@@ -205,7 +216,10 @@ class SettingsActivity : Activity() {
             prefs.ownIcon = !prefs.ownIcon
             showIcon(icon)
         }
-        row("显示右上角头像", "右上角的头像，按它可以打开控制中心。", { onOff(prefs.showAvatar) }) { prefs.showAvatar = !prefs.showAvatar }
+        row("上传头像", "手机扫描二维码，在网页的「头像」中上传照片，返回桌面后显示。", { "手机上传" }) {
+            startActivity(Intent(this, WallpaperActivity::class.java).putExtra("upload_avatar", true))
+        }
+        row("显示右上角头像", "右上角的头像，按它可以打开主屏幕设置。", { onOff(prefs.showAvatar) }) { prefs.showAvatar = !prefs.showAvatar }
         row("聚焦动画", "tvOS：选中的 App 放大、跟着方向倾斜，表面有一道光。简洁：只放大。" +
             "\n“自动”在配置较低的电视上用简洁。", {
             auto(prefs.focusStyle, prefs.focusTvos(this), "tvOS", "简洁")
@@ -222,7 +236,7 @@ class SettingsActivity : Activity() {
         section("开机动画")
         val video = Intro.videoFile(this) != null
         row("开机动画", "开机后第一次显示主屏幕时播放，最后标志放大进入桌面。按任意键可以跳过。" +
-            if (video) "" else "\n还没有上传动画视频，会用 Tigris 字样代替。", {
+            if (video) "" else "\n默认播放内置开机视频，也可上传自己的视频。", {
             when (prefs.intro) { Prefs.INTRO_BOOT -> "开机时"; Prefs.INTRO_WAKE -> "开机和唤醒时"; else -> "关" }
         }) {
             val opts = listOf(Prefs.INTRO_OFF, Prefs.INTRO_BOOT, Prefs.INTRO_WAKE)
@@ -231,8 +245,8 @@ class SettingsActivity : Activity() {
             prefs.introBoot = Intro.bootStamp(this)
         }
         row("动画内容", "上传的视频：比如 Apple TV 的开机动画，结尾的标志放大进入桌面。Tigris 字样：Tigris 字样淡入后放大。" +
-            if (video) "" else "\n还没有上传视频时，两种都显示 Tigris 字样。", {
-            if (prefs.introSource == Prefs.INTRO_WORDMARK) "Tigris 字样" else "上传的视频"
+            if (video) "" else "\n没有上传视频时，视频模式使用内置动画。", {
+            if (prefs.introSource == Prefs.INTRO_WORDMARK) "Tigris 字样" else if (video) "上传的视频" else "内置视频"
         }) {
             prefs.introSource = if (prefs.introSource == Prefs.INTRO_WORDMARK) Prefs.INTRO_VIDEO else Prefs.INTRO_WORDMARK
         }

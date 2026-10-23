@@ -58,7 +58,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
     private var blurX = 0f
     private var blurY = 0f
     private var blurDirty = true
-    private val resample = Runnable { if (isOpen && blurDirty) sampleBehind() }
+    private val resample = Runnable { if (blurDirty) sampleBehind() }
     /** Saturated and lifted, so the glass takes on the colour of what is behind it. */
     private val toneMatrix = ColorMatrix().apply {
         setSaturation(1.5f)
@@ -434,7 +434,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
     fun refreshGlass() {
         if (destroyed) return
         blurDirty = true
-        if (isOpen && glassStyle) {
+        if (glassStyle) {
             host.removeCallbacks(resample)
             host.postDelayed(resample, 80)
         }
@@ -456,10 +456,10 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         val bmp = try {
             Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also {
                 Canvas(it).apply {
-                    drawColor(Color.BLACK)
                     scale(sampleScale, sampleScale)
                     translate(-left.toFloat(), -top.toFloat())
-                    home.sceneView.draw(this)
+                    // Keep the last good texture until the wallpaper is ready after resume/recreation.
+                    if (!home.drawGlassScene(this)) return
                 }
             }
         } catch (e: RuntimeException) {
@@ -729,6 +729,19 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         memButton.requestFocus()
         host.removeCallbacks(ticker)
         host.post(ticker)
+    }
+
+    fun atRightEdge(): Boolean {
+        val current = panel.findFocus() ?: return false
+        // Right on a slider must continue to adjust its value.
+        if (current.contentDescription == "亮度" || current.contentDescription == "音量") return false
+        val next = current.focusSearch(View.FOCUS_RIGHT)
+        var parent: android.view.ViewParent? = next?.parent
+        while (parent != null) {
+            if (parent === panel) return false
+            parent = parent.parent
+        }
+        return true
     }
 
     fun close() {

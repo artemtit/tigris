@@ -1,6 +1,5 @@
 import type { Copy } from "./lang";
 import { brand, cmds } from "./site";
-import type { Cmd } from "./site";
 
 /* Local alias keeps the copy readable. */
 const C: typeof cmds = cmds;
@@ -25,7 +24,7 @@ export const zh = {
     copy: "复制",
     copied: "已复制",
     copyFailed: "复制失败",
-    compareLabel: "对比通用桌面示意与 Tigris 实拍截图",
+    compareLabel: "对比小米 PatchWall 官方图与 Tigris 电视实录",
     compareValue: (p: number) => `显示 ${p}% 的安装前画面`,
     slideshow: { prev: "上一张", next: "下一张" },
     lightbox: { close: "关闭", prev: "上一张", next: "下一张", name: "截图查看器" },
@@ -74,15 +73,15 @@ export const zh = {
     compare: {
       eyebrow: "BEFORE / AFTER",
       title: "左右滑动，看见改变。",
-      lede: "左边是安装前的<strong>示意图（非同一设备实拍）</strong>，说明常见的平铺桌面；右边是 Tigris 在索尼 BRAVIA 上的<strong>真实截图</strong>。拖动中轴看看差别。",
+      lede: "左边是小米官方展示的 <strong>PatchWall 桌面</strong>，右边是 Tigris 的<strong>电视实录</strong>。拖动分界线，看看两种桌面的不同。",
       beforeLabel: "安装前",
-      beforeSub: "示意图 · 非同一设备实拍",
+      beforeSub: "小米官方图 · 动态展示",
       afterLabel: "安装后",
-      afterSub: "Tigris · 实拍",
-      beforeAlt: "通用 Android TV 桌面布局示意插图，非实拍。",
+      afterSub: "Tigris · 电视实录",
+      beforeAlt: "小米官方 PatchWall 桌面图片，轻微平移缩放展示。",
       afterAlt: "Tigris 主屏幕实拍，风景照片上是液态玻璃 Dock。",
       hintKeys: "拖动、点击或聚焦把手后用 ← → 调整，Shift 加速，双击回到中间。",
-      disclaimer: "安装前画面为示意图，不是同一设备的真实截图。",
+      disclaimer: "左侧为小米官网图片的动态展示，不是操作录像；两侧不是同一设备。",
     },
 
     aerial: {
@@ -114,14 +113,14 @@ export const zh = {
       label: "播放 Tigris 介绍片（有声音）",
     },
     gallery: {
-      eyebrow: "SCREENSHOTS",
-      title: "全部来自一台真实的电视。",
-      lede: "索尼 BRAVIA XR-55A80J，Android TV 12，1280 × 720 实拍截图和录屏。点击任意一张放大查看。",
+      eyebrow: "IN MOTION",
+      title: "让细节，动起来。",
+      lede: "桌面、控制中心和航拍来自索尼 BRAVIA 实录；开机动画为内置素材预览。点击放大，观看完整片段。",
     },
 
     install: {
       eyebrow: "INSTALL",
-      title: "从下载到新桌面，按步骤来。",
+      title: "选一种方式，把 Tigris 带回家。",
       lede: "一台和电视连在同一个 Wi-Fi 的电脑、电视的 IP 地址、打开的 ADB 调试，就够了。支持 Android 9 及以上，不需要 root。",
       packages: [
         {
@@ -339,7 +338,7 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
         title: "让 AI 帮你安装（推荐）",
         body: "不熟悉命令行也可以：把下面这句话连同仓库链接发给 Codex、Claude Code 这类能执行命令的 Agent，它会先确认品牌和 IP，再按 AGENTS.md 安装、验证，并保留原桌面的恢复方案。",
         prompt:
-          "请按照 https://github.com/lesnolie/Tigris/blob/main/AGENTS.md，帮我在 Android TV 上安装 Tigris。先确认我的电视品牌和 IP，再逐步安装、验证，并保留原桌面的可恢复方案。不要未经我确认停用系统桌面。",
+          "请帮我把开源电视桌面 Tigris 装到我的电视，并设为开机进入的桌面。\n电视 IP：<电视IP>\n保持 ADB 常开：要\n\n请先完整阅读 https://tigris-tv.pages.dev/agent.md（备用：https://raw.githubusercontent.com/lesnolie/Tigris/main/AGENTS.md），再在我的电脑上亲自运行命令。需要电视端操作时提醒我。保留现有配置，不要自动卸载。\n最后贴出以下命令的原始输出：\n- adb shell \"cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME\"\n- adb shell settings get secure enabled_accessibility_services\n- 按主页键后 adb shell \"dumpsys window | grep mCurrentFocus\"",
         note: "过程中电视会弹出两三次确认框，需要你用遥控器选择「允许」。TCL 上会弹出「多屏互动：正在发起应用推送」，选择「同意」即可。",
       },
       safety:

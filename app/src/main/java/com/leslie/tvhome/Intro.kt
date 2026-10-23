@@ -31,8 +31,8 @@ import kotlin.math.sin
  * flies into its home screen. The logo is taken from the video's last frame (whatever is bright on
  * black), so any clip that ends on a logo works. Without a video, the name "Tigris" stands in.
  *
- * The video is not part of the app: the phone page (壁纸 → QR code) uploads one, or adb pushes it
- * to Android/data/com.leslie.tvhome/files/intro.mp4.
+ * A default video is bundled; the phone page (壁纸 → QR code) can upload an override, or adb
+ * can push one to Android/data/com.leslie.tvhome/files/intro.mp4.
  */
 class Intro(
     private val ctx: Context,
@@ -72,11 +72,11 @@ class Intro(
     }
 
     private fun begin() {
-        val video = if (Prefs(ctx).introSource == Prefs.INTRO_WORDMARK) null else videoFile(ctx)
-        if (video == null) {
+        if (Prefs(ctx).introSource == Prefs.INTRO_WORDMARK) {
             showWordmark()
             return
         }
+        val video = videoFile(ctx)
         val tv = TextureView(ctx)
         texture = tv
         tv.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
@@ -92,12 +92,15 @@ class Intro(
         overlay.addView(tv, FrameLayout.LayoutParams(-1, -1))
     }
 
-    private fun play(file: File, surface: Surface) {
+    private fun play(file: File?, surface: Surface) {
         if (finished) return
         val mp = MediaPlayer()
         player = mp
         try {
-            mp.setDataSource(file.path)
+            if (file != null) mp.setDataSource(file.path)
+            else ctx.resources.openRawResourceFd(R.raw.default_intro).use {
+                mp.setDataSource(it.fileDescriptor, it.startOffset, it.length)
+            }
             mp.setSurface(surface)
             if (!sound) mp.setVolume(0f, 0f)
             mp.setOnPreparedListener { it.start() }

@@ -88,6 +88,12 @@ class PhoneServer private constructor(private val ctx: Context, private val toke
                     json(state())
                 }
                 post && path == "/api/intro/upload" -> uploadIntro(session)
+                post && path == "/api/avatar/upload" -> uploadAvatar(session)
+                post && path == "/api/avatar/delete" -> {
+                    session.parseBody(HashMap())
+                    synchronized(this) { SettingsActivity.avatarFile(ctx)?.delete() }
+                    json(state())
+                }
                 post && path == "/api/icon/upload" -> uploadIcon(session)
                 post && path == "/api/backdrop/upload" -> uploadBackdrop(session)
                 post && path == "/api/backdrop/delete" -> {
@@ -128,6 +134,7 @@ class PhoneServer private constructor(private val ctx: Context, private val toke
         .put("intro", prefs.intro)
         .put("introVideo", Intro.videoFile(ctx)?.length() ?: 0L)
         .put("introSource", prefs.introSource)
+        .put("avatar", SettingsActivity.avatarFile(ctx) != null)
         .put("icon", SettingsActivity.iconFile(ctx) != null)
         .put("backdrop", SettingsActivity.backdropFile(ctx) != null)
         .put("mine", names(Wallpapers.MINE))
@@ -199,6 +206,32 @@ class PhoneServer private constructor(private val ctx: Context, private val toke
     }
 
     /** The settings icon: any picture, kept as PNG, at most 960 px wide (a tile is drawn at 400 or so). */
+    @Synchronized
+    private fun uploadAvatar(session: IHTTPSession): Response {
+        val files = HashMap<String, String>()
+        session.parseBody(files)
+        val file = files.values.map { File(it) }.firstOrNull { it.isFile && it.length() in 1..MAX_UPLOAD }
+            ?: return json(state().put("ok", false))
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.path, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return json(state().put("ok", false))
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 1024) sample *= 2
+        val src = BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample })
+            ?: return json(state().put("ok", false))
+        val size = minOf(src.width, src.height)
+        val crop = Bitmap.createBitmap(src, (src.width - size) / 2, (src.height - size) / 2, size, size)
+        val scaled = Bitmap.createScaledBitmap(crop, 256, 256, true)
+        val target = android.util.AtomicFile(File(ctx.filesDir, SettingsActivity.AVATAR_FILE))
+        val output = target.startWrite()
+        try {
+            check(scaled.compress(Bitmap.CompressFormat.PNG, 100, output))
+            target.finishWrite(output)
+        } catch (e: Exception) { target.failWrite(output); throw e }
+        finally { listOf(src, crop, scaled).distinct().forEach { it.recycle() } }
+        return json(state().put("ok", true))
+    }
+
     private fun uploadIcon(session: IHTTPSession): Response {
         val files = HashMap<String, String>()
         session.parseBody(files)

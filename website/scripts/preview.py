@@ -11,7 +11,7 @@ import mimetypes
 import socketserver
 from pathlib import Path
 
-ROOT = Path(r"C:\work\appletv\TVHome\website\dist")
+ROOT = Path(__file__).resolve().parents[1] / "dist"
 PORT = 8789
 
 mimetypes.add_type("image/webp", ".webp")

@@ -157,10 +157,10 @@ class Prefs(ctx: Context) {
 
     /** When the boot animation plays: [INTRO_OFF], [INTRO_BOOT] (after a cold boot) or [INTRO_WAKE] (also on wake from standby). */
     var intro: String
-        get() = sp.getString("intro", INTRO_OFF)!!
+        get() = sp.getString("intro", INTRO_BOOT)!!
         set(v) = sp.edit().putString("intro", v).apply()
 
-    /** What plays: the uploaded video ([INTRO_VIDEO], the wordmark when there is none) or the Tigris wordmark ([INTRO_WORDMARK]). */
+    /** What plays: uploaded or bundled video ([INTRO_VIDEO]), or the Tigris wordmark ([INTRO_WORDMARK]). */
     var introSource: String
         get() = sp.getString("intro_source", INTRO_VIDEO)!!
         set(v) = sp.edit().putString("intro_source", v).apply()

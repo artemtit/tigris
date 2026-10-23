@@ -1,5 +1,5 @@
 ---
-import { clips, shots } from "../data/site";
+import { clips } from "../data/site";
 import type { Copy, Locale } from "../data/lang";
 import { uiStrings } from "../data/strings";
 
@@ -14,11 +14,11 @@ const g = copy.gallery;
 
 /* slot: the grid cell (two wide ones, then three). A clip plays in place and in the viewer. */
 const items = [
-  { slot: "home", clip: clips.intro, label: locale === "zh" ? "开机动画" : "Boot animation", file: "intro.mp4", alt: locale === "zh" ? "开机动画录屏：Tigris 字样放大进入主屏幕。" : "Boot animation recording: the Tigris wordmark zooms into the home screen." },
-  { slot: "shelf", img: shots.shelf, label: locale === "zh" ? "顶部内容" : "Top Shelf", file: "shelf.jpg", alt: locale === "zh" ? "Top Shelf 顶部内容实拍。" : "Top Shelf capture." },
-  { slot: "grid", clip: clips.settings, label: locale === "zh" ? "设置" : "Settings", file: "settings.mp4", alt: locale === "zh" ? "设置页录屏。" : "Settings page recording." },
+  { slot: "home", clip: clips.intro, label: locale === "zh" ? "开机动画" : "Boot animation", file: "intro.mp4", alt: locale === "zh" ? "内置开机动画素材预览。" : "Bundled startup video preview." },
+  { slot: "shelf", clip: clips.shelf, label: locale === "zh" ? "顶部内容" : "Top Shelf", file: "shelf.mp4", alt: locale === "zh" ? "Top Shelf 顶部内容实拍。" : "Top Shelf capture." },
+  { slot: "grid", clip: clips.updates, label: locale === "zh" ? "软件更新" : "Software updates", file: "updates.mp4", alt: locale === "zh" ? "软件更新页录屏。" : "Software update page recording." },
   { slot: "cc", clip: clips.cc, label: locale === "zh" ? "控制中心" : "Control Center", file: "cc.mp4", alt: locale === "zh" ? "控制中心录屏。" : "Control Center recording." },
-  { slot: "frame", img: shots.frame, label: locale === "zh" ? "相框屏保" : "Photo frame", file: "frame.jpg", alt: locale === "zh" ? "相框屏保实拍。" : "Photo frame capture." },
+  { slot: "frame", clip: clips.aerial, label: locale === "zh" ? "航拍屏保" : "Aerial screensaver", file: "aerial.mp4", alt: locale === "zh" ? "航拍屏保录屏。" : "Aerial screensaver recording." },
 ];
 ---
 <section class="section gallery-section" id="gallery">
@@ -30,19 +30,18 @@ const items = [
     </div>
 
     <div class="gallery reveal">
-      {items.map((item, i) => (
+      {items.map((item) => (
         <figure class={`g-${item.slot}`}>
           <button
             type="button"
             data-lightbox-open
-            data-full={item.clip ? item.clip.src : item.img!.src}
-            data-video={item.clip ? "" : undefined}
+            data-full={item.clip.src}
+            data-video={""}
             data-caption={item.label}
             data-alt={item.alt}
             aria-label={item.label}
           >
-            {item.clip ? (
-              <video
+            <video
                 data-clip
                 src={item.clip.src}
                 poster={item.clip.poster}
@@ -54,18 +53,6 @@ const items = [
                 preload="none"
                 aria-label={item.alt}
               ></video>
-            ) : (
-              <img
-                src={item.img!.small}
-                srcset={`${item.img!.small} 640w, ${item.img!.src} 1280w`}
-                sizes={i < 2 ? "(max-width: 860px) 92vw, 48vw" : "(max-width: 860px) 46vw, 32vw"}
-                width="1280"
-                height="720"
-                loading="lazy"
-                decoding="async"
-                alt={item.alt}
-              />
-            )}
           </button>
           <figcaption>{item.label} <em>{item.file}</em></figcaption>
         </figure>

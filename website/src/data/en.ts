@@ -1,5 +1,4 @@
 import { brand, cmds } from "./site";
-import type { Cmd } from "./site";
 import type { Copy } from "./lang";
 
 const C: typeof cmds = cmds;
@@ -24,7 +23,7 @@ export const en = {
   copy: "Copy",
   copied: "Copied",
   copyFailed: "Copy failed",
-  compareLabel: "Compare the generic launcher illustration with a real Tigris capture",
+  compareLabel: "Compare the Xiaomi PatchWall official image with a Tigris TV recording",
   compareValue: (p: number) => `Showing ${p}% of the before image`,
   slideshow: { prev: "Previous", next: "Next" },
   lightbox: { close: "Close", prev: "Previous", next: "Next", name: "Screenshot viewer" },
@@ -73,15 +72,15 @@ export const en = {
   compare: {
     eyebrow: "BEFORE / AFTER",
     title: "Drag to reveal the difference.",
-    lede: "The left side is an <strong>illustration of the before state, not a capture of the same TV</strong>. The right side is a <strong>real capture</strong> from Tigris on a Sony BRAVIA. Drag the divider.",
+    lede: "Xiaomi’s official <strong>PatchWall image</strong> on the left. A <strong>Tigris recording</strong> on the right. Drag the divider to compare the two interfaces.",
     beforeLabel: "Before",
-    beforeSub: "Illustration · not the same TV",
+    beforeSub: "Xiaomi image · animated view",
     afterLabel: "After",
-    afterSub: "Tigris · real capture",
-    beforeAlt: "Illustration of a generic Android TV grid, not a real screenshot.",
+    afterSub: "Tigris · TV recording",
+    beforeAlt: "Official Xiaomi PatchWall image with a gentle pan and zoom.",
     afterAlt: "Tigris home screen, real capture.",
     hintKeys: "Drag, click, or focus the handle and use ← →. Hold Shift for larger steps; double-click to reset.",
-    disclaimer: "The before image is an illustration of a generic launcher, not a capture of the same TV.",
+    disclaimer: "The left side animates an official Xiaomi image; it is not an interaction recording. These are different devices.",
   },
 
   aerial: {
@@ -113,9 +112,9 @@ export const en = {
     label: "Play the Tigris film (with sound)",
   },
   gallery: {
-    eyebrow: "SCREENSHOTS",
-    title: "Every image comes from a real TV.",
-    lede: "Sony BRAVIA XR-55A80J, Android TV 12, original 1280 × 720 captures and screen recordings. Select one to enlarge.",
+    eyebrow: "IN MOTION",
+    title: "See the details in motion.",
+    lede: "Home, Control Center and aerial clips were recorded on a Sony BRAVIA. The startup clip previews the bundled video. Select a clip to enlarge.",
   },
 
   install: {
@@ -290,7 +289,7 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
       title: "Let an AI agent do it (recommended)",
       body: "Send this message with the repository link to an agent that can run commands (Codex, Claude Code and similar). It confirms your brand and IP, installs, verifies and keeps a way back to the stock home screen.",
       prompt:
-        "Follow https://github.com/lesnolie/Tigris/blob/main/AGENTS.md and install Tigris on my Android TV. First confirm my TV brand and IP address, then install and verify step by step, and keep a documented way to restore the original home screen. Do not disable the system launcher without my confirmation.",
+        "Install the open-source Tigris launcher on my TV and make it the home screen.\nTV IP: <TV_IP>\nKeep ADB enabled: yes\n\nRead https://tigris-tv.pages.dev/agent.md fully first (fallback: https://raw.githubusercontent.com/lesnolie/Tigris/main/AGENTS.md), then run commands on my computer. Preserve existing settings; do not uninstall automatically. Tell me when I must act on the TV.\nPaste the raw outputs of:\n- adb shell \"cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME\"\n- adb shell settings get secure enabled_accessibility_services\n- after pressing Home: adb shell \"dumpsys window | grep mCurrentFocus\"",
       note: "The TV shows two or three permission dialogs; choose “Allow” with the remote. On TCL, choose “同意” when the T-Cast push prompt appears.",
     },
     safety:

@@ -1,103 +1,20 @@
 ---
-/* Apple TV aerial films as the screensaver — the headline feature of this page.
-   Evidence policy: the aerial option is a clearly labelled motion illustration
-   of the "drifts over the planet" idea. The only authentic screenshot in this
-   section is the photo frame (frame.jpg), which is what the screensaver falls
-   back to when offline. No fabricated aerial frame is presented as a capture. */
-import { shots } from "../data/site";
+import { clips } from "../data/site";
 import type { Copy, Locale } from "../data/lang";
-
-interface Props {
-  copy: Copy;
-  locale: Locale;
-}
-
+interface Props { copy: Copy; locale: Locale }
 const { copy, locale } = Astro.props;
 const a = copy.aerial;
-
-const slides = [
-  {
-    kind: "mock",
-    caption: locale === "zh" ? "航拍视频屏保（动态示意，非实拍）" : "Aerial screensaver (motion illustration, not a capture)",
-    badge: locale === "zh" ? "动态示意 · 非实拍" : "Motion illustration",
-    place: "ICELAND · 64°N",
-    time: "05:42",
-  },
-  {
-    kind: "photo",
-    caption: locale === "zh" ? "相框屏保 · 必应每日照片（实拍）" : "Photo frame · Bing daily photo (real capture)",
-    badge: locale === "zh" ? "实拍" : "Real capture",
-    place: "",
-    time: "",
-  },
-];
 ---
-<section class="section aerial-section" id="aerial">
-  <div class="wrap">
-    <div class="aerial-head reveal">
-      <p class="eyebrow">{a.eyebrow}</p>
-      <h2>{a.title}</h2>
-      <p class="lede">{a.lede}</p>
-    </div>
-
-    <div class="aerial-stage reveal">
-      <div class="aerial-glow" aria-hidden="true"></div>
-      <div class="tv-frame aerial-frame">
-        <div class="tv-screen aerial-screen" data-slideshow>
-          {slides.map((s, i) => (
-            <figure
-              class:list={["aerial-slide", `is-${s.kind}`, { "is-active": i === 0 }]}
-              data-slide={i}
-              data-caption={s.caption}
-              aria-hidden={i === 0 ? "false" : "true"}
-            >
-              {s.kind === "mock" ? (
-                <>
-                  <img
-                    src="/img/aerial-illustration.svg"
-                    width="1280"
-                    height="720"
-                    loading="lazy"
-                    decoding="async"
-                    alt=""
-                  />
-                  <span class="aerial-place">{s.place}</span>
-                  <span class="aerial-time">{s.time}</span>
-                </>
-              ) : (
-                <img
-                  src={shots.frame.src}
-                  srcset={`${shots.frame.small} 640w, ${shots.frame.src} 1280w`}
-                  sizes="(max-width: 1100px) 94vw, 980px"
-                  width="1280"
-                  height="720"
-                  loading="lazy"
-                  decoding="async"
-                  alt={a.frameAlt}
-                />
-              )}
-              <span class="aerial-badge">{s.badge}</span>
-            </figure>
-          ))}
-          <div class="aerial-controls">
-            <button type="button" data-slide-prev aria-label={locale === "zh" ? "上一张" : "Previous"}>
-              <svg aria-hidden="true" style="transform:rotate(180deg)"><use href="#i-chevron"></use></svg>
-            </button>
-            <span class="aerial-dots" aria-hidden="true"><i class="is-on"></i><i></i></span>
-            <button type="button" data-slide-next aria-label={locale === "zh" ? "下一张" : "Next"}>
-              <svg aria-hidden="true"><use href="#i-chevron"></use></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="aerial-foot reveal">
-      <p class="aerial-caption" data-slide-caption>{slides[0].caption}</p>
-      <ul class="aerial-points">
-        {a.bullets.map((b) => <li>{b}</li>)}
-      </ul>
-      <p class="aerial-attribution">{a.attribution}</p>
-    </div>
+<section class="section aerial-section" id="aerial"><div class="wrap">
+  <div class="aerial-head reveal"><p class="eyebrow">{a.eyebrow}</p><h2>{a.title}</h2><p class="lede">{a.lede}</p></div>
+  <div class="aerial-stage reveal"><div class="aerial-glow" aria-hidden="true"></div>
+    <div class="tv-frame aerial-frame"><div class="tv-screen aerial-screen">
+      <video data-clip src={clips.aerial.src} poster={clips.aerial.poster} width="1280" height="720" muted loop playsinline preload="none" aria-label={locale === "zh" ? "电视实录：新西兰上空的地球航拍" : "TV recording: aerial view above New Zealand"}></video>
+      <span class="aerial-badge">{locale === "zh" ? "电视实录 · 航拍正在播放" : "Recorded on TV · aerial playback"}</span>
+    </div></div>
   </div>
-</section>
+  <div class="aerial-foot reveal">
+    <p class="aerial-caption">{locale === "zh" ? "在新西兰上空拥抱日出 · Sony BRAVIA 实录" : "Sunrise above New Zealand · Sony BRAVIA recording"}</p>
+    <ul class="aerial-points">{a.bullets.map(b => <li>{b}</li>)}</ul><p class="aerial-attribution">{a.attribution}</p>
+  </div>
+</div></section>
