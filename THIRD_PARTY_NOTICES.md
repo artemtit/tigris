@@ -19,8 +19,9 @@ their owners' trademarks; these files are not covered by Tigris's source-code
 license. Tigris is independent and not endorsed by Apple. User-uploaded videos
 remain the responsibility of their uploader and retain their original rights.
 
-The website does not serve the bundled startup clip as a preview. Its startup
-preview is an original Tigris wordmark illustration.
+The website's muted startup preview uses a compressed excerpt of this
+owner-supplied clip for project documentation. It is not covered by Tigris's
+source-code license and should not be republished without permission.
 
 The website comparison animates an owner-supplied screenshot of a Chinese-market
 TV launcher. It is not an interaction recording or a same-device before/after

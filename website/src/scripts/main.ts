@@ -311,6 +311,7 @@
 
     const data = triggers.map((el) => ({
       src: el.dataset.full || "",
+      poster: el.dataset.poster || "",
       alt: el.dataset.alt || "",
       caption: el.dataset.caption || "",
       video: el.dataset.video !== undefined,
@@ -324,12 +325,21 @@
       video.hidden = !item.video;
       if (item.video) {
         img.removeAttribute("src");
+        video.muted = true;
+        video.poster = item.poster;
         video.src = item.src;
         video.setAttribute("aria-label", item.alt);
-        video.play().catch(() => {});
+        const startPlayback = () => {
+          if (video.hidden) return;
+          video.play().catch(() => {});
+        };
+        video.addEventListener("canplay", startPlayback, { once: true });
+        video.load();
+        requestAnimationFrame(startPlayback);
       } else {
         video.pause();
         video.removeAttribute("src");
+        video.removeAttribute("poster");
         img.src = item.src;
         img.alt = item.alt;
       }
@@ -338,9 +348,17 @@
     };
 
     triggers.forEach((el, i) => el.addEventListener("click", () => {
-      show(i);
+      /* Play only after the dialog is visible. Browsers reject play() while a closed
+         dialog is inert, leaving the viewer on the video's black first frame. */
       lightbox.showModal();
+      show(i);
     }));
+    doc.querySelectorAll<HTMLElement>(".gallery figure").forEach((figure) => {
+      figure.addEventListener("click", (event) => {
+        if ((event.target as Element).closest("[data-lightbox-open]")) return;
+        figure.querySelector<HTMLButtonElement>("[data-lightbox-open]")?.click();
+      });
+    });
     lightbox.querySelector("[data-prev]")?.addEventListener("click", () => show(index - 1));
     lightbox.querySelector("[data-next]")?.addEventListener("click", () => show(index + 1));
     lightbox.querySelector("[data-close]")?.addEventListener("click", () => lightbox.close());

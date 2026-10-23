@@ -6,7 +6,7 @@ Production: https://tigris-tv.pages.dev (Cloudflare Pages project `tigris-tv`).
 | --- | --- |
 | home.mp4, cc.mp4, shelf.mp4, updates.mp4 | Sony BRAVIA / Android 12 recordings, 2026-10-24; silent H.264 1280×720 |
 | aerial.mp4 | Same TV playing the Apple-hosted aerial over New Zealand; real motion, clock and location caption |
-| tigris-intro.mp4 | Generated Tigris wordmark animation illustration; no Apple startup footage |
+| intro.mp4 | Owner-supplied default startup MP4 bundled in Tigris 2.0.4; muted website preview, third-party rights retained |
 | domestic-launcher.mp4 | Gentle pan/zoom of the owner-supplied Chinese-market TV screenshot; explicitly labelled, not a recording |
 | tigris-ad.mp4 | Existing owner-supplied promo film, unchanged; Bensound attribution retained |
 | *-poster.webp | Frame extracted from the corresponding video |

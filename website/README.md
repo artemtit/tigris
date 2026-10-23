@@ -67,7 +67,8 @@ public/404.html         static 404 served by Cloudflare Pages
 - **Product media** now uses muted video loops. Home, Top Shelf, Control Center,
   update center and aerial clips were captured on the owner's Sony BRAVIA with
   `adb screenrecord` on 2026-10-24. Posters are frames from each recording.
-- **Startup preview** illustrates the Tigris wordmark; no Apple startup clip is served.
+- **Startup preview** uses the owner-supplied default clip bundled in 2.0.4. The
+  gallery labels it as third-party material; do not republish it without permission.
 - **Comparison** uses the owner-supplied Chinese-market TV screenshot with gentle
   pan/zoom, labelled as an image rather than a recording. The two sides are different TVs.
 - **Aerial** shows actual TV playback, not an illustration; Apple retains the

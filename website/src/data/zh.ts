@@ -115,7 +115,7 @@ export const zh = {
     gallery: {
       eyebrow: "IN MOTION",
       title: "让细节，动起来。",
-      lede: "桌面、控制中心和航拍来自索尼 BRAVIA 实录；开机动画为 Tigris 字样效果示意。点击放大，观看完整片段。",
+      lede: "桌面、控制中心和航拍来自索尼 BRAVIA 实录；开机动画为项目所有者提供的默认素材预览。点击放大，观看完整片段。",
     },
 
     install: {

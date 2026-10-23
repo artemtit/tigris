@@ -1392,6 +1392,7 @@ h3 {
 
 .gallery figure {
   margin: 0;
+  cursor: zoom-in;
 }
 
 .gallery button {
@@ -1454,6 +1455,7 @@ h3 {
   padding: 11px 4px 0;
   font-size: 0.78rem;
   color: var(--muted);
+  pointer-events: none;
 }
 
 .gallery figcaption em {
@@ -1528,6 +1530,11 @@ h3 {
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
+}
+
+.lightbox img[hidden],
+.lightbox video[hidden] {
+  display: none;
 }
 
 .lightbox-bar {

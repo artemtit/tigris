@@ -14,7 +14,7 @@ const g = copy.gallery;
 
 /* slot: the grid cell (two wide ones, then three). A clip plays in place and in the viewer. */
 const items = [
-  { slot: "home", clip: clips.intro, label: locale === "zh" ? "开机动画" : "Boot animation", file: "tigris-intro.mp4", alt: locale === "zh" ? "Tigris 字样动画示意；不内置 Apple 开机视频。" : "Tigris wordmark animation illustration; no bundled Apple startup video." },
+  { slot: "home", clip: clips.intro, label: locale === "zh" ? "开机动画" : "Boot animation", file: "intro.mp4", alt: locale === "zh" ? "项目所有者提供的默认开机动画预览。" : "Preview of the owner-supplied default startup animation." },
   { slot: "shelf", clip: clips.shelf, label: locale === "zh" ? "顶部内容" : "Top Shelf", file: "shelf.mp4", alt: locale === "zh" ? "Top Shelf 顶部内容实拍。" : "Top Shelf capture." },
   { slot: "grid", clip: clips.updates, label: locale === "zh" ? "软件更新" : "Software updates", file: "updates.mp4", alt: locale === "zh" ? "软件更新页录屏。" : "Software update page recording." },
   { slot: "cc", clip: clips.cc, label: locale === "zh" ? "控制中心" : "Control Center", file: "cc.mp4", alt: locale === "zh" ? "控制中心录屏。" : "Control Center recording." },
@@ -29,7 +29,7 @@ const items = [
       <p class="lede">{g.lede}</p>
     </div>
 
-    <p class="fine">{locale === "zh" ? "默认使用 Tigris 字样动画。自定义视频请仅使用已获授权的素材；相关商标与版权归原权利人，本项目与 Apple 无关联。" : "The default is the Tigris wordmark animation. Only upload videos you have permission to use. Trademarks and copyrights belong to their owners; Tigris is not affiliated with Apple."}</p>
+    <p class="fine">{locale === "zh" ? "开机动画预览来自项目所有者提供的内置素材。相关商标与版权归原权利人，本项目与 Apple 无关联；未经许可请勿转载或用于其他用途。" : "The startup preview is an owner-supplied bundled asset. Trademarks and copyrights belong to their owners; Tigris is not affiliated with Apple. Do not republish it without permission."}</p>
     <div class="gallery reveal">
       {items.map((item) => (
         <figure class={`g-${item.slot}`}>
@@ -37,6 +37,7 @@ const items = [
             type="button"
             data-lightbox-open
             data-full={item.clip.src}
+            data-poster={item.clip.poster}
             data-video={""}
             data-caption={item.label}
             data-alt={item.alt}
@@ -68,7 +69,7 @@ const items = [
       <svg aria-hidden="true"><use href="#i-close"></use></svg>
     </button>
     <img alt="" hidden />
-    <video muted loop playsinline hidden></video>
+    <video autoplay muted loop playsinline preload="metadata" hidden></video>
     <div class="lightbox-bar">
       <span data-lightbox-caption></span>
       <span data-lightbox-counter>1 / {items.length}</span>

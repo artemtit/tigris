@@ -114,7 +114,7 @@ export const en = {
   gallery: {
     eyebrow: "IN MOTION",
     title: "See the details in motion.",
-    lede: "Home, Control Center and aerial clips were recorded on a Sony BRAVIA. The startup clip illustrates the Tigris wordmark animation. Select a clip to enlarge.",
+    lede: "Home, Control Center and aerial clips were recorded on a Sony BRAVIA. The startup clip previews the owner-supplied default asset. Select a clip to enlarge.",
   },
 
   install: {
