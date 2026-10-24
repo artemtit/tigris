@@ -18,7 +18,7 @@ export const zh = {
       { href: "#faq", label: "常见问题" },
     ],
     langSwitch: { href: "/en/", label: "EN", lang: "en" },
-    headerCta: "免费下载",
+    headerCta: "前往下载",
     menuCta: "下载 Tigris APK",
     menuNote: "Android TV 9+ · 不需要 Root · 独立开源项目，与 Apple 无关联",
     copy: "复制",
@@ -51,7 +51,7 @@ export const zh = {
       eyebrow: "TIGRIS · ANDROID TV LAUNCHER",
       titleLines: ["让电视桌面，", "重新惊艳。"],
       sub: "把熟悉的 Android TV 换成 tvOS 般的沉浸入口。沉底的液态玻璃 Dock、会呼吸的顶部内容，还有 Apple TV 航拍视频做屏保——Tigris 把客厅的那块屏幕，重新变回它该有的样子。",
-      primary: "免费下载",
+      primary: "前往下载",
       secondary: "查看安装方法",
       chips: ["Android TV 9+", "不需要 Root", "部分功能因电视品牌而异"],
       note: "独立开源项目，与 Apple 无任何关联。「Apple TV」为 Apple Inc. 的商标。",
@@ -124,13 +124,13 @@ export const zh = {
       lede: "一台和电视连在同一个 Wi-Fi 的电脑、电视的 IP 地址、打开的 ADB 调试，就够了。支持 Android 9 及以上，不需要 root。",
       packages: [
         {
-          name: "Tigris-v2.0.6.apk",
-          use: "标准版。索尼 BRAVIA、原生 Android TV / Google TV、小米 / Redmi、海信等大多数电视。",
+          name: "标准版 APK",
+          use: "索尼 BRAVIA、原生 Android TV / Google TV、小米 / Redmi、海信等大多数电视。在 Releases 页面选择 Tigris-vX.Y.Z.apk。",
           href: brand.apk,
         },
         {
-          name: "Tigris-guard-v2.0.6.apk",
-          use: "守护版。不声明桌面，供 TCL / 雷鸟等拒绝安装桌面 APK 的固件，通过「多屏互动」推送。",
+          name: "守护版 APK",
+          use: "不声明桌面，供 TCL / 雷鸟等拒绝安装桌面 APK 的固件。在 Releases 页面选择 Tigris-guard-vX.Y.Z.apk，并通过「多屏互动」推送。",
           href: brand.apkGuard,
         },
       ],
@@ -464,7 +464,7 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
         {
           q: "怎么更新到新版本？",
           a: [
-            "重新下载最新 APK，用 adb install -r 覆盖安装即可，设置和布局会保留。所有下载地址都指向 GitHub 的 releases/latest，不会指向过期版本。",
+            "从 GitHub Releases 页面下载最新 APK，用 adb install -r 覆盖安装即可，设置和布局会保留。下载入口始终打开全部版本列表，不需要网站跟随版本更新。",
           ],
         },
         {
@@ -487,7 +487,7 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
       eyebrow: "GET TIGRIS",
       title: "让每一次打开电视，都值得期待。",
       body: "下载 APK，打开 ADB，剩下的交给指南或一个 Agent。Android 9+，无需 root，随时可以回到原厂桌面。",
-      primary: "免费下载",
+      primary: "前往 Releases 下载",
       secondary: "在 GitHub 查看源码",
     },
 

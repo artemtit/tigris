@@ -87,7 +87,7 @@ public/404.html         static 404 served by Cloudflare Pages
   Both languages say so explicitly and offer the home guard instead.
 - **Client-side strings** come from `data-*` attributes written by the layout,
   never from literals inside `main.ts`, so `/en/` cannot fall back to Chinese.
-- **Download buttons** link directly to the two existing, signed versioned APK assets on GitHub Releases. Keep `brand.releaseTag`, both APK URLs and bilingual package labels in sync whenever a new version ships; do not use unversioned `releases/latest/download/Tigris.apk` URLs (404 since v2.0.6). Installer snippets separately use `tools/download-release.py` to resolve and verify the latest release without hardcoding the tag.
+- **Download buttons** open the full GitHub Releases list, where both the Standard and Guard APKs are available. This is deliberately version-agnostic: never hardcode a release tag, a versioned asset URL, or the retired unversioned `releases/latest/download/Tigris.apk` URLs. Installer snippets use `tools/download-release.py` to resolve and verify the current release.
 - **Evergreen copy**: no "tonight"-style lines; the CTA promises the experience,
   not a single evening.
 - Adding a UI string means adding it to `zh.ts`, `en.ts` and, if the client
