@@ -46,6 +46,7 @@ class TVCompatibilityDocsTest(unittest.TestCase):
             "title": "[TV] Sony XR-55A80J",
             "body": body,
             "labels": [],
+            "state": "open",
         }
 
     def test_parses_issue_form_with_expected_enums(self):
@@ -62,8 +63,21 @@ class TVCompatibilityDocsTest(unittest.TestCase):
         self.assertIsNone(compat.form_fields("Tigris won't install on my TV"))
         incomplete = FORM.replace("Sony\n", "_No response_\n", 1)
         self.assertIsNone(compat.form_fields(incomplete))
-        self.assertTrue(compat.build([{"number": 4, "title": "generic issue", "body": FORM, "labels": []}], True).startswith(
-            "No structured community reports yet. [Submit a report]"))
+        self.assertTrue(compat.build([
+            {"number": 4, "title": "generic issue", "body": "Please add support", "labels": []}
+        ], True).startswith("No structured community reports yet. [Submit a report]"))
+
+    def test_structured_form_without_tv_prefix_or_label_is_included(self):
+        issue = self.issue(number=14)
+        issue["title"] = "雷鸟电视使用Tigris桌面问题"
+        self.assertIn("[#14]", compat.build([issue], False))
+        self.assertIn("Open", compat.build([issue], True))
+
+    def test_closed_issue_does_not_imply_a_verified_fix(self):
+        issue = self.issue(number=15)
+        issue["state"] = "closed"
+        self.assertIn("已关闭（未验证修复）", compat.build([issue], False))
+        self.assertIn("Closed (fix unverified)", compat.build([issue], True))
 
     def test_both_languages_are_reported_not_verified(self):
         zh = compat.build([self.issue()], False)

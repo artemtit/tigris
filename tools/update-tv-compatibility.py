@@ -14,7 +14,6 @@ from pathlib import Path
 
 REPO = os.environ.get("GITHUB_REPOSITORY", "lesnolie/Tigris")
 BASE = "https://api.github.com/repos/" + REPO
-LABEL = "tv-compatibility"
 START = "<!-- TV_COMPATIBILITY_AUTO_START -->"
 END = "<!-- TV_COMPATIBILITY_AUTO_END -->"
 KEYS = {
@@ -93,9 +92,8 @@ def clean(value, limit=70):
 def build(issues, english):
     rows = []
     for issue in issues:
-        labels = {label["name"] for label in issue.get("labels", [])}
-        if LABEL not in labels and not issue.get("title", "").startswith("[TV]"):
-            continue
+        # GitHub's Issue Form does not force a title prefix or attach a label.
+        # A complete, valid structured form is sufficient, even for custom titles.
         record = form_fields(issue.get("body"))
         if not record:
             continue
@@ -105,8 +103,11 @@ def build(issues, english):
         platform = clean(record["android"])
         version = clean(record["version"]) + " / " + APKS[record["apk"]][locale]
         outcome = OUTCOMES[record["outcome"]][locale]
+        # This is GitHub issue state, not evidence that the bug has been fixed.
+        issue_state = (("已关闭（未验证修复）", "Closed (fix unverified)") if
+                       issue.get("state") == "closed" else ("未关闭", "Open"))[locale]
         link = f"[#{no}](https://github.com/{REPO}/issues/{no})"
-        rows.append((no, f"| {device} | {platform} | {version} | {outcome} | {link} |"))
+        rows.append((no, f"| {device} | {platform} | {version} | {outcome} | {issue_state} | {link} |"))
     rows.sort(key=lambda item: item[0], reverse=True)
     if not rows:
         return ("No structured community reports yet. [Submit a report](https://github.com/"
@@ -114,10 +115,10 @@ def build(issues, english):
                 if english else
                 "尚无新的结构化社区反馈。[提交电视兼容性反馈](https://github.com/"
                 + REPO + "/issues/new/choose)。")
-    header = ("| TV model | Android | Tigris / APK | Installation result | Source |\n"
-              "|---|---|---|---|---|" if english else
-              "| 品牌与型号 | Android | Tigris / 安装包 | 安装结果 | 来源 |\n"
-              "|---|---|---|---|---|")
+    header = ("| TV model | Android | Tigris / APK | Installation result | Issue state | Source |\n"
+              "|---|---|---|---|---|---|" if english else
+              "| 品牌与型号 | Android | Tigris / 安装包 | 安装结果 | Issue 状态 | 来源 |\n"
+              "|---|---|---|---|---|---|")
     return header + "\n" + "\n".join(row for _, row in rows)
 
 

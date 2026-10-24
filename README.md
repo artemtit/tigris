@@ -398,7 +398,10 @@ adb -s 192.168.1.20:5555 uninstall com.leslie.tvhome
 自动化只读取模板中的结构化字段，为中英文 README 创建待审核 PR；不会把陌生用户的反馈直接当成确认兼容，也不会直接改 `main`。
 
 <!-- TV_COMPATIBILITY_AUTO_START -->
-尚无新的结构化社区反馈。[提交电视兼容性反馈](https://github.com/lesnolie/Tigris/issues/new/choose)。
+| 品牌与型号 | Android | Tigris / 安装包 | 安装结果 | Issue 状态 | 来源 |
+|---|---|---|---|---|---|
+| 创维酷开 85P3DMAX | Android 11 | 2.0.2 / 自定义 Fork | 已安装且能启动（自报） | 未关闭 | [#15](https://github.com/lesnolie/Tigris/issues/15) |
+| 雷鸟 75S545C | Android 9 | V2.0.2 / 守护版 | 已安装且能启动（自报） | 未关闭 | [#14](https://github.com/lesnolie/Tigris/issues/14) |
 <!-- TV_COMPATIBILITY_AUTO_END -->
 
 ### 适配新品牌

@@ -20,6 +20,7 @@ import android.service.notification.NotificationListenerService
 import android.util.Log
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
+import com.leslie.tvhome.tv.CoocaaAdapter
 import com.leslie.tvhome.tv.TclAdapter
 import com.leslie.tvhome.tv.XiaomiAdapter
 
@@ -266,13 +267,18 @@ class HomeGuardService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     /**
-     * Up to Android 11 always on: there, once Home reaches the system, it holds every background
-     * activity start for five seconds, so Tigris would come back only after five seconds.
+     * Android 11 and earlier normally intercept Home to avoid delayed activity launches.
+     * On Coocaa / Skyworth Android 11, however, the firmware consumes Home before
+     * onKeyEvent, so filtering other keys can interfere with volume KEY_UP (issue #15).
+     * That device uses the existing window-based home takeover instead.
      */
     private fun filterKeys(on: Boolean) {
         val info = serviceInfo ?: return
         val flag = AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
-        val want = if (on || Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) info.flags or flag else info.flags and flag.inv()
+        val request = HomeKeyFilterPolicy.shouldRequestFilter(
+            Build.VERSION.SDK_INT, CoocaaAdapter.isCoocaa(), on,
+        )
+        val want = if (request) info.flags or flag else info.flags and flag.inv()
         if (want == info.flags) return
         info.flags = want
         serviceInfo = info
