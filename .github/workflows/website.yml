@@ -41,21 +41,26 @@ jobs:
         run: pnpm check
       - name: Build both locales and install shell route
         run: pnpm build
-      - name: Validate versioned release links and installer helper
+      - name: Validate Releases download entry points and installer helper
         run: |
           python3 - <<'PY'
           from pathlib import Path
           data = Path("src/data/site.ts").read_text()
-          for old in ("releases/latest/download/Tigris.apk", "releases/latest/download/Tigris-guard.apk"):
-              assert old not in data, old
+          releases = "https://github.com/lesnolie/Tigris/releases"
+          assert f'apk: "{releases}"' in data
+          assert f'apkGuard: "{releases}"' in data
+          for retired in ("releaseTag", "releases/download/", "releases/latest"):
+              assert retired not in data, retired
           assert "download-release.py" in data
-          import re
-          tag = re.search(r'releaseTag: "(v[0-9]+\.[0-9]+\.[0-9]+)"', data).group(1)
-          for flavor in ("Tigris", "Tigris-guard"):
-              asset = f"https://github.com/lesnolie/Tigris/releases/download/{tag}/{flavor}-{tag}.apk"
-              assert asset in data, f"Missing direct APK link: {asset}"
-              for page in ("dist/index.html", "dist/en/index.html"):
-                  assert asset in Path(page).read_text(), f"Broken download link in {page}"
+          for page in ("dist/index.html", "dist/en/index.html"):
+              html = Path(page).read_text()
+              assert releases in html, f"Missing Releases link in {page}"
+              for retired in ("releases/download/", "releases/latest"):
+                  assert retired not in html, f"Stale download link in {page}: {retired}"
+          redirects = Path("dist/_redirects").read_text()
+          for path in ("/download", "/download-guard"):
+              assert f"{path}  {releases}  302" in redirects, path
+          assert "releases/download/" not in redirects
           assert Path("dist/install.sh").exists()
-          print("Website direct APK downloads and locale routes OK")
+          print("Website Releases entry points and locale routes OK")
           PY

@@ -17,7 +17,7 @@ export const en = {
     { href: "#faq", label: "FAQ" },
   ],
   langSwitch: { href: "/", label: "中文", lang: "zh-CN" },
-  headerCta: "Download",
+  headerCta: "Downloads",
   menuCta: "Download Tigris APK",
   menuNote: "Android TV 9+ · no root · independent project, not affiliated with Apple",
   copy: "Copy",
@@ -50,7 +50,7 @@ export const en = {
     eyebrow: "TIGRIS · ANDROID TV LAUNCHER",
     titleLines: ["Your TV home screen,", "worth opening again."],
     sub: "Turn the Android TV you already own into something closer to tvOS: a sunken liquid-glass dock, a Top Shelf that actually plays something, and Apple TV aerial films drifting across the screen when the room goes quiet.",
-    primary: "Download free",
+    primary: "Download",
     secondary: "See how to install",
     chips: ["Android TV 9+", "No root", "Some features vary by brand"],
     note: "An independent open-source project, not affiliated with Apple. “Apple TV” is a trademark of Apple Inc.",
@@ -123,13 +123,13 @@ export const en = {
     lede: "You need a computer on the same Wi-Fi as the TV, the TV's IP address and ADB debugging enabled. Android 9+, no root.",
     packages: [
       {
-        name: "Tigris-v2.0.6.apk",
-        use: "Standard build: Sony BRAVIA, stock Android TV / Google TV, Xiaomi / Redmi, Hisense and most others.",
+          name: "Standard APK",
+          use: "For Sony BRAVIA, stock Android TV / Google TV, Xiaomi / Redmi, Hisense and most others. Choose Tigris-vX.Y.Z.apk on the Releases page.",
         href: brand.apk,
       },
       {
-        name: "Tigris-guard-v2.0.6.apk",
-        use: "Guard build: declares no home screen, for TCL / FFalcon firmware that rejects launcher APKs. Push it through T-Cast.",
+          name: "Guard APK",
+          use: "Declares no home screen, for TCL / FFalcon firmware that rejects launcher APKs. Choose Tigris-guard-vX.Y.Z.apk on the Releases page and push it through T-Cast.",
         href: brand.apkGuard,
       },
     ],
@@ -396,7 +396,7 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
       {
         q: "How do I update?",
         a: [
-          "Download the latest APK and install it with adb install -r over the existing app; settings and layout are kept. Every download link points at GitHub releases/latest, never a pinned version.",
+          "Download the latest APK from GitHub Releases and install it with adb install -r over the existing app; settings and layout are kept. Every download entry point opens the full Releases list, so the site does not need updating for each version.",
         ],
       },
       {
@@ -419,7 +419,7 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
     eyebrow: "GET TIGRIS",
     title: "Make every TV moment feel new.",
     body: "Download the APK, enable ADB, and follow the guide or hand it to an agent. Android 9+, no root, reversible.",
-    primary: "Download free",
+    primary: "Download from Releases",
     secondary: "View source on GitHub",
   },
 
