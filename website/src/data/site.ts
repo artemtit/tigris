@@ -6,8 +6,9 @@
      alias for Invoke-WebRequest, so the download uses `curl.exe`. Variable
      assignments use `$name = "value"` and are expanded by PowerShell itself.
 
-   Neither variant needs a shell variable to run: the package name is always
-   written out in full, so a partially selected line still works. */
+   The installer snippets do use a local APK filename variable because versioned
+   releases change the filename with each tag. They always spell out the app's
+   package name; selected snippets must be copied as complete blocks. */
 
 export const brand = {
   name: "TIGRIS",
@@ -16,9 +17,10 @@ export const brand = {
   site: "https://tigris-tv.pages.dev",
   repo: "https://github.com/lesnolie/Tigris",
   releases: "https://github.com/lesnolie/Tigris/releases",
-  apk: "https://github.com/lesnolie/Tigris/releases/latest/download/Tigris.apk",
-  apkGuard:
-    "https://github.com/lesnolie/Tigris/releases/latest/download/Tigris-guard.apk",
+  // Link to the evergreen release listing: asset filenames now include a version.
+  apk: "https://github.com/lesnolie/Tigris/releases/latest",
+  apkGuard: "https://github.com/lesnolie/Tigris/releases/latest",
+  downloadHelper: "https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/download-release.py",
   agents: "https://github.com/lesnolie/Tigris/blob/main/AGENTS.md",
   readme: "https://github.com/lesnolie/Tigris/blob/main/README.md",
   issues: "https://github.com/lesnolie/Tigris/issues",
@@ -93,10 +95,12 @@ adb -s 192.168.x.x:5555 get-state`,
   ),
 
   installStandard: {
-    posix: `curl -L -o Tigris.apk ${brand.apk}
-adb -s 192.168.x.x:5555 install -r Tigris.apk`,
-    powershell: `curl.exe -L -o Tigris.apk ${brand.apk}
-adb -s 192.168.x.x:5555 install -r Tigris.apk`,
+    posix: `curl -fsSL -o download-release.py ${brand.downloadHelper}
+APK=$(python3 download-release.py standard)
+adb -s 192.168.x.x:5555 install -r "$APK"`,
+    powershell: `curl.exe -fsSL -o download-release.py ${brand.downloadHelper}
+$apk = python .\\download-release.py standard
+adb -s 192.168.x.x:5555 install -r $apk`,
   },
 
   setHomeAndGrant: cmd(
@@ -126,12 +130,14 @@ curl.exe -s -u ":PIN" http://192.168.x.x/sony/accessControl -d $body`,
   },
 
   tclPush: {
-    posix: `curl -L -o Tigris-guard.apk ${brand.apkGuard}
-curl -L -o tcast-push.py ${brand.tcast}
-python3 tcast-push.py 192.168.x.x Tigris-guard.apk`,
-    powershell: `curl.exe -L -o Tigris-guard.apk ${brand.apkGuard}
-curl.exe -L -o tcast-push.py ${brand.tcast}
-python tcast-push.py 192.168.x.x Tigris-guard.apk`,
+    posix: `curl -fsSL -o download-release.py ${brand.downloadHelper}
+APK=$(python3 download-release.py guard)
+curl -fsSL -o tcast-push.py ${brand.tcast}
+python3 tcast-push.py 192.168.x.x "$APK"`,
+    powershell: `curl.exe -fsSL -o download-release.py ${brand.downloadHelper}
+$apk = python .\\download-release.py guard
+curl.exe -fsSL -o tcast-push.py ${brand.tcast}
+python .\\tcast-push.py 192.168.x.x $apk`,
   },
 
   tclGrants: cmd(
@@ -180,12 +186,14 @@ adb -s 192.168.x.x:5555 shell appops set ${P} SYSTEM_ALERT_WINDOW allow`,
   ),
 
   stockInstall: {
-    posix: `curl -L -o Tigris.apk ${brand.apk}
-adb -s 192.168.x.x:5555 install -r Tigris.apk
+    posix: `curl -fsSL -o download-release.py ${brand.downloadHelper}
+APK=$(python3 download-release.py standard)
+adb -s 192.168.x.x:5555 install -r "$APK"
 adb -s 192.168.x.x:5555 shell cmd package set-home-activity ${P}/.HomeActivity
 adb -s 192.168.x.x:5555 shell input keyevent KEYCODE_HOME`,
-    powershell: `curl.exe -L -o Tigris.apk ${brand.apk}
-adb -s 192.168.x.x:5555 install -r Tigris.apk
+    powershell: `curl.exe -fsSL -o download-release.py ${brand.downloadHelper}
+$apk = python .\\download-release.py standard
+adb -s 192.168.x.x:5555 install -r $apk
 adb -s 192.168.x.x:5555 shell cmd package set-home-activity ${P}/.HomeActivity
 adb -s 192.168.x.x:5555 shell input keyevent KEYCODE_HOME`,
   },

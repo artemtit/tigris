@@ -48,9 +48,13 @@ object Updates {
             val update = current == null || UpdatePolicy.newer(version, current)
             val assets = release.getJSONArray("assets")
             val home = c.packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).setPackage(c.packageName), 0).isNotEmpty()
-            val name = if (p.pkg == c.packageName) { if (home) "Tigris.apk" else "Tigris-guard.apk" } else null
-            val asset = (0 until assets.length()).map { assets.getJSONObject(it) }.firstOrNull {
-                if (name != null) it.getString("name") == name else it.getString("name").endsWith("-universal.apk")
+            val items = (0 until assets.length()).map { assets.getJSONObject(it) }
+            val asset = if (p.pkg == c.packageName) {
+                // New releases carry the version in their filename; preserve legacy release support.
+                val preferred = ReleaseAssetNames.select(version, !home, items.map { it.getString("name") })
+                items.firstOrNull { it.getString("name") == preferred }
+            } else {
+                items.firstOrNull { it.getString("name").endsWith("-universal.apk") }
             } ?: error("发布中没有适用安装包")
             val url = asset.getString("browser_download_url")
             check(url.startsWith("https://github.com/${p.repo}/releases/download/"))

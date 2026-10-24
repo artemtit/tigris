@@ -80,18 +80,41 @@ cat > "$TEST/bin/curl" <<'MOCK'
 #!/usr/bin/env bash
 url=$2
 out=$4
-if [[ "$url" == *SHA256SUMS.txt ]]; then
+tag=${MOCK_RELEASE_TAG:-v2.0.6}
+if [[ "${MOCK_LEGACY:-0}" == 1 ]]; then
+  standard=Tigris.apk
+  guard=Tigris-guard.apk
+  checksums=SHA256SUMS.txt
+else
+  standard="Tigris-$tag.apk"
+  guard="Tigris-guard-$tag.apk"
+  checksums="SHA256SUMS-$tag.txt"
+fi
+base="https://github.com/lesnolie/Tigris/releases/download/$tag"
+if [[ "$url" == *"api.github.com"* ]]; then
+  printf '{"tag_name":"%s","draft":false,"prerelease":false,"assets":[{"name":"%s","browser_download_url":"%s/%s"},{"name":"%s","browser_download_url":"%s/%s"},{"name":"%s","browser_download_url":"%s/%s"}]}' \
+    "$tag" "$standard" "$base" "$standard" "$guard" "$base" "$guard" "$checksums" "$base" "$checksums" > "$out"
+elif [[ "$url" == *SHA256SUMS* ]]; then
   hash=$(python3 -c 'import hashlib; print(hashlib.sha256(b"downloaded-apk").hexdigest())')
   [[ "${BAD_HASH:-0}" == 0 ]] || hash=0000
-  printf '%s  Tigris.apk\n' "$hash" > "$out"
-else printf downloaded-apk > "$out"
+  printf '%s  %s\n%s  %s\n' "$hash" "$standard" "$hash" "$guard" > "$out"
+else
+  printf downloaded-apk > "$out"
 fi
 MOCK
 chmod +x "$TEST/bin/curl"
 : > "$LOG"
 APK='' bash "$ROOT/install.sh" > "$TEST/output"
-grep -q 'install -r' "$LOG"
-echo 'PASS downloaded APK checksum accepted'
+grep -q 'Tigris-v2.0.6.apk' "$LOG"
+echo 'PASS versioned standard release selected and checksum verified'
+: > "$LOG"
+APK='' bash "$ROOT/install.sh" -s guard > "$TEST/output"
+grep -q 'Tigris-guard-v2.0.6.apk' "$LOG"
+echo 'PASS versioned guard release selected and checksum verified'
+: > "$LOG"
+MOCK_LEGACY=1 MOCK_RELEASE_TAG=v2.0.5 VERSION=v2.0.5 APK='' bash "$ROOT/install.sh" > "$TEST/output"
+grep -q 'Tigris.apk' "$LOG"
+echo 'PASS legacy release names still install from exact version tag'
 : > "$LOG"
 if BAD_HASH=1 APK='' bash "$ROOT/install.sh" > "$TEST/output" 2>&1; then exit 1; fi
 ! grep -q 'install -r' "$LOG"

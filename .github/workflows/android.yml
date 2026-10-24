@@ -8,6 +8,8 @@ on:
       - 'app/**'
       - 'install.sh'
       - 'tools/test-install.sh'
+      - 'tools/download-release.py'
+      - 'tools/test_release_download.py'
       - 'gradle/**'
       - '*.gradle.kts'
       - '.github/workflows/android.yml'
@@ -18,6 +20,8 @@ on:
       - 'app/**'
       - 'install.sh'
       - 'tools/test-install.sh'
+      - 'tools/download-release.py'
+      - 'tools/test_release_download.py'
       - 'gradle/**'
       - '*.gradle.kts'
       - '.github/workflows/android.yml'
@@ -56,6 +60,9 @@ jobs:
 
       - name: Installer safety and restore contracts
         run: bash tools/test-install.sh
+
+      - name: Test versioned release downloader
+        run: python3 -m unittest discover -s tools -p 'test_release_download.py' -v
 
       - name: Build both release APK flavors
         run: bash ./gradlew --no-daemon :app:assembleStandardRelease :app:assembleGuardRelease --stacktrace

@@ -1,0 +1,56 @@
+name: Website build
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'tools/download-release.py'
+      - '.github/workflows/website.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'tools/download-release.py'
+      - '.github/workflows/website.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  website:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: website/pnpm-lock.yaml
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Type-check both locales
+        run: pnpm check
+      - name: Build both locales and install shell route
+        run: pnpm build
+      - name: Validate versioned release links and installer helper
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          data = Path("src/data/site.ts").read_text()
+          for old in ("releases/latest/download/Tigris.apk", "releases/latest/download/Tigris-guard.apk"):
+              assert old not in data, old
+          assert "download-release.py" in data
+          assert Path("dist/install.sh").exists()
+          assert Path("dist/en/index.html").exists()
+          assert Path("dist/index.html").exists()
+          print("Website versioned download and locale routes OK")
+          PY

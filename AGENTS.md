@@ -51,26 +51,31 @@ Note the current home activity (the stock launcher), the current screensaver and
 
 There are two builds:
 
-- `Tigris.apk` (standard) declares itself a home screen. Use it everywhere except TCL.
-- `Tigris-guard.apk` declares no home screen and appears as an ordinary app. TCL refuses any APK that declares one unless TCL signed it. The guard build is otherwise identical; the home guard (section 10) keeps it in front.
+- `Tigris-vX.Y.Z.apk` (standard) declares itself a home screen. Use it everywhere except TCL.
+- `Tigris-guard-vX.Y.Z.apk` declares no home screen and appears as an ordinary app. TCL refuses any APK that declares one unless TCL signed it. The guard build is otherwise identical; the home guard (section 10) keeps it in front.
+
+**Always resolve the latest Release asset**, instead of constructing a `releases/latest/download/Tigris.apk` URL (new assets include a version). The helper verifies SHA-256 and prints the downloaded filename:
 
 ```sh
-curl -L -o Tigris.apk https://github.com/lesnolie/Tigris/releases/latest/download/Tigris.apk
-adb -s <TV_IP>:5555 install -r Tigris.apk
+curl -fsSL -o download-release.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/download-release.py
+APK=$(python3 download-release.py standard)
+adb -s <TV_IP>:5555 install -r "$APK"
 ```
+
+On Windows PowerShell use `curl.exe` to download the helper, `$apk = python .\download-release.py standard`, and `adb -s <TV_IP>:5555 install -r $apk`.
 
 **If it fails with `INSTALL_FAILED_VERIFICATION_FAILURE`** (TCL: its verifier refuses every adb install), install the guard build through TCL's own 多屏互动 (T-Cast) instead. It needs Python 3 and the repository's `tools/tcast-push.py`:
 
 ```sh
-curl -L -o Tigris-guard.apk https://github.com/lesnolie/Tigris/releases/latest/download/Tigris-guard.apk
-curl -L -o tcast-push.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/tcast-push.py
-python3 tcast-push.py <TV_IP> Tigris-guard.apk
+GUARD_APK=$(python3 download-release.py guard)
+curl -fsSL -o tcast-push.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/tcast-push.py
+python3 tcast-push.py <TV_IP> "$GUARD_APK"
 ```
 
 The script serves the APK from this computer on port 8765. The TV shows "多屏互动：正在发起应用推送" in a corner. Tell the user to choose **同意** on the TV. If the computer's firewall asks, allow the connection. If the script can't reach port 6553 (no 多屏互动 on that model), fall back to installing on the TV itself:
 
 ```sh
-adb -s <TV_IP>:5555 push Tigris-guard.apk /sdcard/Download/Tigris.apk
+adb -s <TV_IP>:5555 push "$GUARD_APK" /sdcard/Download/Tigris-guard.apk
 adb -s <TV_IP>:5555 shell am start -n com.dangbeimarket/.ui.apkmanager.ApkManagerActivity   # if 当贝市场 is installed
 ```
 

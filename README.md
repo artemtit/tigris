@@ -47,7 +47,7 @@
 - **Liquid Glass Dock**：第一排应用放在液态玻璃 Dock 中，下一排露出上沿。玻璃模糊、边缘折射和高光会按当前背景预先生成，低配电视可改用更省性能的样式。
 - **顶部内容**：选中 Dock 中的云视听小电视或斗鱼时，上半屏轮播对应的热门内容。数据来自服务公开的网页接口，使用前需要安装对应的 TV 版 App。
 - **主屏幕设置**：仿 tvOS 的分组布局，可分别调整时钟、聚焦动画、控制中心样式、背景、相框、开机动画、头像和桌面守护。
-- **最近打开优先**：成功打开一个 App 后，它会移到第一位，其他图标保持相对顺序，重启后仍保留。
+- **最近打开自动置顶（可开启）**：首次安装及升级后默认关闭；开启后成功打开一个 App，它会移到第一位，其他图标保持相对顺序。可在「主屏幕设置 → App」关闭，之后固定使用当前排序，长按「编辑主屏幕」可自行调整。
 - **编辑、文件夹与删除**：长按图标可移动、放入文件夹或删除。电视预装 App 也可用 `pm uninstall --user 0` 从当前用户空间移除，并可在设置中恢复；系统运行必需组件受到保护。
 - **控制中心**：遥控器返回键或右上角按钮打开，提供网络、待机、关机、重启、释放内存、相框、设置、亮度、音量和 HDMI 输入源。低配机型可切换成深色面板。
 - **背景与手机上传**：支持必应每日风景、360 壁纸、Wallhaven 全年龄二次元、公有领域名画、纯色渐变、手机相册照片和自定义图片链接。手机扫码页面还支持上传头像、开机视频和设置页背景。
@@ -123,7 +123,7 @@ Agent 必须能在这台电脑上实际运行命令。手机聊天或网页版�
 
 ### 2.3 一行命令（macOS / Linux）
 
-电脑需要先安装 `adb`（Android SDK Platform-Tools）、`curl` 和 `python3`。脚本默认下载最新正式版，校验 `SHA256SUMS.txt`，保存原桌面快照，覆盖安装时保留 App 配置。
+电脑需要先安装 `adb`（Android SDK Platform-Tools）、`curl` 和 `python3`。脚本默认下载最新正式版，按版本号解析 APK 与对应的 SHA-256 校验文件，保存原桌面快照，覆盖安装时保留 App 配置。
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/lesnolie/Tigris/main/install.sh \
@@ -132,7 +132,7 @@ curl -fsSL https://raw.githubusercontent.com/lesnolie/Tigris/main/install.sh \
 
 - 把 `192.168.1.20` 换成电视 IP。
 - 小米电视想保持 ADB 常开时使用 `KEEP_ADB=1`；不需要可改为 `KEEP_ADB=0`。
-- 指定版本：管道右侧写成 `KEEP_ADB=1 TV=192.168.1.20 VERSION=v2.0.4 bash`。
+- 指定版本：管道右侧写成 `KEEP_ADB=1 TV=192.168.1.20 VERSION=v2.0.6 bash`；旧版本未带版本号的文件也仍兼容。
 - TCL / 雷鸟使用守护包：把末尾的 `bash` 换成 `bash -s -- -s guard`。
 - 原始配置默认保存在 `~/.local/state/tigris/<电视IP>:5555/`；升级不会覆盖首次快照。
 
@@ -164,34 +164,40 @@ adb -s 192.168.1.20:5555 shell settings get secure enabled_notification_listener
 
 #### 第二步：下载并安装
 
-索尼、小米、原生 Android TV 等一般使用标准版。Windows PowerShell：
+索尼、小米、原生 Android TV 等一般使用标准版。发布的 APK 均带版本号（如 `Tigris-v2.0.6.apk`），可在 [最新 Release](https://github.com/lesnolie/Tigris/releases/latest) 手动下载，也可使用校验 SHA-256 的下载助手：
+
+Windows PowerShell：
 
 ```powershell
-curl.exe -L -o Tigris.apk https://github.com/lesnolie/Tigris/releases/latest/download/Tigris.apk
-adb -s 192.168.1.20:5555 install -r Tigris.apk
+curl.exe -fsSL -o download-release.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/download-release.py
+$apk = python .\download-release.py standard
+adb -s 192.168.1.20:5555 install -r $apk
 ```
 
 macOS / Linux：
 
 ```bash
-curl -fL -o Tigris.apk https://github.com/lesnolie/Tigris/releases/latest/download/Tigris.apk
-adb -s 192.168.1.20:5555 install -r Tigris.apk
+curl -fsSL -o download-release.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/download-release.py
+apk=$(python3 download-release.py standard)
+adb -s 192.168.1.20:5555 install -r "$apk"
 ```
 
 TCL / 雷鸟国行固件通常拒绝直接安装，也拒绝声明 HOME 的标准包，需要使用守护版和电视自带的「多屏互动」：
 
 ```powershell
-curl.exe -L -o Tigris-guard.apk https://github.com/lesnolie/Tigris/releases/latest/download/Tigris-guard.apk
-curl.exe -L -o tcast-push.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/tcast-push.py
-python .\tcast-push.py 192.168.1.20 .\Tigris-guard.apk
+curl.exe -fsSL -o download-release.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/download-release.py
+$apk = python .\download-release.py guard
+curl.exe -fsSL -o tcast-push.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/tcast-push.py
+python .\tcast-push.py 192.168.1.20 $apk
 ```
 
 macOS / Linux：
 
 ```bash
-curl -fL -o Tigris-guard.apk https://github.com/lesnolie/Tigris/releases/latest/download/Tigris-guard.apk
-curl -fL -o tcast-push.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/tcast-push.py
-python3 tcast-push.py 192.168.1.20 Tigris-guard.apk
+curl -fsSL -o download-release.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/download-release.py
+apk=$(python3 download-release.py guard)
+curl -fsSL -o tcast-push.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/tcast-push.py
+python3 tcast-push.py 192.168.1.20 "$apk"
 ```
 
 运行推送脚本时，电视角落会出现「多屏互动：正在发起应用推送」，用遥控器选择 **同意**。如果电脑防火墙询问，允许脚本访问局域网。
@@ -280,7 +286,7 @@ curl.exe -s -u ':<PIN>' http://192.168.1.20/sony/accessControl --data-binary '@b
 1. **桌面守护**：无障碍服务只监听前台窗口变化，不读取屏幕内容。只在确认原厂首页持续出现时接管；应用、输入源或弹窗出现会取消等待。开机、唤醒和服务恢复本身不会触发接管，短时间反复跳转会暂缓自动接管。
 2. **后台恢复**：通知监听服务不读取通知。系统结束 Tigris 进程后，Android 会重新绑定监听器，从而拉起进程并恢复桌面守护。
 3. **保持 ADB 开启**：小米唤醒后会关闭 ADB。启用该选项后，Tigris 用 `WRITE_SECURE_SETTINGS` 自动重新打开，方便以后升级。
-4. **TCL 守护版**：TCL 拒绝标准 HOME APK，因此使用不声明 HOME 的 `Tigris-guard.apk`，通过「多屏互动」安装，并放行 `APP_AUTO_START` / `APP_ASSOC_START`。
+4. **TCL 守护版**：TCL 拒绝标准 HOME APK，因此使用不声明 HOME 的守护版（发布文件名如 `Tigris-guard-v2.0.6.apk`），通过「多屏互动」安装，并放行 `APP_AUTO_START` / `APP_ASSOC_START`。
 
 | 权限或组件 | 用途 |
 |---|---|

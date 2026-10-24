@@ -123,12 +123,12 @@ export const en = {
     lede: "You need a computer on the same Wi-Fi as the TV, the TV's IP address and ADB debugging enabled. Android 9+, no root.",
     packages: [
       {
-        name: "Tigris.apk",
+        name: "Tigris-vX.Y.Z.apk",
         use: "Standard build: Sony BRAVIA, stock Android TV / Google TV, Xiaomi / Redmi, Hisense and most others.",
         href: brand.apk,
       },
       {
-        name: "Tigris-guard.apk",
+        name: "Tigris-guard-vX.Y.Z.apk",
         use: "Guard build: declares no home screen, for TCL / FFalcon firmware that rejects launcher APKs. Push it through T-Cast.",
         href: brand.apkGuard,
       },
@@ -365,7 +365,7 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
       {
         q: "TCL says INSTALL_FAILED_VERIFICATION_FAILURE",
         a: [
-          "TCL's verifier rejects every adb install. Use Tigris-guard.apk and push it through the TV's own T-Cast (多屏互动) service; the commands are in the TCL tab above.",
+          "TCL's verifier rejects every adb install. Use the versioned Guard APK (Tigris-guard-vX.Y.Z.apk) and push it through the TV's T-Cast service; the commands are in the TCL tab above.",
           "If the script cannot reach port 6553, that model has no T-Cast service. Push the APK to /sdcard/Download/ and install it with a file manager on the TV.",
         ],
       },

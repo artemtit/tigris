@@ -124,12 +124,12 @@ export const zh = {
       lede: "一台和电视连在同一个 Wi-Fi 的电脑、电视的 IP 地址、打开的 ADB 调试，就够了。支持 Android 9 及以上，不需要 root。",
       packages: [
         {
-          name: "Tigris.apk",
+          name: "Tigris-vX.Y.Z.apk",
           use: "标准版。索尼 BRAVIA、原生 Android TV / Google TV、小米 / Redmi、海信等大多数电视。",
           href: brand.apk,
         },
         {
-          name: "Tigris-guard.apk",
+          name: "Tigris-guard-vX.Y.Z.apk",
           use: "守护版。不声明桌面，供 TCL / 雷鸟等拒绝安装桌面 APK 的固件，通过「多屏互动」推送。",
           href: brand.apkGuard,
         },
@@ -433,7 +433,7 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
         {
           q: "TCL / 雷鸟安装失败，提示 INSTALL_FAILED_VERIFICATION_FAILURE",
           a: [
-            "这是 TCL 的安装校验在拒绝 adb 安装。请改用 Tigris-guard.apk，通过电视自带的「多屏互动」推送，命令见上方 TCL 标签页。",
+            "这是 TCL 的安装校验在拒绝 adb 安装。请使用带版本号的守护版 APK（Tigris-guard-vX.Y.Z.apk），通过电视自带的「多屏互动」推送，命令见上方 TCL 标签页。",
             "如果脚本连不上 6553 端口，说明该机型没有多屏互动服务，可以把 APK 推到 /sdcard/Download/，再用电视上的文件管理器安装。",
           ],
         },

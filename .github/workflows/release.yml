@@ -37,6 +37,7 @@ jobs:
           TIGRIS_KEY_ALIAS: ${{ secrets.TIGRIS_KEY_ALIAS }}
         run: |
           bash tools/test-install.sh
+          python3 -m unittest discover -s tools -p 'test_release_download.py' -v
           bash ./gradlew --no-daemon testStandardDebugUnitTest testGuardDebugUnitTest assembleStandardRelease assembleGuardRelease lintStandardRelease lintGuardRelease
       - name: Verify release identity and checksums
         run: |
@@ -44,20 +45,20 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           test -f "docs/releases/$GITHUB_REF_NAME.md"
           mkdir -p dist
-          cp app/build/outputs/apk/standard/release/app-standard-release.apk dist/Tigris.apk
-          cp app/build/outputs/apk/guard/release/app-guard-release.apk dist/Tigris-guard.apk
+          cp app/build/outputs/apk/standard/release/app-standard-release.apk "dist/Tigris-$GITHUB_REF_NAME.apk"
+          cp app/build/outputs/apk/guard/release/app-guard-release.apk "dist/Tigris-guard-$GITHUB_REF_NAME.apk"
           for apk in dist/*.apk; do
             "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk" > "$RUNNER_TEMP/badging.txt"
             head -n 1 "$RUNNER_TEMP/badging.txt" | grep -F "name='com.leslie.tvhome'" | grep -F "versionName='$VERSION'"
             "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" > "$RUNNER_TEMP/cert.txt"
             grep -F '7d2b6be8a86ce8981e368dde4920869b90c8206137934a6d1fc89a2d1d1b6114' "$RUNNER_TEMP/cert.txt"
           done
-          (cd dist && sha256sum Tigris.apk Tigris-guard.apk > SHA256SUMS.txt)
+          (cd dist && sha256sum "Tigris-$GITHUB_REF_NAME.apk" "Tigris-guard-$GITHUB_REF_NAME.apk" > "SHA256SUMS-$GITHUB_REF_NAME.txt")
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/Tigris.apk dist/Tigris-guard.apk dist/SHA256SUMS.txt \
+          gh release create "$GITHUB_REF_NAME" "dist/Tigris-$GITHUB_REF_NAME.apk" "dist/Tigris-guard-$GITHUB_REF_NAME.apk" "dist/SHA256SUMS-$GITHUB_REF_NAME.txt" \
             --verify-tag --title "Tigris ${GITHUB_REF_NAME#v}" --notes-file "docs/releases/$GITHUB_REF_NAME.md" --latest
       - name: Remove signing key
         if: always()

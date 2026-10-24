@@ -346,6 +346,8 @@ class SettingsActivity : Activity() {
         }
 
         section("App")
+        row("最近打开的 App 自动置顶", "开启时，成功打开的应用或文件夹会移动到最前面；关闭后保持当前排列，只通过长按「编辑主屏幕」手动调整，重新启动应用也不会打乱顺序。",
+            { onOff(prefs.recentFirst) }) { prefs.recentFirst = !prefs.recentFirst }
         row("隐藏的 App", "不在主屏幕上显示的 App。", { "${prefs.hidden.size} 个" }, chevron = true) { show(Page.HIDDEN) }
         row("已删除的预装 App", "从长按菜单里删除的预装 App，可以在这里恢复。", { "${prefs.removed.size} 个" }, chevron = true) {
             show(Page.REMOVED)

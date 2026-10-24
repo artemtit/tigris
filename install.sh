@@ -76,21 +76,57 @@ if [[ ! -f "$STATE/home" ]]; then
 fi
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-ASSET=Tigris.apk
-[[ "$FLAVOR" == guard ]] && ASSET=Tigris-guard.apk
-# APK is also useful for offline tests; no package is downloaded in that mode.
+# Select assets from the GitHub release metadata rather than assuming unversioned filenames.
+# Works with versioned v2.0.6+ assets and historical Tigris.apk / Tigris-guard.apk releases.
+ASSET=$( [[ "$FLAVOR" == guard ]] && echo Tigris-guard.apk || echo Tigris.apk )
 if [[ -n "${APK:-}" ]]; then
   [[ -f "$APK" ]] || fail 'APK file not found'
   cp "$APK" "$TMP/$ASSET"
 else
   VERSION=${VERSION:-latest}
-  if [[ "$VERSION" == latest ]]; then BASE="$REPO/releases/latest/download"
+  if [[ "$VERSION" == latest ]]; then
+    METADATA=https://api.github.com/repos/lesnolie/Tigris/releases/latest
   else
-    [[ "$VERSION" =~ ^[a-zA-Z0-9._-]+$ ]] || fail 'Invalid VERSION tag'
-    BASE="$REPO/releases/download/$VERSION"
+    [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9._-]+)?$ ]] || fail 'Invalid VERSION tag'
+    METADATA="https://api.github.com/repos/lesnolie/Tigris/releases/tags/$VERSION"
   fi
-  curl -fLsS "$BASE/$ASSET" -o "$TMP/$ASSET"
-  curl -fLsS "$BASE/SHA256SUMS.txt" -o "$TMP/SHA256SUMS.txt"
+  curl -fLsS "$METADATA" -o "$TMP/release.json"
+  python3 - "$TMP/release.json" "$FLAVOR" "$TMP" "$VERSION" <<'PY'
+import json, pathlib, re, sys
+
+release_path, flavor, directory, requested = sys.argv[1:]
+data = json.loads(pathlib.Path(release_path).read_text(encoding="utf-8"))
+tag = data["tag_name"]
+if not isinstance(tag, str) or not re.fullmatch(r"v[0-9]+\.[0-9]+(?:\.[0-9]+)?(?:-[A-Za-z0-9._-]+)?", tag):
+    raise SystemExit("Invalid release tag")
+if requested != "latest" and tag != requested:
+    raise SystemExit("Release tag mismatch")
+if data.get("draft") or data.get("prerelease"):
+    raise SystemExit("Only stable releases are installable")
+assets = {asset["name"]: asset["browser_download_url"] for asset in data["assets"]}
+base = "Tigris-guard" if flavor == "guard" else "Tigris"
+preferred_apk = (f"{base}-{tag}.apk", f"{base}.apk")
+preferred_checksums = (f"SHA256SUMS-{tag}.txt", "SHA256SUMS.txt")
+def select(candidates):
+    for name in candidates:
+        if name in assets:
+            expected = f"https://github.com/lesnolie/Tigris/releases/download/{tag}/{name}"
+            if assets[name] != expected:
+                raise SystemExit("Unexpected release asset URL")
+            return name, expected
+    raise SystemExit("Required APK or SHA256SUMS file missing from release")
+apk, url = select(preferred_apk)
+checksum, checksum_url = select(preferred_checksums)
+out = pathlib.Path(directory)
+(out / "asset_name").write_text(apk, encoding="utf-8")
+(out / "asset_url").write_text(url, encoding="utf-8")
+(out / "checksum_url").write_text(checksum_url, encoding="utf-8")
+PY
+  ASSET=$(cat "$TMP/asset_name")
+  ASSET_URL=$(cat "$TMP/asset_url")
+  CHECKSUM_URL=$(cat "$TMP/checksum_url")
+  curl -fLsS "$ASSET_URL" -o "$TMP/$ASSET"
+  curl -fLsS "$CHECKSUM_URL" -o "$TMP/SHA256SUMS.txt"
   python3 - "$TMP/$ASSET" "$TMP/SHA256SUMS.txt" "$ASSET" <<'PY'
 import hashlib, pathlib, sys
 apk, manifest, name = sys.argv[1:]

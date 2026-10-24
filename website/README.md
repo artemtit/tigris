@@ -76,17 +76,18 @@ public/404.html         static 404 served by Cloudflare Pages
 - **Bundled settings artwork** is an owner-supplied third-party
   asset, not original Tigris artwork; see the repository's asset provenance.
 
-- **Commands have two OS variants.** `com.leslie.tvhome` is always written in
-  full, so no snippet depends on a shell variable. The install section has one
-  PowerShell / macOS·Linux switch that swaps every block (and what the copy
-  button copies). The only variable-bearing lines are the Sony BRAVIA `BODY`
-  registration, shipped separately per shell. `192.168.x.x` and `PIN` are
+- **Commands have two OS variants.** The install section has one
+  PowerShell / macOS·Linux switch that swaps every block (including what the
+  copy button copies). The installer captures the actual versioned APK filename
+  in `$apk` or `APK` before installing; users must copy the complete code block.
+  Sony BRAVIA registration also uses a platform-specific `BODY` variable.
+  `com.leslie.tvhome` is always spelled out; `192.168.x.x` and `PIN` are
   documented placeholders.
 - **Never suggest disabling the Xiaomi stock launcher** (`com.mitv.tvhome`).
   Both languages say so explicitly and offer the home guard instead.
 - **Client-side strings** come from `data-*` attributes written by the layout,
   never from literals inside `main.ts`, so `/en/` cannot fall back to Chinese.
-- **Every download link** points at GitHub `releases/latest/download/…`.
+- **Download links** open the latest GitHub Release listing, where APK assets are versioned. Installer snippets use `tools/download-release.py` to resolve and verify the correct current filename on Windows / macOS / Linux without hardcoding a release tag.
 - **Evergreen copy**: no "tonight"-style lines; the CTA promises the experience,
   not a single evening.
 - Adding a UI string means adding it to `zh.ts`, `en.ts` and, if the client

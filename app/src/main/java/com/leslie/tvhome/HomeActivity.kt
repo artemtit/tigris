@@ -730,10 +730,11 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         }
     }
 
-    /** Only successful app launches reorder the shelf; editing or failed launches never do. */
+    /** A disabled recent-first preference preserves manual order, including folders. */
     private fun rememberOpened(pkg: String) {
+        if (!prefs.recentFirst) return
         val visible = adapter.apps.map { it.pkg }
-        prefs.order = RecentOrder.promote(pkg, visible, prefs.order)
+        prefs.order = RecentOrder.afterLaunch(pkg, visible, prefs.order, prefs.recentFirst)
         reload()
     }
 

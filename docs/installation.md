@@ -37,13 +37,15 @@ curl -fsSL https://raw.githubusercontent.com/lesnolie/Tigris/main/install.sh | K
 默认下载最新**正式版**并校验 SHA-256，不自动安装预发布。指定版本可加 `VERSION=v2.0.4`；Guard 版末尾用 `bash -s -- -s guard`。TCL 拒绝 ADB 安装时，脚本停止，按 [多屏互动说明](../AGENTS.md#3-install) 推送 Guard 包。
 
 
-**手动**：下载 [Tigris.apk](https://github.com/lesnolie/Tigris/releases/latest/download/Tigris.apk)，逐条执行，遇到失败先处理再继续：
+**手动**：从 [最新正式版 Release](https://github.com/lesnolie/Tigris/releases/latest) 选择带版本号的标准版 APK（如 `Tigris-v2.0.6.apk`），或者运行以下脚本自动下载并校验。先记录原配置，遇到失败先处理再继续：
 
 ```bash
 adb connect 192.168.1.20:5555
 # 保存原桌面输出，便于还原。
 adb -s 192.168.1.20:5555 shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME
-adb -s 192.168.1.20:5555 install -r Tigris.apk
+curl -fsSL -o download-release.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/download-release.py
+APK=$(python3 download-release.py standard)
+adb -s 192.168.1.20:5555 install -r "$APK"
 adb -s 192.168.1.20:5555 shell pm grant com.leslie.tvhome android.permission.WRITE_SECURE_SETTINGS
 adb -s 192.168.1.20:5555 shell cmd notification allow_listener com.leslie.tvhome/com.leslie.tvhome.RevivalListener
 adb -s 192.168.1.20:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW allow
@@ -51,7 +53,7 @@ adb -s 192.168.1.20:5555 shell cmd package set-home-activity com.leslie.tvhome/.
 adb -s 192.168.1.20:5555 shell am start -n com.leslie.tvhome/.HomeActivity
 ```
 
-Windows 用 Agent 或逐条运行上述 ADB 命令，无需 Bash。小米/TCL 等仍被原桌面接管时按 [守护说明](../AGENTS.md#10-tvs-whose-system-fights-third-party-launchers-the-home-guard) 配置。
+Windows 用 Agent 或 PowerShell：`curl.exe` 下载脚本，再运行 `$apk = python .\download-release.py standard`，随后 `adb -s 192.168.1.20:5555 install -r $apk`，无需 Bash。小米/TCL 等仍被原桌面接管时按 [守护说明](../AGENTS.md#10-tvs-whose-system-fights-third-party-launchers-the-home-guard) 配置。
 
 **没有电脑**：项目没有逐一验证手机上的 ADB 工具。只用 U 盘装 APK 不等于设好了默认桌面和开机进入，建议用电脑完成验收。
 
