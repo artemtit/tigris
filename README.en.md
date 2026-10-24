@@ -1,6 +1,6 @@
 # Tigris
 
-> 2.0.5 requires confirmed stock HOME evidence before automatic takeover, limits repeated takeovers, and makes automatic cleanup cache-only and opt-in for new installs. See [release notes](docs/releases/v2.0.5.md). The TV in #14 still needs device verification.
+> **Latest stable release: v2.0.6 (October 24, 2026).** Recently opened apps can now be kept in a fixed manual order: automatic promotion is off by default. Release APKs and checksums include their version in the filename. See the [v2.0.6 release notes](docs/releases/v2.0.6.md). The [v2.0.5 home-guard fixes](docs/releases/v2.0.5.md) remain included; issue #14 still needs testing on the reported TV.
 
 <p align="center">
   <a href="https://tigris-tv.pages.dev/">
@@ -16,7 +16,7 @@ A tvOS-inspired launcher for Android TV, featuring a Liquid Glass Dock, Top Shel
 
 **Fully tested by the maintainer on Sony BRAVIA XR-55A80J (Android TV 12).** Other devices and firmware variants may require installation or TV-specific adjustments.
 
-**Website:** [tigris-tv.pages.dev](https://tigris-tv.pages.dev) · [Latest APK downloads](https://github.com/lesnolie/Tigris/releases/latest)
+**Website:** [tigris-tv.pages.dev](https://tigris-tv.pages.dev) · **[v2.0.6 Release](https://github.com/lesnolie/Tigris/releases/tag/v2.0.6)** ([Standard APK](https://github.com/lesnolie/Tigris/releases/download/v2.0.6/Tigris-v2.0.6.apk) · [Guard APK](https://github.com/lesnolie/Tigris/releases/download/v2.0.6/Tigris-guard-v2.0.6.apk) · [SHA-256 checksums](https://github.com/lesnolie/Tigris/releases/download/v2.0.6/SHA256SUMS-v2.0.6.txt))
 
 [![Tigris promotional film](docs/screenshots/film.jpg)](https://tigris-tv.pages.dev/#film)
 
@@ -34,7 +34,7 @@ A tvOS-inspired launcher for Android TV, featuring a Liquid Glass Dock, Top Shel
 
 ## TV installation and compatibility reports
 
-> **Snapshot: October 23, 2026. Official APKs require Android 9 (API 28) or newer.** The table records observations on **specific models, OS builds, and Tigris versions**. It is not blanket certification of a brand. **APK installed ≠ launcher activated ≠ HDMI, brightness, wallpaper and other features verified.** Historic bugs may be fixed in source without a subsequent hardware retest.
+> **Snapshot: October 24, 2026. Official APKs require Android 9 (API 28) or newer.** The table records observations on **specific models, OS builds, and Tigris versions**. It is not blanket certification of a brand. **APK installed ≠ launcher activated ≠ HDMI, brightness, wallpaper and other features verified.** Historic bugs may be fixed in source without a subsequent hardware retest.
 
 | TV model | Android / firmware | Installation / launch result | Evidence and limitations | Source |
 |---|---|---|---|---|
@@ -109,6 +109,12 @@ To explicitly keep ADB enabled, add `KEEP_ADB=1` before `bash`. New releases shi
 
 ## Features
 
+### What's new in v2.0.6
+
+- **Choose your app order:** Settings → App → **Recently opened apps first**. Off by default on a fresh v2.0.6 install or first upgrade from an older release. Keep your current layout and folders in manual mode, or turn it on to move a successfully launched app or folder to the front. Toggling does not reset the layout.
+- **Versioned release assets:** `Tigris-v2.0.6.apk`, `Tigris-guard-v2.0.6.apk`, and `SHA256SUMS-v2.0.6.txt`. The in-app updater and install script recognize both current and historical release naming.
+- **Upgrade in place:** compatible installations retain their data and settings using the established stable signing key. See the [v2.0.6 release notes](docs/releases/v2.0.6.md).
+
 ### Highlights introduced in 2.0.4
 
 App folders, phone-based avatar upload, an update center for Tigris and MiracastReceiver, and frosted app-list scrolling. The Dock and top-right controls scroll off-screen with the grid. Bundled startup media and settings artwork are defaults; existing customizations take priority. Upload or reset an avatar from the TV's Settings screen using the on-screen QR code. Updates are under Control Center → Settings → Software updates & casting.
@@ -117,7 +123,7 @@ App folders, phone-based avatar upload, an update center for Tigris and Miracast
 
 - **tvOS-style home screen:** docked 16:9 app tiles, focus zoom, directional tilt, animated light sweep and shadow; optional portrait icon; compact clock, large clock with date, or no clock; 12/24-hour time.
 - **Settings:** a large-icon tvOS-inspired settings screen with grouped controls. Focus animation and Control Center style default to *Auto*, choosing a lighter style on TVs with under 2.5 GB RAM, Android below 10, or fewer than four CPU cores.
-- **Recently opened apps first (optional):** disabled by default on new installs and upgrades; when enabled, a successfully opened app moves to the front without reordering other apps. Turn it off under Settings → Apps to keep the current manual order. Long-press an app and choose Edit Home Screen to rearrange it. Focus changes, failed launches and HDMI switching never reorder apps.
+- **Recently opened apps first (optional):** off by default when installing v2.0.6 or first upgrading from an older release; after that, your saved preference is retained. Turn it on under Settings → App → Recently opened apps first to move successfully launched apps or folders to the front; turn it off to preserve the current manual order. Long-press a tile and choose Edit Home Screen to rearrange it. Focus changes, failed launches and HDMI switching never reorder apps.
 - **Manage apps:** long-press items for actions including removing preinstalled user-visible packages with `pm uninstall --user 0` when allowed (system partition APKs are not deleted). Restore them from the deleted-preinstalled-apps section. Essential TV system components are protected from this action.
 - **Liquid Glass Dock:** precomputed blur, refraction, highlights and shadows from the wallpaper avoid expensive per-frame GPU effects.
 - **Top Shelf-style content:** selected app tiles can show public-feed content from Bilibili and Douyu. Their corresponding TV apps are required.
@@ -207,7 +213,7 @@ curl -s http://<TV_IP>/sony/accessControl -d "$BODY"
 curl -s -u ":<PIN>" http://<TV_IP>/sony/accessControl -d "$BODY"
 ```
 
-See [AGENTS.md](AGENTS.md) for permissions, setup and verification. The upstream release APKs are debug-signed for sideloading.
+See [AGENTS.md](AGENTS.md) for permissions, setup and verification. Official release APKs are signed with the project's stable release key; locally built APKs may use a different key, so verify signatures before attempting an in-place upgrade.
 
 ## Casting recommendation
 
