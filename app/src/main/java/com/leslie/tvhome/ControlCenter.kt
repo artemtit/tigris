@@ -841,7 +841,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         Thread {
             val r = Cleaner.clean(ctx.applicationContext)
             host.post {
-                status.text = "已释放 ${r.freedMb} MB" + if (r.viaAdb) "" else "（仅缓存）"
+                status.text = r.description()
             }
         }.start()
     }

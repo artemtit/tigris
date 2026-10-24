@@ -61,7 +61,7 @@ jobs:
         run: bash ./gradlew --no-daemon :app:assembleStandardRelease :app:assembleGuardRelease --stacktrace
 
       - name: Android lint
-        run: bash ./gradlew --no-daemon :app:lintStandardRelease --stacktrace
+        run: bash ./gradlew --no-daemon :app:lintStandardRelease :app:lintGuardRelease --stacktrace
 
       - name: Upload test reports and built APKs
         if: always()

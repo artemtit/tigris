@@ -15,7 +15,7 @@ case "$*" in
   get-state) echo device ;;
   'shell getprop ro.build.version.sdk') echo "${SDK:-31}" ;;
   'shell getprop ro.product.manufacturer') echo Sony ;;
-  'shell cmd package resolve-activity'*) echo com.vendor.home/.Home ;;
+  'shell cmd package resolve-activity'*) echo "${RESOLVED_HOME:-com.vendor.home/.Home}" ;;
   'shell settings get secure screensaver_components') echo "${SAVER:-com.vendor.saver/.Dream}" ;;
   'shell settings get secure enabled_notification_listeners') echo com.other/.Listener ;;
   'shell settings get secure enabled_accessibility_services') echo com.other/.Service ;;
@@ -41,6 +41,19 @@ printf com.saved.home/.Home > "$STATE_DIR/home"
 bash "$ROOT/install.sh" > "$TEST/output"
 [[ "$(cat "$STATE_DIR/home")" == com.saved.home/.Home ]]
 echo 'PASS upgrade retains initial snapshot'
+! grep -q -- '--ez keep_adb' "$LOG"
+echo 'PASS omitted keep_adb preserves user preference'
+: > "$LOG"
+KEEP_ADB=1 bash "$ROOT/install.sh" > "$TEST/output"
+grep -q -- '--ez keep_adb true' "$LOG"
+: > "$LOG"
+KEEP_ADB=0 bash "$ROOT/install.sh" > "$TEST/output"
+grep -q -- '--ez keep_adb false' "$LOG"
+echo 'PASS explicit keep_adb changes still apply'
+: > "$LOG"
+RESOLVED_HOME=com.leslie.tvhome/.HomeActivity bash "$ROOT/install.sh" > "$TEST/output"
+! grep -q 'am broadcast' "$LOG"
+echo 'PASS native HOME upgrade with no configuration skips empty broadcast'
 : > "$LOG"
 if FAIL_INSTALL=1 bash "$ROOT/install.sh" > "$TEST/output" 2>&1; then exit 1; fi
 ! grep -Eq 'uninstall|pm grant|set-home-activity|am broadcast' "$LOG"

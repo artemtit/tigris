@@ -80,7 +80,7 @@ class KeeperService : Service() {
         worker.execute {
             try {
                 val fg = if (spareForeground) Cleaner.foregroundPackage(this) else null
-                Cleaner.clean(this, fg)
+                Cleaner.clean(this, fg, automatic = true)
             } finally {
                 if (wl.isHeld) wl.release()
             }
@@ -111,11 +111,6 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(c: Context, i: Intent) {
         KeeperService.start(c)
         Guard.ensure(c)
-        // After a real boot on a firmware that still hands Home to its own launcher: open the home
-        // screen, unless the guard is already running and will look at what is in front itself (an
-        // HDMI-CEC source may have switched the TV to its input by now). Starting an activity from
-        // here needs SYSTEM_ALERT_WINDOW, granted with the guard.
-        if (i.action != Intent.ACTION_BOOT_COMPLETED || !Prefs(c).guard || HomeGuardService.isRunning || Guard.isDefaultHome(c)) return
-        runCatching { c.startActivity(HomeActivity.bringBack(c)) }
+        // The guard waits for a confirmed stock HOME event. Boot alone must not steal an input.
     }
 }

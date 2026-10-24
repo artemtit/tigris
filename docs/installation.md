@@ -82,7 +82,7 @@ curl -fsSL https://raw.githubusercontent.com/lesnolie/Tigris/main/install.sh | T
 
 - **只装 APK，主页键还是原桌面**：还需要默认 HOME 或桌面守护配置。
 - **TCL / 雷鸟拒绝安装**：用 Guard 包和多屏互动，电视弹出提示时选择「同意」。
-- **`KEEP_ADB=1`**：明确启用“保持 ADB 调试开启”，用于固件待机后关闭 ADB 的情况。默认不启用，还原时关闭。
+- **`KEEP_ADB=1`**：明确启用“保持 ADB 调试开启”，用于固件待机后关闭 ADB 的情况。未指定时保留已有选择，新安装默认关闭，还原时关闭。
 - **系统太旧**：官方包最低 Android 9，`INSTALL_FAILED_OLDER_SDK` 无法靠更换安装器解决。LG webOS、三星 Tizen 等非 Android 系统不能安装。
 - **原桌面、账号、会员还在吗**：安装器不卸载或停用原桌面，不清除其他应用数据。固件开机广告不属于桌面，不能承诺去除。
 - **安装成功却不能开机进入**：主页、待机唤醒和开机要分别验证，重启需用户同意；机型范围见 README。

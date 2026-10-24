@@ -1,5 +1,7 @@
 # Tigris
 
+> 2.0.5 requires confirmed stock HOME evidence before automatic takeover, limits repeated takeovers, and makes automatic cleanup cache-only and opt-in for new installs. See [release notes](docs/releases/v2.0.5.md). The TV in #14 still needs device verification.
+
 <p align="center">
   <a href="https://tigris-tv.pages.dev/">
     <img src="website/public/img/favicon.svg" alt="Tigris — 官方网站图标 / official website icon" width="112" />

@@ -1,5 +1,7 @@
 # Tigris
 
+> 2.0.5：桌面守护只在确认原厂首页出现时接管，限制反复跳转；自动清理改为仅缓存，新安装默认关闭。详见 [更新说明](docs/releases/v2.0.5.md)。雷鸟 #14 尚待对应型号实机复测。
+
 <p align="center">
   <a href="https://tigris-tv.pages.dev/">
     <img src="website/public/img/favicon.svg" alt="Tigris 官方网站图标" width="112" />
@@ -275,7 +277,7 @@ curl.exe -s -u ':<PIN>' http://192.168.1.20/sony/accessControl --data-binary '@b
 
 小米、TCL、海信、创维等国产固件常常只认自家桌面。小米上 `set-home-activity` 可能显示成功，但主页键仍回 PatchWall；待机时还会清理第三方 App。Tigris 用以下方式接管前台，不 root、不修改系统分区、不卸载或停用原厂桌面：
 
-1. **桌面守护 / Home Guard**：无障碍服务只监听前台窗口变化，不读取屏幕内容。原厂桌面出现后，Tigris 会在大约半秒内回到前台。开机或唤醒后等待 1.5 秒，避免打断 HDMI-CEC 输入源切换。
+1. **桌面守护 / Home Guard**：无障碍服务只监听前台窗口变化，不读取屏幕内容。只在确认原厂首页持续出现时接管；应用、输入源或弹窗出现会取消等待。开机、唤醒和服务恢复本身不会触发接管，短时间反复跳转会暂缓自动接管。
 2. **被杀后复活 / Revival**：通知监听服务不读取通知。系统结束 Tigris 进程后，Android 会重新绑定监听器，从而拉起进程并恢复桌面守护。
 3. **保持 ADB 开启**：小米唤醒后会关闭 ADB。启用该选项后，Tigris 用 `WRITE_SECURE_SETTINGS` 自动重新打开，方便以后升级。
 4. **TCL 守护版**：TCL 拒绝标准 HOME APK，因此使用不声明 HOME 的 `Tigris-guard.apk`，通过「多屏互动」安装，并放行 `APP_AUTO_START` / `APP_ASSOC_START`。
@@ -454,7 +456,7 @@ tv/
 
 **`KEEP_ADB=1` 是什么？**
 
-明确启用「保持 ADB 调试开启」。小米等固件待机唤醒后可能关闭 ADB，开启后 Tigris 会尝试自动恢复，方便以后升级；脚本未指定时默认为 `0`，还原时会关闭。
+明确启用「保持 ADB 调试开启」。小米等固件待机唤醒后可能关闭 ADB，开启后 Tigris 会尝试自动恢复，方便以后升级；脚本未指定时保留已有选择，新安装默认关闭；还原时会关闭。
 
 **Windows 应该选 PowerShell 还是其他方式？**
 

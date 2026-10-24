@@ -317,10 +317,10 @@ class SettingsActivity : Activity() {
         }
 
         section("内存与电源")
-        row("待机时自动释放内存", "电视待机时关掉后台的 App，下次开机更流畅。", { onOff(prefs.cleanOnStandby) }) {
+        row("待机时自动释放内存", "待机时仅清理缓存进程，不强制停止应用；无法确认前台时跳过。", { onOff(prefs.cleanOnStandby) }) {
             prefs.cleanOnStandby = !prefs.cleanOnStandby
         }
-        row("定时释放内存", "每隔一段时间自动关掉后台的 App。", {
+        row("定时释放内存", "定时清理缓存进程，不强制停止应用。新安装默认关闭。", {
             if (prefs.cleanIntervalHours == 0) "关闭" else "每 ${prefs.cleanIntervalHours} 小时"
         }) {
             val opts = listOf(0, 2, 4, 8)
@@ -331,7 +331,7 @@ class SettingsActivity : Activity() {
             v.text = "正在释放…"
             Thread {
                 val r = Cleaner.clean(applicationContext)
-                runOnUiThread { v.text = "已释放 ${r.freedMb} MB" }
+                runOnUiThread { v.text = r.description() }
             }.start()
         }
         row("释放内存时保留的 App", "释放内存时不会被关掉的 App，比如投屏和音乐。", { "${prefs.keep.size} 个" }, chevron = true) {

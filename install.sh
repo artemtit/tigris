@@ -64,8 +64,8 @@ if [[ "$MODE" == restore ]]; then
   echo 'Restore commands completed. Verify that mCurrentFocus names your original launcher.'
   exit 0
 fi
-KEEP_ADB=${KEEP_ADB:-0}
-[[ "$KEEP_ADB" == 0 || "$KEEP_ADB" == 1 ]] || fail 'KEEP_ADB must be 0 or 1'
+KEEP_ADB=${KEEP_ADB:-preserve}
+[[ "$KEEP_ADB" == preserve || "$KEEP_ADB" == 0 || "$KEEP_ADB" == 1 ]] || fail 'KEEP_ADB must be 0 or 1'
 command -v curl >/dev/null || fail 'Install curl first'
 # Never overwrite the first snapshot during an upgrade.
 if [[ ! -f "$STATE/home" ]]; then
@@ -119,9 +119,12 @@ fi
 case "$BRAND" in *xiaomi*|*redmi*|*tcl*|*ffalcon*) GUARD=true ;; esac
 [[ "$(shread "${HOME_QUERY[@]}")" == *"$PKG"* ]] || GUARD=true
 # An upgrade never turns off a guard the user previously enabled.
-CONFIG=(--ez keep_adb "$([[ "$KEEP_ADB" == 1 ]] && echo true || echo false)")
+CONFIG=()
+[[ "$KEEP_ADB" == preserve ]] || CONFIG+=(--ez keep_adb "$([[ "$KEEP_ADB" == 1 ]] && echo true || echo false)")
 [[ "$GUARD" == true ]] && CONFIG+=(--ez guard true)
-ad shell am broadcast -a "$PKG.CONFIG" -n "$PKG/.ConfigReceiver" "${CONFIG[@]}"
+if [[ "$GUARD" == true || "$KEEP_ADB" != preserve ]]; then
+  ad shell am broadcast -a "$PKG.CONFIG" -n "$PKG/.ConfigReceiver" "${CONFIG[@]}"
+fi
 ad shell am start -n "$PKG/.HomeActivity"
 verify
 echo "Original launcher snapshot: $STATE (keep this directory for restore)."

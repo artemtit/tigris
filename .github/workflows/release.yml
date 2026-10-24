@@ -37,7 +37,7 @@ jobs:
           TIGRIS_KEY_ALIAS: ${{ secrets.TIGRIS_KEY_ALIAS }}
         run: |
           bash tools/test-install.sh
-          bash ./gradlew --no-daemon testStandardDebugUnitTest testGuardDebugUnitTest assembleStandardRelease assembleGuardRelease lintStandardRelease
+          bash ./gradlew --no-daemon testStandardDebugUnitTest testGuardDebugUnitTest assembleStandardRelease assembleGuardRelease lintStandardRelease lintGuardRelease
       - name: Verify release identity and checksums
         run: |
           set -euo pipefail

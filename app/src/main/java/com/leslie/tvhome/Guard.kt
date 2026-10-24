@@ -13,7 +13,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
-import android.os.Process
 import android.os.SystemClock
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
@@ -51,6 +50,7 @@ import com.leslie.tvhome.tv.XiaomiAdapter
  */
 object Guard {
     private const val TAG = "TigrisGuard"
+    private var recovery: ServiceRecovery? = null
 
     /** elapsedRealtime of the last time the guard had to be switched back on. */
     @Volatile
@@ -99,6 +99,7 @@ object Guard {
 
     /** Turns the guard on or off for good. Returns false when the permission to do so is missing. */
     fun setEnabled(ctx: Context, on: Boolean): Boolean {
+        recovery?.cancel()
         Prefs(ctx).guard = on
         if (!hasSecureSettings(ctx)) return false
         if (on) ensure(ctx) else runCatching {
@@ -163,19 +164,18 @@ object Guard {
      */
     fun rebindIfStalled(ctx: Context) {
         if (HomeGuardService.isRunning || !Prefs(ctx).guard || !hasSecureSettings(ctx)) return
-        val me = service(ctx)
-        val entries = enabledServices(ctx)
-        val others = entries.filter { ComponentName.unflattenFromString(it)?.flattenToString() != me }
-        if (others.size == entries.size) return // not enabled at all; ensure() handles that
-        val r = ctx.contentResolver
-        runCatching {
-            lastRevivedAt = SystemClock.elapsedRealtime()
-            Settings.Secure.putString(r, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, others.joinToString(":"))
-            Handler(Looper.getMainLooper()).postDelayed({
-                runCatching { Settings.Secure.putString(r, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, (others + me).joinToString(":")) }
-            }, 1500)
-            Log.i(TAG, "home guard was enabled but not running; asked Android to bind it again")
-        }
+        val app = ctx.applicationContext
+        val repair = recovery ?: ServiceRecovery(
+            service(app),
+            read = { enabledServices(app).mapNotNull { ComponentName.unflattenFromString(it)?.flattenToString() } },
+            write = { Settings.Secure.putString(app.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, it.joinToString(":")) },
+            allowed = { Prefs(app).guard && hasSecureSettings(app) },
+            bound = { HomeGuardService.isRunning },
+            later = { action -> Handler(Looper.getMainLooper()).postDelayed({
+                runCatching { action() }.onFailure { Log.w(TAG, "guard rebind failed", it) }
+            }, 1500) },
+        ).also { recovery = it }
+        runCatching { repair.repair() }.onFailure { Log.w(TAG, "guard repair failed", it) }
     }
 }
 
@@ -194,8 +194,8 @@ class HomeGuardService : AccessibilityService() {
     /** HOME activities that are not ours: package to class names. */
     private var stockHomes: Map<String, Set<String>> = emptyMap()
     private var allowStockUntil = 0L
-    /** The last activity that came to the front; null until one does. */
-    private var lastWindow: Pair<String, String>? = null
+    /** Tracks confirmed windows and bounds automatic takeover attempts. */
+    private val takeoverPolicy = HomeTakeoverPolicy()
     private val handler = Handler(Looper.getMainLooper())
     private var takeOverReason = ""
     private val takeOver = Runnable { takeOverIfStockInFront(takeOverReason) }
@@ -203,7 +203,8 @@ class HomeGuardService : AccessibilityService() {
     private val screenOn = object : BroadcastReceiver() {
         override fun onReceive(c: Context, i: Intent) {
             // Firmwares put their own launcher back in front during standby, and no window change follows.
-            takeOverOnceSettled("screen on")
+            takeoverPolicy.observe(HomeTakeoverPolicy.Window.UNKNOWN, SystemClock.elapsedRealtime())
+            handler.removeCallbacks(takeOver)
         }
     }
 
@@ -212,17 +213,8 @@ class HomeGuardService : AccessibilityService() {
         refreshStockHomes()
         filterKeys(false)
         registerReceiver(screenOn, IntentFilter(Intent.ACTION_SCREEN_ON))
-        // Bound after boot or after the firmware killed Tigris: the stock launcher is in front and
-        // the window change that showed it is long gone. Not after an update, though: installing
-        // also kills the app, and whoever is watching an input must not be pulled back to Home.
-        val revived = SystemClock.elapsedRealtime() - Guard.lastRevivedAt < 60_000 && !justUpdated()
-        val diedInFront = Prefs(this).homeInFront &&
-            SystemClock.elapsedRealtime() - Process.getStartElapsedRealtime() < 60_000
-        val awake = getSystemService(PowerManager::class.java)?.isInteractive == true
-        Log.i(TAG, "connected: awake=$awake revived=$revived diedInFront=$diedInFront stock=${stockHomes.keys}")
-        if (awake && (SystemClock.elapsedRealtime() < BOOT_WINDOW_MS || revived || diedInFront)) {
-            takeOverOnceSettled(if (revived) "revived" else if (diedInFront) "died in front" else "bound after boot")
-        }
+        // Wait for a real window event: binding does not prove what is on screen.
+        Log.i(TAG, "connected; waiting for a confirmed stock HOME window")
     }
 
     /**
@@ -233,22 +225,14 @@ class HomeGuardService : AccessibilityService() {
     private fun takeOverOnceSettled(reason: String) {
         takeOverReason = reason
         handler.removeCallbacks(takeOver)
-        handler.postDelayed(takeOver, SETTLE_MS)
+        handler.postDelayed(takeOver, HomeTakeoverPolicy.SETTLE_MS)
     }
 
-    private fun justUpdated(): Boolean = runCatching {
-        System.currentTimeMillis() - packageManager.getPackageInfo(packageName, 0).lastUpdateTime < 2 * 60_000
-    }.getOrDefault(false)
-
     private fun takeOverIfStockInFront(reason: String) {
-        val last = lastWindow
-        // Unknown means we were only just bound. Any screen of the stock launcher counts: when
-        // Tigris is killed, whatever was on top of the launcher's task is uncovered.
-        if (stockHomes.isEmpty()) return // Tigris is the only home; nothing to take over from
-        val stockInFront = last == null || last.first in stockHomes
-        if (!stockInFront) Log.i(TAG, "$reason with ${last?.first} in front; leaving it")
-        if (!stockInFront || SystemClock.uptimeMillis() < allowStockUntil) return
-        Log.i(TAG, "$reason with the stock launcher in front; bringing Tigris back")
+        val awake = getSystemService(PowerManager::class.java)?.isInteractive == true
+        if (!takeoverPolicy.request(SystemClock.elapsedRealtime(), Prefs(this).guard,
+                awake, SystemClock.uptimeMillis() < allowStockUntil)) return
+        Log.i(TAG, "$reason: confirmed stock HOME; bringing Tigris back")
         goHome()
     }
 
@@ -285,35 +269,32 @@ class HomeGuardService : AccessibilityService() {
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        if (!Prefs(this).guard) return false
         if (event.keyCode != KeyEvent.KEYCODE_HOME || Guard.isDefaultHome(this)) return false
         if (event.action == KeyEvent.ACTION_UP && !event.isCanceled) goHome()
         return true
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        if (!Prefs(this).guard || event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
         val pkg = event.packageName?.toString() ?: return
         val cls = event.className?.toString() ?: return
-        // Overlays and dialogs raise this event too (TCL's voice assistant at boot); only
-        // activities count as what is in front.
-        if (isActivity(pkg, cls)) lastWindow = pkg to cls
+        // Dialogs and overlays cancel a pending takeover too; never act on stale HOME evidence.
+        val stockHome = stockHomes[pkg]?.contains(cls) == true
+        takeoverPolicy.observe(if (stockHome) HomeTakeoverPolicy.Window.STOCK_HOME
+            else HomeTakeoverPolicy.Window.OTHER, SystemClock.elapsedRealtime())
+        handler.removeCallbacks(takeOver)
         val allowed = SystemClock.uptimeMillis() < allowStockUntil
         if (pkg in stockHomes) {
             filterKeys(allowed)
             if (cls !in stockHomes.getValue(pkg) || allowed) return
-            Log.i(TAG, "stock home $pkg came to the front; bringing Tigris back")
-            goHome()
+            Log.i(TAG, "stock HOME observed: $pkg/$cls; waiting for it to settle")
+            takeOverOnceSettled("stock HOME window")
             return
         }
         filterKeys(false)
         // Leaving the stock launcher for a real app ends the visit: Home goes to Tigris again.
         if (allowed && pkg != packageName && isApp(pkg)) allowStockUntil = 0L
-    }
-
-    private val activityCache = HashMap<Pair<String, String>, Boolean>()
-
-    private fun isActivity(pkg: String, cls: String): Boolean = activityCache.getOrPut(pkg to cls) {
-        runCatching { packageManager.getActivityInfo(ComponentName(pkg, cls), 0) }.isSuccess
     }
 
     private fun isApp(pkg: String): Boolean =
@@ -336,8 +317,6 @@ class HomeGuardService : AccessibilityService() {
 
     companion object {
         private const val TAG = "TigrisGuard"
-        private const val BOOT_WINDOW_MS = 3 * 60 * 1000L
-        private const val SETTLE_MS = 1500L
 
         @Volatile
         private var instance: HomeGuardService? = null

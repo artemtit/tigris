@@ -50,12 +50,12 @@ class Prefs(ctx: Context) {
         set(v) = sp.edit().putStringSet("keep", v).putStringSet("keep_defaults", DEFAULT_KEEP).apply()
 
     var cleanOnStandby: Boolean
-        get() = sp.getBoolean("clean_on_standby", true)
+        get() = sp.getBoolean("clean_on_standby", false)
         set(v) = sp.edit().putBoolean("clean_on_standby", v).apply()
 
     /** Hours between automatic cleanups; 0 = off. */
     var cleanIntervalHours: Int
-        get() = sp.getInt("clean_interval", 4)
+        get() = sp.getInt("clean_interval", 0)
         set(v) = sp.edit().putInt("clean_interval", v).apply()
 
     var shutdownOnPowerKey: Boolean

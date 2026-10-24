@@ -262,7 +262,7 @@ adb -s <TV_IP>:5555 shell dumpsys activity activities | grep -m1 ResumedActivity
 adb -s <TV_IP>:5555 logcat -d -s TigrisGuard                                     # what the guard did and why
 ```
 
-Then ask the user to put the TV in standby and wake it, and check again that Tigris is in front and the guard is still listed. If the user agrees to a reboot, check after boot too. The guard waits 1.5 s after boot or wake before taking over, so a game console or set-top box switching the TV to its HDMI input over CEC is left alone.
+Then ask the user to put the TV in standby and wake it, and check again that Tigris is in front and the guard is still listed. If the user agrees to a reboot, check after boot too. The guard waits for a confirmed stock HOME window, then a short settling interval. Boot or wake alone never authorizes takeover. If no window event arrives, open Tigris or press Home; do not claim automatic boot takeover was verified. See docs/guard-stability.md.
 
 If the guard is listed but `dumpsys accessibility` shows no bound service for it, Tigris re-registers it by itself within a few seconds of opening; if it stays unbound, toggle it off and on in 设置 → 桌面守护.
 

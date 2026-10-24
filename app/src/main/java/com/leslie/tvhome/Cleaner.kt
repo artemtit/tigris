@@ -49,8 +49,13 @@ object LocalAdb {
 }
 
 object Cleaner {
-    data class Result(val beforeMb: Long, val afterMb: Long, val stopped: Int, val viaAdb: Boolean) {
+    data class Result(val beforeMb: Long, val afterMb: Long, val stopped: Int, val viaAdb: Boolean, val failed: Int = 0, val skipped: Boolean = false) {
         val freedMb get() = (afterMb - beforeMb).coerceAtLeast(0)
+        fun description(): String = when {
+            skipped -> "未能确认前台应用，已跳过自动清理"
+            viaAdb -> "已释放 ${freedMb} MB，停止 $stopped 个，失败 $failed 个"
+            else -> "已释放 ${freedMb} MB（仅缓存）"
+        }
     }
 
     fun availMb(ctx: Context): Long = memInfo(ctx).availMem / 1024 / 1024
@@ -61,47 +66,66 @@ object Cleaner {
     }
 
     /**
-     * Stops third-party apps except the keep list and [spare] (the app in
-     * front, when the screen is on), then kills cached background processes.
+     * Manual cleanup stops unprotected third-party apps. Automatic cleanup only requests
+     * cached-process cleanup; missing foreground evidence skips automatic work.
      * Blocking; call off the main thread.
      */
-    fun clean(ctx: Context, spare: String? = null): Result {
+    fun clean(ctx: Context, spare: String? = null, automatic: Boolean = false): Result {
         val prefs = Prefs(ctx)
         val before = availMb(ctx)
-        val keep = prefs.keep + setOfNotNull(ctx.packageName, spare)
+        val foreground = spare ?: foregroundPackage(ctx)
+        // Automatic cleanup never force-stops apps: downloads/casting may be active without a visible window.
+        val mode = CleanupPolicy.mode(automatic, foreground)
+        if (mode == CleanupPolicy.Mode.SKIP) return Result(before, before, 0, false, skipped = true)
+        val keep = prefs.keep + setOfNotNull(ctx.packageName, foreground) + protectedServices(ctx)
         var stopped = 0
+        var failed = 0
         var viaAdb = false
-
-        val list = LocalAdb.shell(ctx, "pm list packages -3")
+        val list = if (mode != CleanupPolicy.Mode.DEEP) null else LocalAdb.shell(ctx, "pm list packages -3")
         if (list != null) {
-            val targets = list.lineSequence()
-                .map { it.removePrefix("package:").trim() }
-                .filter { it.isNotEmpty() && it !in keep }
-                .toList()
-            val script = targets.joinToString("; ") { "am force-stop $it" } + "; am kill-all; echo done"
-            if (LocalAdb.shell(ctx, script, 15_000) != null) {
-                stopped = targets.size
-                viaAdb = true
+            val targets = CleanupPolicy.targets(list.lineSequence()
+                .filter { it.startsWith("package:") }.map { it.removePrefix("package:").trim() }.toList(), keep)
+            viaAdb = true
+            for (pkg in targets) {
+                val marker = "TIGRIS_STOP_OK"
+                val out = LocalAdb.shell(ctx, "am force-stop $pkg && echo $marker", 4000)
+                if (CleanupPolicy.succeeded(out, marker)) stopped++ else failed++
             }
-        }
-        if (!viaAdb) {
-            // No adb authorization yet: only cached background processes can go.
+        } else {
             val am = ctx.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-            for (app in ctx.packageManager.getInstalledApplications(0)) {
-                if (app.packageName in keep) continue
-                am.killBackgroundProcesses(app.packageName)
-            }
+            val packages = ctx.packageManager.getInstalledApplications(0)
+                .filter { it.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM == 0 }
+                .map { it.packageName }
+            for (pkg in CleanupPolicy.targets(packages, keep)) am.killBackgroundProcesses(pkg)
         }
         Thread.sleep(1500)
-        val r = Result(before, availMb(ctx), stopped, viaAdb)
+        val r = Result(before, availMb(ctx), stopped, viaAdb, failed)
         prefs.lastClean = SimpleDateFormat("M月d日 HH:mm", Locale.CHINA).format(Date()) +
-            "，释放 ${r.freedMb} MB"
+            "，${r.description()}"
         return r
     }
 
+    private fun protectedServices(ctx: Context): Set<String> {
+        val r = ctx.contentResolver
+        val names = listOf("enabled_accessibility_services", "enabled_notification_listeners", "default_input_method")
+        val keep = names.flatMap { android.provider.Settings.Secure.getString(r, it).orEmpty().split(':') }
+            .mapNotNull { android.content.ComponentName.unflattenFromString(it)?.packageName }.toMutableSet()
+        val am = ctx.getSystemService(ActivityManager::class.java)
+        am.runningAppProcesses.orEmpty().filter { it.importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE }
+            .forEach { keep.addAll(it.pkgList.orEmpty()) }
+        runCatching {
+            ctx.getSystemService(android.media.session.MediaSessionManager::class.java)
+                .getActiveSessions(android.content.ComponentName(ctx, RevivalListener::class.java))
+                .forEach { keep.add(it.packageName) }
+        }.onFailure {
+            // No reliable playback inventory: keep all third-party apps out of destructive cleanup.
+            keep.addAll(ctx.packageManager.getInstalledApplications(0).map { it.packageName })
+        }
+        return keep
+    }
+
     fun foregroundPackage(ctx: Context): String? =
-        LocalAdb.shell(ctx, "dumpsys activity activities | grep -m1 topResumedActivity")
-            ?.let { Regex("""u0 ([\w.]+)/""").find(it)?.groupValues?.get(1) }
+        LocalAdb.shell(ctx, "dumpsys activity activities")?.let(CleanupPolicy::foreground)
 
     fun shutdown(ctx: Context) = LocalAdb.shellAsync(ctx, "svc power shutdown")
     fun reboot(ctx: Context) = LocalAdb.shellAsync(ctx, "svc power reboot")
