@@ -123,12 +123,12 @@ export const en = {
     lede: "You need a computer on the same Wi-Fi as the TV, the TV's IP address and ADB debugging enabled. Android 9+, no root.",
     packages: [
       {
-        name: "Tigris-vX.Y.Z.apk",
+        name: "Tigris-v2.0.6.apk",
         use: "Standard build: Sony BRAVIA, stock Android TV / Google TV, Xiaomi / Redmi, Hisense and most others.",
         href: brand.apk,
       },
       {
-        name: "Tigris-guard-vX.Y.Z.apk",
+        name: "Tigris-guard-v2.0.6.apk",
         use: "Guard build: declares no home screen, for TCL / FFalcon firmware that rejects launcher APKs. Push it through T-Cast.",
         href: brand.apkGuard,
       },

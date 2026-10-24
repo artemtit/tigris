@@ -124,12 +124,12 @@ export const zh = {
       lede: "一台和电视连在同一个 Wi-Fi 的电脑、电视的 IP 地址、打开的 ADB 调试，就够了。支持 Android 9 及以上，不需要 root。",
       packages: [
         {
-          name: "Tigris-vX.Y.Z.apk",
+          name: "Tigris-v2.0.6.apk",
           use: "标准版。索尼 BRAVIA、原生 Android TV / Google TV、小米 / Redmi、海信等大多数电视。",
           href: brand.apk,
         },
         {
-          name: "Tigris-guard-vX.Y.Z.apk",
+          name: "Tigris-guard-v2.0.6.apk",
           use: "守护版。不声明桌面，供 TCL / 雷鸟等拒绝安装桌面 APK 的固件，通过「多屏互动」推送。",
           href: brand.apkGuard,
         },

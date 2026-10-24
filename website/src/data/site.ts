@@ -17,9 +17,11 @@ export const brand = {
   site: "https://tigris-tv.pages.dev",
   repo: "https://github.com/lesnolie/Tigris",
   releases: "https://github.com/lesnolie/Tigris/releases",
-  // Link to the evergreen release listing: asset filenames now include a version.
-  apk: "https://github.com/lesnolie/Tigris/releases/latest",
-  apkGuard: "https://github.com/lesnolie/Tigris/releases/latest",
+  // Update this tag after each signed GitHub Release; the website's two
+  // download buttons must resolve directly to real versioned APK assets.
+  releaseTag: "v2.0.6",
+  apk: "https://github.com/lesnolie/Tigris/releases/download/v2.0.6/Tigris-v2.0.6.apk",
+  apkGuard: "https://github.com/lesnolie/Tigris/releases/download/v2.0.6/Tigris-guard-v2.0.6.apk",
   downloadHelper: "https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/download-release.py",
   agents: "https://github.com/lesnolie/Tigris/blob/main/AGENTS.md",
   readme: "https://github.com/lesnolie/Tigris/blob/main/README.md",
