@@ -4,11 +4,11 @@
 
 <p align="center">
   <a href="https://tigris-tv.pages.dev/">
-    <img src="website/public/img/favicon.svg" alt="Tigris — 官方网站图标 / official website icon" width="112" />
+    <img src="website/public/img/favicon.svg" alt="Tigris website icon" width="112" />
   </a>
 </p>
 
-**Language / 语言:** [English](README.en.md) · [简体中文](README.md)
+**Languages:** [English](README.en.md) · [Simplified Chinese](README.md)
 
 A tvOS-inspired launcher for Android TV, featuring a Liquid Glass Dock, Top Shelf-like content, a translucent Control Center, photographic wallpapers, and a photo-frame screensaver.
 
@@ -87,21 +87,33 @@ Give a command-capable agent such as Codex or Claude Code:
 
 The [installation guide for agents](AGENTS.md) covers connecting, choosing the APK, configuring the launcher, requesting permissions and Sony-specific setup. Approve any on-TV prompts yourself. On TCL, accept the **T-Cast / 多屏互动** installation prompt.
 
-## 2.0.4
+### 3. Install or restore with Bash (macOS / Linux)
 
-App folders, phone avatar uploads, a glass update center for Tigris and MiracastReceiver, and frosted app scrolling. The Dock and top-right controls scroll away naturally. Bundled startup video and settings artwork are defaults; existing customizations take priority.
-
-Updates: Control Center → Settings → Software updates & casting. The installer supports configuration-preserving upgrades and restoring the original launcher.
+Install Android Platform-Tools (`adb`), `curl` and Python 3 on your computer first. The script downloads the latest stable APK, checks its SHA-256, backs up the original HOME configuration and preserves app settings on compatible upgrades. Replace the sample IP with your TV's address.
 
 ```sh
-curl -fsSL https://tigris-tv.pages.dev/install.sh | KEEP_ADB=1 TV=192.168.1.20 bash
-# Restore using the original computer and saved snapshot:
-curl -fsSL https://tigris-tv.pages.dev/install.sh | TV=192.168.1.20 bash -s -- restore
+# Standard APK (most Android TVs):
+curl -fsSL https://raw.githubusercontent.com/lesnolie/Tigris/main/install.sh \
+  | TV=192.168.1.20 bash
+
+# Guard APK for TCL / FFalcon China firmware:
+curl -fsSL https://raw.githubusercontent.com/lesnolie/Tigris/main/install.sh \
+  | TV=192.168.1.20 bash -s -- -s guard
+
+# Restore using the same computer and saved snapshot:
+curl -fsSL https://raw.githubusercontent.com/lesnolie/Tigris/main/install.sh \
+  | TV=192.168.1.20 bash -s -- restore
 ```
 
-Use a desktop agent that can execute commands on Windows, following [agent.md](https://tigris-tv.pages.dev/agent.md). Phone chat alone cannot run ADB.
+To explicitly keep ADB enabled, add `KEEP_ADB=1` before `bash`. The installer will not silently uninstall an APK when signatures differ. See the [installation and restore guide](docs/installation.md). On Windows, follow [AGENTS.md](AGENTS.md) with a command-capable desktop agent or use PowerShell/ADB manually; phone chat alone cannot operate the TV.
 
 ## Features
+
+### Highlights introduced in 2.0.4
+
+App folders, phone-based avatar upload, an update center for Tigris and MiracastReceiver, and frosted app-list scrolling. The Dock and top-right controls scroll off-screen with the grid. Bundled startup media and settings artwork are defaults; existing customizations take priority. Upload or reset an avatar from the TV's Settings screen using the on-screen QR code. Updates are under Control Center → Settings → Software updates & casting.
+
+### Core features
 
 - **tvOS-style home screen:** docked 16:9 app tiles, focus zoom, directional tilt, animated light sweep and shadow; optional portrait icon; compact clock, large clock with date, or no clock; 12/24-hour time.
 - **Settings:** a large-icon tvOS-inspired settings screen with grouped controls. Focus animation and Control Center style default to *Auto*, choosing a lighter style on TVs with under 2.5 GB RAM, Android below 10, or fewer than four CPU cores.
@@ -139,6 +151,19 @@ These are **implementation capabilities**, not proof of hardware compatibility o
 
 Sony TVs can use the local BRAVIA IP-control endpoint for brightness, TV volume and input selection when enabled. Generic Android TVs use `AudioManager` for volume and `TvInputManager` for inputs. Android provides no universal backlight API; unsupported sliders are hidden. ARC/eARC setups may require vendor-specific volume handling.
 
+### Home guard and permissions
+
+On firmware that enforces the manufacturer's launcher, Tigris uses an accessibility service to watch foreground window changes without reading screen content. Automatic takeover requires a confirmed stock HOME window; app windows, HDMI inputs and dialogs cancel pending takeovers. Boot, wake and service recovery alone do not initiate a takeover, and repeated attempts are rate-limited. The notification listener helps recover the process after OEM termination without reading notifications.
+
+| Permission or service | Purpose |
+|---|---|
+| `WRITE_SECURE_SETTINGS` | With user authorization, restore guard, screensaver and ADB settings; support Xiaomi backlight control. |
+| Notification listener | Help revive the process after firmware cleanup without reading notification content. |
+| `SYSTEM_ALERT_WINDOW` | Permit background home launches where supported by firmware. |
+| TCL `APP_AUTO_START` / `APP_ASSOC_START` | Allow autostart and associated launches on compatible TCL firmware. |
+
+The home guard is off by default. Firmware behavior varies, so cold boot, standby/wake and Home key behavior must be verified on each TV. See [guard stability notes](docs/guard-stability.md).
+
 ### TCL / FFalcon China firmware
 
 Community-tested on FFalcon 75R685C ([PR #1](https://github.com/lesnolie/Tigris/pull/1)). This firmware does not expose standard HDMI input services or a usable brightness API. Tigris offers a single **TCL source picker** action, opens TCL's settings app and hides the backlight slider. It is **not** direct control of each HDMI port.
@@ -147,7 +172,7 @@ For this specific firmware, `adb install` rejects the package and APKs declaring
 
 ### Xiaomi / Redmi China firmware
 
-The Xiaomi adapter takes inspiration from [Aerial](https://github.com/pengchujin/aerial-tv). It can use `picture_backlight` for brightness after `WRITE_SECURE_SETTINGS` approval, Xiaomi's external-source player for input switching, and Xiaomi's settings/Wi-Fi screens. It also has a workaround for the manufacturer's screen saver. **These paths have not been comprehensively tested by this project's maintainers on Xiaomi hardware.** See the issue reports above for observed problems.
+The Xiaomi adapter can use `picture_backlight` for brightness after `WRITE_SECURE_SETTINGS` approval, Xiaomi's external-source player for input switching, and Xiaomi's settings/Wi-Fi screens. It also has a workaround for the manufacturer's screensaver. **These paths have not been comprehensively tested by this project's maintainers on Xiaomi hardware.** See the issue reports above for observed problems.
 
 **Never disable Xiaomi's stock launcher** (`com.mitv.tvhome` / PatchWall); it can leave the TV with a black screen on boot. Use Tigris's optional home guard instead. The guard uses an accessibility service to detect vendor-home foreground changes, a notification listener to help restart after OEM process termination, and optional secure settings/overlay permissions. Those operations require user authorization and can behave differently across firmware versions.
 
@@ -188,17 +213,8 @@ See [AGENTS.md](AGENTS.md) for permissions, setup and verification. The upstream
 
 Tigris has no built-in casting receiver. The open-source [Miracast Receiver](https://github.com/weekdayjast/MiracastReceiver) is one option for AirPlay, DLNA and Miracast (some firmware features may require root). Install the APK matching your TV's CPU architecture. Tigris's cleanup keep-alive defaults account for this app.
 
-## License and credits
+## License and third-party notices
 
-Tigris is licensed under [MIT](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md) for fonts, icons and dependencies.
-
-Home-guard ideas, TCL T-Cast installation, Apple TV aerial catalogs and the phone-based setup draw on [Aerial](https://github.com/pengchujin/aerial-tv) (MIT; © 2026 pengchujin). Community device compatibility work is credited in the linked Issues and PRs, including FFalcon [#1](https://github.com/lesnolie/Tigris/pull/1), Coocaa [#4](https://github.com/lesnolie/Tigris/pull/4), and focus rendering [#10](https://github.com/lesnolie/Tigris/pull/10) / [#11](https://github.com/lesnolie/Tigris/pull/11).
+Tigris is licensed under [MIT](LICENSE). Copyright and licensing details for third-party code, fonts, icons and dependencies are in [third-party notices](THIRD_PARTY_NOTICES.md). Community contributions are linked in the corresponding Issues and PRs, including FFalcon [#1](https://github.com/lesnolie/Tigris/pull/1), Coocaa [#4](https://github.com/lesnolie/Tigris/pull/4), and focus improvements [#10](https://github.com/lesnolie/Tigris/pull/10) / [#11](https://github.com/lesnolie/Tigris/pull/11).
 
 This project is not affiliated with Apple, Sony, Xiaomi, TCL, Bilibili or Douyu. Apple TV aerial videos stream from Apple's servers; the app does not distribute those videos. Wallpaper and screenshot media belong to their respective rights holders.
-
-
-## Installer and personalization
-
-See the [installation and restore guide](docs/installation.md) and [agent instructions](AGENTS.md). The Bash installer requires adb, curl and Python 3; it snapshots the original HOME on the computer, verifies APK checksums and stops on signature mismatch without uninstalling. Restore requires that snapshot.
-
-Desktop folders, profile avatar uploads and install.sh are available from **2.0.4**. Avatar upload is in Settings → 上传头像; scan the QR code, upload or reset the portrait, and return Home. Updates are in Control Center → Settings → Software updates & casting.

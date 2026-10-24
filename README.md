@@ -273,23 +273,21 @@ curl.exe -s http://192.168.1.20/sony/accessControl --data-binary '@bravia-regist
 curl.exe -s -u ':<PIN>' http://192.168.1.20/sony/accessControl --data-binary '@bravia-register.json'
 ```
 
-### 2.6 桌面守护 / Home Guard
+### 2.6 桌面守护
 
 小米、TCL、海信、创维等国产固件常常只认自家桌面。小米上 `set-home-activity` 可能显示成功，但主页键仍回 PatchWall；待机时还会清理第三方 App。Tigris 用以下方式接管前台，不 root、不修改系统分区、不卸载或停用原厂桌面：
 
-1. **桌面守护 / Home Guard**：无障碍服务只监听前台窗口变化，不读取屏幕内容。只在确认原厂首页持续出现时接管；应用、输入源或弹窗出现会取消等待。开机、唤醒和服务恢复本身不会触发接管，短时间反复跳转会暂缓自动接管。
-2. **被杀后复活 / Revival**：通知监听服务不读取通知。系统结束 Tigris 进程后，Android 会重新绑定监听器，从而拉起进程并恢复桌面守护。
+1. **桌面守护**：无障碍服务只监听前台窗口变化，不读取屏幕内容。只在确认原厂首页持续出现时接管；应用、输入源或弹窗出现会取消等待。开机、唤醒和服务恢复本身不会触发接管，短时间反复跳转会暂缓自动接管。
+2. **后台恢复**：通知监听服务不读取通知。系统结束 Tigris 进程后，Android 会重新绑定监听器，从而拉起进程并恢复桌面守护。
 3. **保持 ADB 开启**：小米唤醒后会关闭 ADB。启用该选项后，Tigris 用 `WRITE_SECURE_SETTINGS` 自动重新打开，方便以后升级。
 4. **TCL 守护版**：TCL 拒绝标准 HOME APK，因此使用不声明 HOME 的 `Tigris-guard.apk`，通过「多屏互动」安装，并放行 `APP_AUTO_START` / `APP_ASSOC_START`。
 
-**English:** Home Guard watches foreground window changes without reading screen content. The notification listener reads no notifications and helps revive the process after OEM cleanup. Keep ADB is optional. Recovery timing and boot behavior depend on the TV firmware and require device testing.
-
-| 权限 / Permission | 中文用途 | English purpose |
-|---|---|---|
-| `WRITE_SECURE_SETTINGS` | 恢复被固件关闭的守护、系统屏保、ADB 状态；写入小米背光 | Restore guard settings, screensaver and ADB; control Xiaomi backlight. |
-| 通知监听 / Notification listener | 被系统清理或开机后重新拉起；不读取通知 | Help revive the process; no notification content is read. |
-| `SYSTEM_ALERT_WINDOW` | 允许开机或唤醒后从后台打开主屏幕 | Allow the home screen to start from the background. |
-| TCL `APP_AUTO_START` / `APP_ASSOC_START` | 放行 TCL 第三方应用开机自启与关联启动 | Allow boot and associated app starts on supported TCL firmware. |
+| 权限或组件 | 用途 |
+|---|---|
+| `WRITE_SECURE_SETTINGS` | 经用户授权后，恢复被固件关闭的桌面守护、屏保及 ADB 状态；支持小米背光控制。 |
+| 通知监听服务 | 在被系统结束进程后协助重新启动守护，不读取通知内容。 |
+| `SYSTEM_ALERT_WINDOW` | 在部分固件允许的条件下，从后台启动桌面。 |
+| TCL `APP_AUTO_START` / `APP_ASSOC_START` | 在适用的 TCL 固件上放行第三方应用自启动及关联启动。 |
 
 守护默认关闭。AI 安装会按 [AGENTS.md](AGENTS.md) 授权并打开；手动安装后也可在 设置 → 桌面守护 中开启。索尼等原生 Android TV 通常不需要。
 
@@ -389,7 +387,7 @@ adb -s 192.168.1.20:5555 uninstall com.leslie.tvhome
 
 - **索尼**：BRAVIA IP 控制接口可提供背光、原生音量和 HDMI 输入源。未注册时自动回退到 Android 标准接口。
 - **TCL / 雷鸟国行**：输入源打开 TCL 自带选择器，设置打开 TCL 原生设置，没有可用背光接口。安装需 Guard 版与多屏互动。
-- **小米 / Redmi 国行**：背光使用 `picture_backlight`，输入源调用小米播放器，设置和 Wi-Fi 打开小米原生设置。当前适配参考 Aerial 的实机笔记，仍需要更多社区复测。
+- **小米 / Redmi 国行**：背光使用 `picture_backlight`，输入源调用小米播放器，设置和 Wi-Fi 打开小米原生设置；以上功能仍需要更多社区实机复测。
 - **酷开 / 创维**：目前只适配输入源选择器，尚未在官方新版上完成真机验证。
 - **其他品牌**：使用 Android 标准接口。Android 没有统一背光 API，因此亮度滑条会隐藏；连接 ARC / eARC 功放时，标准音量可能控制电视本体。
 
@@ -499,10 +497,8 @@ app/build/outputs/apk/guard/release/app-guard-release.apk
 
 本地构建使用本机签名，可能与正式 Release 不同。覆盖安装前先确认签名；不要为了安装本地包直接卸载正式版。
 
-### 许可与致谢
+### 许可与第三方声明
 
-代码采用 [MIT](LICENSE) 许可证。第三方字体、图标和依赖许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-
-桌面守护、TCL 多屏互动推送、Apple TV 航拍片单和手机设置页参考并移植自 [Aerial](https://github.com/pengchujin/aerial-tv)（MIT，© 2026 pengchujin），小米和 TCL 的机型细节也来自其真机调试笔记，特此感谢。
+代码采用 [MIT](LICENSE) 许可证。第三方代码、字体、图标和依赖的版权与许可信息见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 Tigris 是独立开源项目，与 Apple、Sony、小米、TCL、哔哩哔哩和斗鱼没有关联，也没有获得这些公司的赞助或背书。所有第三方商标、影视封面、摄影作品和视频素材归各自权利人所有。
