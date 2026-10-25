@@ -113,11 +113,35 @@ object Updates {
             check((archive.applicationInfo?.minSdkVersion ?: Int.MAX_VALUE) <= Build.VERSION.SDK_INT) { I18n.text(R.string.i18n_updates_017) }
             val old = runCatching { pm.getPackageInfo(p.pkg, PackageManager.GET_SIGNING_CERTIFICATES) }.getOrNull()
             if (old != null) check(archive.longVersionCode > old.longVersionCode) { I18n.text(R.string.i18n_updates_018) }
-            fun certs(info: android.content.pm.PackageInfo) = info.signingInfo?.apkContentsSigners?.map { hex(MessageDigest.getInstance("SHA-256").digest(it.toByteArray())) }?.toSet().orEmpty()
-            val signatures = certs(archive)
+
+            // Android 9 / 10 can return PackageInfo for an APK on disk without populating
+            // signingInfo. On those releases, explicitly reparse with GET_SIGNATURES; merely
+            // checking archive.signatures without that second query leaves the same bug.
+            // Newer Android must not silently downgrade to legacy certificate extraction.
+            fun certs(info: android.content.pm.PackageInfo?): Set<String> {
+                val signers = info?.signingInfo?.apkContentsSigners?.takeIf { it.isNotEmpty() }
+                    ?: info?.signatures?.takeIf { it.isNotEmpty() }
+                return signers?.map { hex(MessageDigest.getInstance("SHA-256").digest(it.toByteArray())) }?.toSet().orEmpty()
+            }
+            val legacyAllowed = Build.VERSION.SDK_INT < Build.VERSION_CODES.R
+            @Suppress("DEPRECATION")
+            val signatures = UpdateSignerPolicy.withLegacyFallback(certs(archive), legacyAllowed) {
+                val legacy = pm.getPackageArchiveInfo(file.path, PackageManager.GET_SIGNATURES)
+                // Never trust a fallback PackageInfo that disagrees on APK identity.
+                if (legacy?.packageName == archive.packageName) certs(legacy) else emptySet()
+            }
             check(signatures.isNotEmpty()) { I18n.text(R.string.i18n_updates_019) }
-            if (old != null) check(signatures == certs(old)) { I18n.text(R.string.i18n_updates_020) }
-            else check(p.pkg == products[1].pkg && signatures == setOf(MIRACAST_CERT)) { I18n.text(R.string.i18n_updates_021) }
+            if (old != null) {
+                @Suppress("DEPRECATION")
+                val installedSignatures = UpdateSignerPolicy.withLegacyFallback(certs(old), legacyAllowed) {
+                    certs(runCatching { pm.getPackageInfo(p.pkg, PackageManager.GET_SIGNATURES) }.getOrNull())
+                }
+                check(UpdateSignerPolicy.sameSigner(signatures, installedSignatures)) { I18n.text(R.string.i18n_updates_020) }
+            } else {
+                check(UpdateSignerPolicy.matchesPinned(signatures, p.pkg == products[1].pkg, MIRACAST_CERT)) {
+                    I18n.text(R.string.i18n_updates_021)
+                }
+            }
             val installer = pm.packageInstaller
             val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
                 setAppPackageName(p.pkg)
