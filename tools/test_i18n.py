@@ -17,7 +17,7 @@ REFERENCE = re.compile(r"R\.string\.(i18n_[A-Za-z0-9_]+)")
 
 def catalogue(folder: str) -> dict[str, str]:
     root = RES / folder
-    files = sorted(root.glob("i18n_*.xml")) + [root / "strings.xml"]
+    files = sorted(root.glob("*.xml"))
     result: dict[str, str] = {}
     for file in files:
         assert file.is_file(), f"Missing resource: {file}"

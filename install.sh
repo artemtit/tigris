@@ -8,7 +8,7 @@ FLAVOR=standard
 UNINSTALL=0
 while (($#)); do
   case "$1" in
-    install|restore) MODE=$1 ;;
+    install|restore|inspect|verify) MODE=$1 ;;
     --uninstall) UNINSTALL=1 ;;
     -s|--flavor) shift; FLAVOR=${1:?Missing standard or guard} ;;
     *) echo "Unknown argument: $1" >&2; exit 2 ;;
@@ -33,13 +33,20 @@ STATE=${STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/tigris/$SERIAL}
 mkdir -p "$STATE"
 chmod 700 "$STATE"
 HOME_QUERY=(cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME)
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+# The same checker is used by manual users and AI agents. Piped installs fetch it.
+CHECKER="$(dirname "${BASH_SOURCE[0]:-.}")/tools/check-install.py"
+if [[ ! -f "$CHECKER" ]]; then
+  command -v curl >/dev/null || fail 'Install curl first'
+  CHECKER="$TMP/check-install.py"
+  curl -fLsS https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/check-install.py -o "$CHECKER"
+fi
 verify() {
-  echo '=== default HOME ==='; ad shell "${HOME_QUERY[@]}"
-  echo '=== accessibility services ==='; ad shell settings get secure enabled_accessibility_services
-  ad shell input keyevent KEYCODE_HOME
-  sleep 2
-  echo '=== focus after HOME ==='; ad shell dumpsys window | grep -E 'mCurrentFocus|mFocusedApp' || true
+  python3 "$CHECKER" verify --serial "$SERIAL" --expected "${1:-$PKG/.HomeActivity}" --report "$STATE/verification.json"
 }
+if [[ "$MODE" == inspect ]]; then python3 "$CHECKER" inspect --serial "$SERIAL"; exit $?; fi
+if [[ "$MODE" == verify ]]; then verify; exit $?; fi
 if [[ "$MODE" == restore ]]; then
   [[ -f "$STATE/home" ]] || fail "No saved original launcher at $STATE. Follow AGENTS.md; do not guess the original launcher."
   ORIGINAL=$(cat "$STATE/home")
@@ -59,9 +66,9 @@ if [[ "$MODE" == restore ]]; then
     ad shell cmd notification disallow_listener "$PKG/$PKG.RevivalListener"
   fi
   ad shell am force-stop "$PKG"
-  verify
+  verify "$ORIGINAL" || fail 'Original HOME was not verified; Tigris has NOT been uninstalled. See verification.json.'
   if (( UNINSTALL )); then ad uninstall "$PKG"; fi
-  echo 'Restore commands completed. Verify that mCurrentFocus names your original launcher.'
+  echo 'Original HOME passed the ADB check. Test the physical remote separately. Tigris remains installed unless --uninstall was supplied.'
   exit 0
 fi
 KEEP_ADB=${KEEP_ADB:-preserve}
@@ -74,8 +81,6 @@ if [[ ! -f "$STATE/home" ]]; then
   shread settings get secure enabled_accessibility_services > "$STATE/accessibility"
   shread settings get secure enabled_notification_listeners > "$STATE/listeners"
 fi
-TMP=$(mktemp -d)
-trap 'rm -rf "$TMP"' EXIT
 # Select assets from the GitHub release metadata rather than assuming unversioned filenames.
 # Works with versioned v2.0.6+ assets and historical Tigris.apk / Tigris-guard.apk releases.
 ASSET=$( [[ "$FLAVOR" == guard ]] && echo Tigris-guard.apk || echo Tigris.apk )
@@ -139,21 +144,31 @@ fi
 if ! ad install -r "$TMP/$ASSET"; then
   fail 'Installation failed; nothing uninstalled. Signature mismatch requires the original signing key. TCL verification failure: use Guard APK via tools/tcast-push.py (see AGENTS.md).'
 fi
-ad shell pm grant "$PKG" android.permission.WRITE_SECURE_SETTINGS
-ad shell cmd notification allow_listener "$PKG/$PKG.RevivalListener"
-ad shell appops set "$PKG" SYSTEM_ALERT_WINDOW allow
-BRAND=$(shread getprop ro.product.manufacturer | tr '[:upper:]' '[:lower:]')
-if [[ "$BRAND" == *tcl* || "$BRAND" == *ffalcon* ]]; then
-  ad shell appops set "$PKG" APP_AUTO_START allow || true
-  ad shell appops set "$PKG" APP_ASSOC_START allow || true
-fi
 GUARD=false
 if [[ "$FLAVOR" == standard ]]; then
-  ad shell cmd package set-home-activity "$PKG/.HomeActivity" || GUARD=true
+  ad shell cmd package set-home-activity "$PKG/.HomeActivity" || true
+  # A resolver or command saying Success is not evidence that HOME actually works.
+  if verify; then :; else
+    CHECK_STATUS=$?
+    if [[ "$CHECK_STATUS" == 1 ]]; then GUARD=true
+    else fail 'APK installed, but HOME is unverified. Complete any TV prompts and retry verify; no guard workaround applied.'
+    fi
+  fi
 else GUARD=true
 fi
-case "$BRAND" in *xiaomi*|*redmi*|*tcl*|*ffalcon*) GUARD=true ;; esac
-[[ "$(shread "${HOME_QUERY[@]}")" == *"$PKG"* ]] || GUARD=true
+if [[ "$GUARD" == true || "$KEEP_ADB" == 1 ]]; then
+  ad shell pm grant "$PKG" android.permission.WRITE_SECURE_SETTINGS
+fi
+if [[ "$GUARD" == true ]]; then
+  ad shell cmd notification allow_listener "$PKG/$PKG.RevivalListener"
+  ad shell appops set "$PKG" SYSTEM_ALERT_WINDOW allow
+  BRAND="$(shread getprop ro.product.manufacturer) $(shread getprop ro.product.brand)"
+  BRAND=$(echo "$BRAND" | tr '[:upper:]' '[:lower:]')
+  if [[ "$BRAND" == *tcl* || "$BRAND" == *ffalcon* ]]; then
+    ad shell appops set "$PKG" APP_AUTO_START allow || true
+    ad shell appops set "$PKG" APP_ASSOC_START allow || true
+  fi
+fi
 # An upgrade never turns off a guard the user previously enabled.
 CONFIG=()
 [[ "$KEEP_ADB" == preserve ]] || CONFIG+=(--ez keep_adb "$([[ "$KEEP_ADB" == 1 ]] && echo true || echo false)")
@@ -161,7 +176,10 @@ CONFIG=()
 if [[ "$GUARD" == true || "$KEEP_ADB" != preserve ]]; then
   ad shell am broadcast -a "$PKG.CONFIG" -n "$PKG/.ConfigReceiver" "${CONFIG[@]}"
 fi
-ad shell am start -n "$PKG/.HomeActivity"
-verify
+if [[ "$GUARD" == true ]]; then
+  ad shell am start -n "$PKG/.HomeActivity"
+  sleep 3
+  verify || fail 'APK installed, but HOME failed or is unverified. See verification.json and docs/installation-compatibility.md. Keep the stock launcher enabled.'
+fi
 echo "Original launcher snapshot: $STATE (keep this directory for restore)."
-echo 'Check mCurrentFocus for com.leslie.tvhome. Standby/wake and reboot require separate TV testing; installation alone does not prove boot takeover.'
+echo 'APK installed; ADB HOME passed. Physical remote HOME: UNVERIFIED. Standby/wake: UNVERIFIED. Reboot: UNVERIFIED. See verification.json.'

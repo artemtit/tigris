@@ -236,11 +236,12 @@ export const en = {
           { title: "Connect", cmd: C.connect },
           { title: "Record the original home, screensaver and accessibility services", cmd: C.snapshotBeforeInstall },
           { title: "Install the standard build", cmd: C.installStandard, note: "Commands match the computer system selected above." },
-          { title: "Make it the home screen and grant permissions", cmd: C.xiaomiSetup },
+          { title: "Make it the home screen and grant permissions", cmd: C.xiaomiSetup, note: "Run the shared checker first; skip guard when Home already works." },
           {
-            title: "Enable the home guard and keep ADB on",
+            title: "Enable guard only after a failed Home check",
             body: "keep_adb true makes Tigris switch ADB back on after Xiaomi turns it off on wake; drop it if you do not want that.",
             cmd: C.xiaomiGuard,
+              note: "Only after actual Home failure; keep_adb is a separate optional preference.",
           },
           {
             title: "Check",
@@ -269,9 +270,9 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
           },
           {
             title: "If Home still returns to the stock launcher",
-            body: "Enable the home guard first. Only if the TV demonstrably does not depend on the vendor launcher, and only with your consent, disable it as a last resort — and keep the undo command.",
-            cmd: C.disableVendor,
-            note: "Never do this on Xiaomi / Redmi.",
+            body: "Run the shared checker: it opens Settings and sends HOME. Configure guard only when needed; keep stock Home enabled.",
+            cmd: C.checkHome,
+            note: "Test the physical remote, wake and reboot separately on every brand.",
           },
         ],
       },
@@ -345,15 +346,13 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
       {
         q: "How do I restore the original launcher?",
         a: [
-          "Everything here runs on your computer, in the same PowerShell or terminal you used to install. Replace the angle-bracket placeholders with the values you recorded in the install step “Record the original home, screensaver and accessibility services”.",
-          "1. Turn the home guard off, so the accessibility service list returns to what it was. 2. Restore the screensaver: if the recorded value was not empty, put it back; if it was empty (no screensaver was set), delete the setting rather than typing a placeholder. 3. Uninstall Tigris. Afterwards press Home once; the stock launcher comes back, so if nothing happens, choose your launcher again in the TV system settings.",
-          "Never disable or uninstall a vendor launcher on Xiaomi / Redmi (com.mitv.tvhome): those TVs boot to a black screen. If you disabled a vendor launcher on another brand earlier, re-enable it with the last command and reboot the TV once.",
+          "Follow the README restore procedure, which keeps Tigris installed by default. Turn guard off and restore the recorded default HOME. Restore the original screensaver only when the current one belongs to Tigris.",
+          "Replace ORIGINAL_PACKAGE/ORIGINAL_ACTIVITY below with the original HOME component. Verify recovery before explicitly choosing to uninstall. If recovery is unverified, keep Tigris installed and do not guess a vendor component.",
+          "Keep stock launchers enabled on every brand. Never reboot or put the TV to sleep without consent.",
         ],
         cmds: [
           { text: cmds.uninstall },
-          { text: cmds.restoreScreensaver },
-          { text: cmds.uninstallPackage },
-          { text: cmds.reenableVendor },
+          { text: cmds.restoreCheck },
         ],
       },
       {

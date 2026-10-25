@@ -14,13 +14,24 @@ case "$*" in
   connect*) echo connected ;;
   get-state) echo device ;;
   'shell getprop ro.build.version.sdk') echo "${SDK:-31}" ;;
-  'shell getprop ro.product.manufacturer') echo Sony ;;
+  'shell getprop ro.product.manufacturer') echo "${BRAND:-Sony}" ;;
   'shell cmd package resolve-activity'*) echo "${RESOLVED_HOME:-com.vendor.home/.Home}" ;;
   'shell settings get secure screensaver_components') echo "${SAVER:-com.vendor.saver/.Dream}" ;;
   'shell settings get secure enabled_notification_listeners') echo com.other/.Listener ;;
   'shell settings get secure enabled_accessibility_services') echo com.other/.Service ;;
-  install*) [[ "${FAIL_INSTALL:-0}" == 0 ]] || { echo INSTALL_FAILED_UPDATE_INCOMPATIBLE >&2; exit 1; }; echo Success ;;
-  'shell dumpsys window') echo 'mCurrentFocus=com.vendor.home/.Home' ;;
+  'shell pm path com.leslie.tvhome') echo package:/data/app/tigris/base.apk ;;
+  'shell am start -W -a android.settings.SETTINGS')
+    [[ "${START_FAIL:-0}" == 0 ]] || { echo 'Error: Activity not found'; exit 0; }
+    echo 'mCurrentFocus=com.android.settings/.Settings' > "$LOG.focus"; echo 'Status: ok' ;;
+  'shell cmd package set-home-activity '*) echo "${*: -1}" > "$LOG.home"; echo Success ;;
+  'shell input keyevent KEYCODE_HOME')
+    target=$(cat "$LOG.home" 2>/dev/null || echo com.leslie.tvhome/.HomeActivity)
+    [[ "${HOME_FAIL:-0}" == 0 ]] || target=com.vendor.home/.Home
+    if [[ "${NEED_GUARD:-0}" == 1 && ! -f "$LOG.guard" ]]; then target=com.vendor.home/.Home; fi
+    echo "mCurrentFocus=$target" > "$LOG.focus" ;;
+  'shell am broadcast'*'--ez guard true'*) touch "$LOG.guard" ;;
+  install*) [[ "${FAIL_INSTALL:-0}" == 0 ]] || { echo INSTALL_FAILED_UPDATE_INCOMPATIBLE >&2; exit 1; }; echo com.leslie.tvhome/.HomeActivity > "$LOG.home"; rm -f "$LOG.guard"; echo Success ;;
+  'shell dumpsys window') cat "$LOG.focus" ;;
 esac
 MOCK
 printf '#!/usr/bin/env bash\nexit 0\n' > "$TEST/bin/sleep"
@@ -29,6 +40,20 @@ chmod +x "$TEST/bin/adb" "$TEST/bin/sleep"
 if ! python3 -c 'import sys' >/dev/null 2>&1; then
   printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$TEST/bin/python3"
   chmod +x "$TEST/bin/python3"
+fi
+# Run the real evidence checker with a virtual clock so polling tests are fast.
+cat > "$TEST/bin/python3" <<'MOCK'
+#!/usr/bin/env bash
+if [[ "$1" == *check-install.py ]]; then
+  exec python -c 'import os,runpy,sys,time,subprocess; time.sleep=lambda _:None; original=subprocess.run; subprocess.run=lambda args,**kw:original([os.environ["MOCK_BASH"],os.environ["MOCK_ADB"],*args[1:]],**kw); sys.argv=sys.argv[1:]; runpy.run_path(sys.argv[0],run_name="__main__")' "$@"
+fi
+exec python "$@"
+MOCK
+chmod +x "$TEST/bin/python3"
+export MOCK_BASH=$(command -v bash) MOCK_ADB="$TEST/bin/adb"
+if command -v cygpath >/dev/null; then
+  MOCK_BASH=$(cygpath -w "$MOCK_BASH")
+  MOCK_ADB=$(cygpath -w "$MOCK_ADB")
 fi
 export PATH="$TEST/bin:$PATH" TV=192.168.1.20 APK="$TEST/local.apk" STATE_DIR="$TEST/state"
 printf fake-apk > "$APK"
@@ -54,6 +79,30 @@ echo 'PASS explicit keep_adb changes still apply'
 RESOLVED_HOME=com.leslie.tvhome/.HomeActivity bash "$ROOT/install.sh" > "$TEST/output"
 ! grep -q 'am broadcast' "$LOG"
 echo 'PASS native HOME upgrade with no configuration skips empty broadcast'
+: > "$LOG"
+BRAND=Xiaomi bash "$ROOT/install.sh" > "$TEST/output"
+! grep -q -- '--ez guard true' "$LOG"
+echo 'PASS Xiaomi with working HOME does not enable guard by brand'
+: > "$LOG"
+NEED_GUARD=1 RESOLVED_HOME=com.leslie.tvhome/.HomeActivity bash "$ROOT/install.sh" > "$TEST/output"
+grep -q -- '--ez guard true' "$LOG"
+echo 'PASS actual HOME failure enables guard even when resolver reports Tigris'
+: > "$LOG"
+if HOME_FAIL=1 bash "$ROOT/install.sh" > "$TEST/output" 2>&1; then exit 1; fi
+grep -q 'APK installed, but HOME failed or is unverified' "$TEST/output"
+echo 'PASS unresolved HOME failure is not a successful installation'
+: > "$LOG"
+if START_FAIL=1 bash "$ROOT/install.sh" > "$TEST/output" 2>&1; then exit 1; fi
+! grep -q -- '--ez guard true' "$LOG"
+echo 'PASS missing verification baseline does not enable guard'
+: > "$LOG"
+bash "$ROOT/install.sh" inspect > "$TEST/output"
+! grep -Eq 'install -r|pm grant|am start|am broadcast|input keyevent|set-home-activity' "$LOG"
+echo 'PASS inspect performs no TV mutations or key events'
+: > "$LOG"
+if HOME_FAIL=1 bash "$ROOT/install.sh" restore --uninstall > "$TEST/output" 2>&1; then exit 1; fi
+! grep -q '^.* uninstall ' "$LOG"
+echo 'PASS restore failure blocks uninstall'
 : > "$LOG"
 if FAIL_INSTALL=1 bash "$ROOT/install.sh" > "$TEST/output" 2>&1; then exit 1; fi
 ! grep -Eq 'uninstall|pm grant|set-home-activity|am broadcast' "$LOG"

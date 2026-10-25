@@ -6,7 +6,8 @@ Array.prototype.forEach.call(document.querySelectorAll("[data-t]"),function(e){e
 document.documentElement.lang=zh?"zh-CN":"en";
 function clock(){var d=new Date();el("clock").textContent=("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
 clock();setInterval(clock,30000);
-function open(){el("dialog").hidden=false;el("close").focus()}function close(){el("dialog").hidden=true;el("settings").focus()}
+var returnFocus=null, inputs=[];
+function open(){returnFocus=document.activeElement;el("dialog").hidden=false;el("close").focus()}function close(){el("dialog").hidden=true;(returnFocus||el("settings")).focus()}
 el("settings").onclick=open;el("close").onclick=close;el("weather").onclick=open;
 var enabled=load("weather-enabled",false)===true,city=load("weather-city",null),fahrenheit=load("weather-fahrenheit",false)===true;el("fahrenheit").checked=fahrenheit;el("fahrenheit").onchange=function(){fahrenheit=this.checked;save("weather-fahrenheit",fahrenheit);showWeather()};el("weather-switch").checked=enabled;el("city").value=city?city.name:"";
 function showWeather(){if(!enabled){el("weather").hidden=true;return}el("weather").hidden=false;
@@ -17,16 +18,28 @@ el("weather-switch").onchange=function(){enabled=this.checked;save("weather-enab
 el("city-search").onclick=function(){var box=el("results");box.textContent="…";w.TigrisWeather.search(el("city").value).then(function(cities){box.textContent="";cities.forEach(function(c){var b=document.createElement("button");b.textContent=c.name+" · "+c.detail;b.onclick=function(){city={name:c.name,lat:c.lat,lon:c.lon};save("weather-city",city);el("city").value=c.name;box.textContent="✓ "+c.name;showWeather()};box.appendChild(b)});if(!cities.length)box.textContent=zh?"找不到城市":"No cities found"}).catch(function(){box.textContent="Search unavailable"})};
 el("root-check").onclick=function(){w.TigrisRoot.inspect().then(function(r){
   el("home-status").textContent=r.available?(zh?"已检测到 Root；Home 服务尚未安装":"Root detected; Home service not installed"):(zh?"未检测到 Root 权限":"Root not detected");
-  if(r.available){w.TigrisRoot.listApps().then(function(a){if(a.length)draw(a)},function(){});}
+  if(r.available){w.TigrisRoot.listApps().then(function(a){if(a.length)draw(a.concat(inputs))},function(){});}
 })};
-function draw(apps){var dock=el("dock");dock.textContent="";apps.slice(0,8).forEach(function(a){var b=document.createElement("button");b.className="tile";b.title=a.title;
+function draw(apps){var dock=el("dock"),seen={};dock.textContent="";apps.filter(function(a){if(seen[a.id])return false;seen[a.id]=true;return true}).forEach(function(a){var b=document.createElement("button");b.className="tile";b.title=a.title;
 if(/^file:\/\//.test(a.icon||"")){var img=document.createElement("img");img.src=a.icon;img.alt="";img.onerror=function(){img.style.display="none"};b.appendChild(img)}
-var label=document.createElement("small");label.textContent=a.title;b.appendChild(label);b.onclick=function(){el("apps-message").textContent=zh?"正在启动…":"Launching…";w.TigrisCore.launch(a.id).then(function(){el("apps-message").textContent=""},function(){el("apps-message").textContent=zh?"启动失败":"Launch failed"})};dock.appendChild(b)});if(!dock.children.length)el("apps-message").textContent=zh?"暂时无法读取应用列表":"App list unavailable";else dock.children[0].focus()}
+var label=document.createElement("small");label.textContent=a.title;b.appendChild(label);b.onclick=function(){el("apps-message").textContent=zh?"正在启动…":"Launching…";w.TigrisCore.launch(a.id).then(function(){el("apps-message").textContent=""},function(){el("apps-message").textContent=zh?"启动失败":"Launch failed"})};dock.appendChild(b)});if(!dock.children.length)el("apps-message").textContent=zh?"暂时无法读取应用列表":"App list unavailable";else {el("apps-message").textContent="";if(el("dialog").hidden)dock.children[0].focus()}}
 el("status").textContent=zh?"LG webOS 开发预览版 · 原厂 Home 不受影响":"LG webOS developer preview · Stock Home unchanged";
 el("apps-message").textContent="…";
-Promise.all([w.TigrisCore.listApps().catch(function(){return[]}),w.TigrisCore.listInputs()]).then(function(v){draw(v[0].concat(v[1]))});
+Promise.all([w.TigrisCore.listApps().catch(function(){return[]}),w.TigrisCore.listInputs()]).then(function(v){inputs=v[1];draw(v[0].concat(inputs))});
 document.addEventListener("keydown",function(e){if(e.keyCode===461||e.keyCode===27||e.key==="Escape"){if(!el("dialog").hidden){e.preventDefault();close()}return}
-if((e.keyCode===37||e.keyCode===39)&&el("dialog").hidden){var b=Array.prototype.slice.call(document.querySelectorAll(".tile")),i=b.indexOf(document.activeElement);
-if(i>=0){e.preventDefault();b[(i+(e.keyCode===39?1:b.length-1))%b.length].focus()}}});
+if(e.keyCode<37||e.keyCode>40)return;
+var active=document.activeElement,forward=e.keyCode===39||e.keyCode===40;
+if(active===el("city")&&(e.keyCode===37||e.keyCode===39))return;
+var nodes;
+if(!el("dialog").hidden){nodes=Array.prototype.slice.call(el("dialog").querySelectorAll("button,input"));}
+else {
+  var tiles=Array.prototype.slice.call(document.querySelectorAll(".tile"));
+  if(tiles.indexOf(active)>=0 && e.keyCode===38){e.preventDefault();el("settings").focus();return;}
+  if(tiles.indexOf(active)>=0 && (e.keyCode===37||e.keyCode===39))nodes=tiles;
+  else nodes=[el("settings")].concat(enabled?[el("weather")]:[]).concat(tiles);
+}
+nodes=nodes.filter(function(n){return !n.disabled&&n.getClientRects().length;});
+if(nodes.length){e.preventDefault();var index=nodes.indexOf(active);var next=nodes[(index+(forward?1:nodes.length-1)+nodes.length)%nodes.length];next.focus();next.scrollIntoView({block:"nearest",inline:"nearest"});}
+});
 showWeather();setInterval(function(){if(enabled&&!document.hidden)showWeather()},1800000);
 })(window);

@@ -266,11 +266,13 @@ export const zh = {
             {
               title: "设为默认桌面并授权",
               cmd: C.xiaomiSetup,
+              note: "设置后先运行上方统一检查器；Home 已正常则跳过守护。",
             },
             {
-              title: "打开桌面守护，并保持 ADB 开启",
+              title: "仅 Home 检查失败时启用守护",
               body: "keep_adb true 让 Tigris 在小米唤醒后自动把 ADB 重新打开，方便以后升级；不需要可以省略这个参数。",
               cmd: C.xiaomiGuard,
+              note: "仅实际 Home 失败时执行；keep_adb 是单独的可选选择。",
             },
             {
               title: "检查",
@@ -306,9 +308,9 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
             },
             {
               title: "如果按主页键仍回到原厂桌面",
-              body: "先打开桌面守护再试。只有在确认电视不依赖原厂桌面、且你同意的情况下，才把停用厂商桌面当作最后手段；恢复命令也一并保存。",
-              cmd: C.disableVendor,
-              note: "小米 / Redmi 不要使用这一步。",
+              body: "运行统一检查器；它会打开设置并发送 Home。失败后再配置守护，保留原厂桌面。",
+              cmd: C.checkHome,
+              note: "所有 Android 品牌使用同一标准；实体 Home、待机、重启分别验证。",
             },
           ],
         },
@@ -415,14 +417,12 @@ adb -s 192.168.x.x:5555 shell appops set com.leslie.tvhome SYSTEM_ALERT_WINDOW a
         {
           q: "怎么恢复原来的桌面？",
           a: [
-            "Tigris 卸载后会回到原厂桌面。先关闭守护并恢复原来的屏保，再卸载；下面的命令把尖括号替换为安装前记录的值。",
+            "优先按 README 的还原流程，默认保留 Tigris。先关闭守护，恢复记录的默认 HOME；仅当前屏保属于 Tigris 时恢复原屏保。下面检查命令的 ORIGINAL_PACKAGE/ORIGINAL_ACTIVITY 替换为保存的原桌面组件；验证失败不要卸载。",
           ],
           cmds: [
             { text: cmds.uninstall },
-            { text: cmds.restoreScreensaver },
-            { text: cmds.uninstallPackage },
-            { text: cmds.reenableVendor },
-          ],
+            { text: cmds.restoreCheck },
+              ],
         },
         {
           q: "为什么小米 / Redmi 不能停用自带桌面？",

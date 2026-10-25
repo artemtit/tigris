@@ -1,0 +1,5 @@
+<resources>
+    <string name="install_home_check_title">安装与 Home 检查</string>
+    <string name="install_home_check_help">安装成功不代表主页接管成功。请从其他应用按遥控器主页键测试。</string>
+    <string name="install_home_check_status">默认 HOME 解析指向 Tigris：%1$s\n桌面守护服务已连接：%2$s\n系统设置写入权限：%3$s\n\n以上是配置检查，不代表主页键已经通过。打开其他应用，按遥控器主页键。如果仍回原厂桌面，可开启下方桌面守护，可能需要 ADB（Android 调试桥）授权。请保留原厂桌面。\n\n实体主页键、待机唤醒、重启：本页面尚未验证，请分别测试。仅通过 U 盘安装不会自动获得系统权限。</string>
+</resources>

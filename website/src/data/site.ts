@@ -125,9 +125,10 @@ curl -s http://192.168.x.x/sony/accessControl -d "$BODY"
 # The TV now shows a 4-digit PIN. Replace PIN with it and run:
 curl -s -u ":PIN" http://192.168.x.x/sony/accessControl -d "$BODY"`,
     powershell: `$body = '{"method":"actRegister","id":1,"version":"1.0","params":[{"clientid":"tvhome:1","nickname":"TVHome","level":"private"},[{"value":"yes","function":"WOL"}]]}'
-curl.exe -s http://192.168.x.x/sony/accessControl -d $body
+[System.IO.File]::WriteAllText((Join-Path (Get-Location) 'bravia-register.json'), $body)
+curl.exe -s http://192.168.x.x/sony/accessControl --data-binary '@bravia-register.json'
 # The TV now shows a 4-digit PIN. Replace PIN with it and run:
-curl.exe -s -u ":PIN" http://192.168.x.x/sony/accessControl -d $body`,
+curl.exe -s -u ":PIN" http://192.168.x.x/sony/accessControl --data-binary '@bravia-register.json'`,
   },
 
   tclPush: {
@@ -200,8 +201,10 @@ adb -s 192.168.x.x:5555 shell input keyevent KEYCODE_HOME`,
   },
 
   verify: cmd(
-    `adb -s 192.168.x.x:5555 exec-out screencap -p > tv.png`,
-    `adb -s 192.168.x.x:5555 exec-out screencap -p > tv.png`,
+    `adb -s 192.168.x.x:5555 shell screencap -p /sdcard/tigris-check.png
+adb -s 192.168.x.x:5555 pull /sdcard/tigris-check.png tv.png`,
+    `adb -s 192.168.x.x:5555 shell screencap -p /sdcard/tigris-check.png
+adb -s 192.168.x.x:5555 pull /sdcard/tigris-check.png tv.png`,
   ),
 
   uninstall: cmd(
@@ -209,17 +212,11 @@ adb -s 192.168.x.x:5555 shell input keyevent KEYCODE_HOME`,
     `adb -s 192.168.x.x:5555 shell am broadcast -a ${P}.CONFIG -n ${P}/.ConfigReceiver --ez guard false --ez keep_adb false`,
   ),
 
-  /* Restore the screensaver only when the snapshot showed one. An empty value
-     means "no screensaver was set": the record must be deleted, not restored. */
-  restoreScreensaver: cmd(
-    `# Only if the recorded value was not empty (replace with your recorded value):
-adb -s 192.168.x.x:5555 shell settings put secure screensaver_components <ORIGINAL_COMPONENT>
-# If it was empty, remove the record instead so Android keeps its own default:
-adb -s 192.168.x.x:5555 shell settings delete secure screensaver_components`,
-    `# Only if the recorded value was not empty (replace with your recorded value):
-adb -s 192.168.x.x:5555 shell settings put secure screensaver_components <ORIGINAL_COMPONENT>
-# If it was empty, remove the record instead so Android keeps its own default:
-adb -s 192.168.x.x:5555 shell settings delete secure screensaver_components`,
+  restoreCheck: cmd(
+    `curl -fsSL -o check-install.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/check-install.py
+python3 check-install.py verify --serial 192.168.x.x:5555 --expected ORIGINAL_PACKAGE/ORIGINAL_ACTIVITY`,
+    `curl.exe -fsSL -o check-install.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/check-install.py
+python check-install.py verify --serial 192.168.x.x:5555 --expected ORIGINAL_PACKAGE/ORIGINAL_ACTIVITY`,
   ),
 
   uninstallPackage: cmd(
@@ -232,10 +229,11 @@ adb -s 192.168.x.x:5555 shell settings delete secure screensaver_components`,
     `adb -s 192.168.x.x:5555 shell pm enable <VENDOR_LAUNCHER_PACKAGE>`,
   ),
 
-  /* Informed, reversible last resort — never on Xiaomi / Redmi. */
-  disableVendor: cmd(
-    `adb -s 192.168.x.x:5555 shell pm disable-user --user 0 <VENDOR_LAUNCHER_PACKAGE>`,
-    `adb -s 192.168.x.x:5555 shell pm disable-user --user 0 <VENDOR_LAUNCHER_PACKAGE>`,
+  checkHome: cmd(
+    `curl -fsSL -o check-install.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/check-install.py
+python3 check-install.py verify --serial 192.168.x.x:5555 --report verification.json`,
+    `curl.exe -fsSL -o check-install.py https://raw.githubusercontent.com/lesnolie/Tigris/main/tools/check-install.py
+python check-install.py verify --serial 192.168.x.x:5555 --report verification.json`,
   ),
 } as const;
 

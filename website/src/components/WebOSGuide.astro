@@ -8,7 +8,7 @@ const prompt = zh
 : "First identify whether my TV runs LG webOS. Read https://github.com/lesnolie/Tigris/blob/main/docs/WEBOS_AI_INSTALL.md and https://github.com/lesnolie/Tigris/blob/main/webos/README.md. Use LG Developer Mode, Key Server, @webos-tools/cli and SSH/Luna; never ADB. Run read-only preflight and report firmware and verified Home Helper status. Request pairing and protect SSH secrets. Only after consent build/install the source-preview IPK. Never root, flash, replace LG Home, or enable an unverified key helper. Verify D-pad, OK, apps, optional weather and stock Home recovery on the actual TV; don't claim untested success.";
 const preflight = "curl -fsSLo tigris-webos.sh https://raw.githubusercontent.com/lesnolie/Tigris/main/webos/install.sh && sh tigris-webos.sh --device myTV --preflight";
 const install = "sh tigris-webos.sh --device myTV --install";
-const manual = "npm install -g @webos-tools/cli\nares-setup-device\nares-setup-device --list\nares-package webos/app\nares-install --device myTV org.tigris.webos_0.1.0_all.ipk\nares-launch --device myTV org.tigris.webos";
+const manual = "npm install -g @webos-tools/cli\nares-setup-device\nares-setup-device --list\nares-novacom --device myTV --getkey\nares-device --system-info --device myTV\nares-package webos/app\nares-install --device myTV org.tigris.webos_0.1.0_all.ipk\nares-launch --device myTV org.tigris.webos";
 const restore = "sh tigris-webos.sh --device myTV --uninstall\n# or: ares-install --device myTV --remove org.tigris.webos";
 ---
 <header class="site-header"><nav class="webos-navigation"><a href={home}>TIGRIS <span>webOS</span></a><div><a href={home}>{zh ? "官网" : "Home"}</a><a href={alternate}>{zh ? "English" : "中文"}</a></div></nav></header>
@@ -18,10 +18,12 @@ const restore = "sh tigris-webos.sh --device myTV --uninstall\n# or: ares-instal
   <p class="lead">{zh ? "独立 IPK 桌面，非 Root 和已有 Root 模块。AI 安装、手动安装、一行命令、还原，以及默认关闭的天气卡片。" : "Standalone IPK launcher, no-root and existing-root modules. AI install, manual steps, one-line command, recovery, and weather off by default."}</p>
   <p class="warning">{zh ? "目前仅提供源码开发预览：没有 LG 正式版 IPK，Home 键原生接管尚未实机验证。普通安装不接管 Home。" : "Source developer preview only: no official released LG IPK, and native Home-key takeover is not yet verified. Normal installs leave LG Home unchanged."}</p>
   <section><h2>{zh ? "1 · 连接前准备" : "1 · Prepare the TV"}</h2>
-    <p>{zh ? "电视上开启 LG Developer Mode 与 Key Server；电脑安装 Node.js 和官方 @webos-tools/cli，并使用 ares-setup-device 配对。它通过 SSH/Luna 通信，不是 Android ADB。" : "Enable LG Developer Mode and Key Server. Install Node.js and @webos-tools/cli on your computer, then pair using ares-setup-device. webOS uses SSH/Luna, not ADB."}</p>
+    <p>{zh ? "电视上开启 LG Developer Mode 与 Key Server；电脑安装 Node.js 和官方 @webos-tools/cli，使用 ares-setup-device 添加设备，再用 ares-novacom --getkey 获取密钥完成配对。它通过 SSH/Luna 通信，不是 Android ADB。" : "Enable LG Developer Mode and Key Server. Install Node.js and @webos-tools/cli on your computer, add the device with ares-setup-device, then retrieve its key with ares-novacom --getkey. webOS uses SSH/Luna, not ADB."}</p>
     <pre><code>npm install -g @webos-tools/cli
 ares-setup-device
-ares-setup-device --list</code></pre>
+ares-setup-device --list
+ares-novacom --device myTV --getkey
+ares-device --system-info --device myTV</code></pre>
     <p>{zh ? "默认 Developer Mode SSH 通常为 prisoner@电视IP:9922。myTV 是 CLI 中配置的电视别名，不是电视 IP。勿公开 SSH 私钥、配对码。" : "Developer Mode commonly uses prisoner@TV_IP:9922. myTV is your configured device alias, not its IP. Never disclose SSH keys or pairing codes."}</p>
     <p><a href="https://webostv.developer.lge.com/develop/tools/cli-dev-guide">{zh ? "LG 官方 CLI 文档" : "LG official CLI guide"}</a></p>
   </section>
@@ -31,7 +33,7 @@ ares-setup-device --list</code></pre>
     <p><a href="https://github.com/lesnolie/Tigris/blob/main/docs/WEBOS_AI_INSTALL.md">{zh ? "完整 AI 安装和安全探针规范" : "Full AI and safe-helper preflight specification"}</a></p>
   </section>
   <section><h2>{zh ? "3 · 一行命令" : "3 · One-line installer"}</h2>
-    <p>{zh ? "先配置设备并做只读预检。确认后才从 main 源码打包普通 IPK。下面的地址将在本模块合并至 main 后可用，尚非稳定包下载。" : "Pair the TV, run read-only preflight, then opt into building a normal IPK from main source. This URL only becomes available once the branch is merged; it is not a stable download."}</p>
+    <p>{zh ? "先配置设备并做只读预检。确认后才从 main 源码打包普通 IPK。此入口构建源码预览，尚非稳定包下载。" : "Pair the TV, run read-only preflight, then opt into building a normal IPK from main source. This builds a source preview; it is not a stable download."}</p>
     <h3>{zh ? "只读预检" : "Read-only preflight"}</h3>
     <pre><code id="webos-preflight">{preflight}</code></pre><button class="copy-webos" data-copy="#webos-preflight">{zh ? "复制" : "Copy"}</button>
     <h3>{zh ? "确认后安装预览版" : "Install preview after approval"}</h3>

@@ -25,7 +25,9 @@ jobs:
           for f in webos/app/*.js webos/app/platform/*.js; do node --check "$f"; done
           sh -n webos/install.sh
       - name: Weather, platform and manifest assertions
-        run: node webos/tests/test-preview.cjs
+        run: |
+          node webos/tests/test-preview.cjs
+          node webos/tests/test-navigation.cjs
       - name: Package app with official webOS CLI
         run: |
           npm install -g @webos-tools/cli

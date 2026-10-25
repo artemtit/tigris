@@ -1,6 +1,6 @@
 # LG webOS AI installation preflight — design contract
 
-> **Status (2026-10-25): planned, not yet implemented in Tigris.** The repository currently ships Android APKs, Android ADB installation scripts and `AGENTS.md` for Android only. It now includes a developer-preview webOS application which can be packaged locally as an IPK, plus a read-only LG CLI preflight script. It does **not** ship a stable released webOS IPK, a native Tigris Home Helper or the safety probe described below. An AI agent MUST NOT claim that a webOS installation or Home-key takeover has succeeded. This document defines the requirements for the future installer.
+> **Status (2026-10-25): ordinary webOS application preview available; Home Helper planned.** The repository includes a developer-preview webOS application which can be packaged locally as an IPK, plus a read-only LG CLI preflight script. It does **not** ship a stable released webOS IPK, a native Tigris Home Helper or the safety probe described below. An agent may report ordinary application installation only after verifying it on the device; it MUST NOT equate that with Home-key takeover. The probe requirements below remain a future design contract.
 
 ## Platform routing is mandatory
 

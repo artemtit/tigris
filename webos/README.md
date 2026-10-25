@@ -46,6 +46,9 @@ Replace `myTV` with the **registered LG CLI device alias**. Inspect the script b
 npm install -g @webos-tools/cli
 ares-setup-device                   # Add LG TV; follow Developer Mode pairing instructions
 ares-setup-device --list
+# Enable Key Server on the TV; enter the passphrase locally when prompted.
+ares-novacom --device myTV --getkey
+ares-device --system-info --device myTV
 ares-package webos/app
 ares-install --device myTV org.tigris.webos_0.1.0_all.ipk
 ares-launch --device myTV org.tigris.webos
@@ -54,6 +57,8 @@ ares-launch --device myTV org.tigris.webos
 For Windows use PowerShell with the same `ares-*` commands and a downloaded repository; the POSIX shell one-liner requires a POSIX shell environment. Package name may change with `appinfo.json` version. After install, check app and HDMI launch, remote focus/Back and city weather **only if the user enabled it**. Other APIs may be denied by particular firmware; that requires physical validation. On older webOS versions, CSS/glass features may degrade gracefully.
 
 ## Safe restore/uninstall
+
+Developer Mode expires. Renew it in LG's Developer Mode app before expiry; when it is disabled, developer-installed apps may be removed. This is separate from Tigris Home compatibility.
 
 ```sh
 sh webos/install.sh --device myTV --uninstall

@@ -60,6 +60,8 @@ class KeeperService : Service() {
         registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF))
         contentResolver.registerContentObserver(Settings.Global.getUriFor(Settings.Global.ADB_ENABLED), false, adbObserver)
         Guard.ensure(this)
+        // START_STICKY may revive us without rebinding the enabled accessibility service.
+        main.postDelayed({ Guard.rebindIfStalled(this) }, 5_000)
         schedule()
     }
 
@@ -90,7 +92,7 @@ class KeeperService : Service() {
     override fun onDestroy() {
         unregisterReceiver(screenOff)
         contentResolver.unregisterContentObserver(adbObserver)
-        main.removeCallbacks(periodic)
+        main.removeCallbacksAndMessages(null)
         worker.shutdown()
         super.onDestroy()
     }

@@ -213,25 +213,50 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             addAction(Intent.ACTION_PACKAGE_CHANGED)
             addDataScheme("package")
         })
-        registerReceiver(screenOn, IntentFilter(Intent.ACTION_SCREEN_ON))
+        registerReceiver(screenOn, IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
+        })
         KeeperService.start(this)
         if (!prefs.adbAuthorized) main.postDelayed({ askAdbAuthorization() }, if (intro != null) 8000L else 1500L)
     }
 
     // ------------------------------------------------------------------- intro
 
-    /*
-     * Waking from standby works like a boot: the home screen comes to the front, whatever was open,
-     * and the intro plays. The broadcast can arrive before or after onResume, so both places check.
-     */
+    // Cover on screen-off, before MIUI can show the retained home frame on wake.
+    // Consume the pending wake in onResume OR SCREEN_ON, never both.
     private var resumed = false
     private var wakeIntro = false
+    private var wakeCover: View? = null
+
+    private fun armWakeIntro() {
+        if (prefs.intro != Prefs.INTRO_WAKE) return
+        wakeIntro = true
+        if (wakeCover == null) {
+            wakeCover = View(this).apply {
+                setBackgroundColor(Color.BLACK)
+                translationZ = dp(401).toFloat()
+                root.addView(this, FrameLayout.LayoutParams(-1, -1))
+            }
+        }
+    }
+
+    private fun consumeWakeIntro() {
+        if (!wakeIntro) return
+        wakeIntro = false
+        if (prefs.intro == Prefs.INTRO_WAKE) playIntro(wake = true)
+        wakeCover?.let { root.removeView(it) }
+        wakeCover = null
+    }
+
     private val screenOn = object : BroadcastReceiver() {
         override fun onReceive(c: Context, i: Intent) {
-            if (prefs.intro != Prefs.INTRO_WAKE) return
-            if (resumed) { playIntro(wake = true); return }
-            wakeIntro = true
-            // The home app may start activities from the background.
+            if (i.action == Intent.ACTION_SCREEN_OFF) {
+                armWakeIntro()
+                return
+            }
+            if (!wakeIntro) return
+            if (resumed) { consumeWakeIntro(); return }
             startActivity(Intent(c, HomeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra(EXTRA_WAKE, true))
         }
     }
@@ -1061,7 +1086,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.getBooleanExtra(Intro.EXTRA_PREVIEW, false)) { playIntro(preview = true); return }
-        if (intent.getBooleanExtra(EXTRA_WAKE, false)) return  // onResume plays the intro
+        if (intent.getBooleanExtra(EXTRA_WAKE, false)) return // consume only the pending wake, never re-arm
         // Home pressed while already home: close everything and go back to the top.
         sheets.toList().forEach { it.dismiss() }
         control.close()
@@ -1087,7 +1112,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         adapter.tvosFocus = prefs.focusTvos(this)
         applyClockStyle()
         control.applyStyle()
-        if (wakeIntro) { wakeIntro = false; playIntro(wake = true) }
+        if (getSystemService(android.os.PowerManager::class.java).isInteractive) consumeWakeIntro()
         resumed = true
         prefs.homeInFront = true
         HomeGuardService.onHomeResumed()
@@ -1103,6 +1128,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     override fun onPause() {
         // Leaving for another app (or standby) ends the intro rather than leaving it half played.
         intro?.finish()
+        if (!getSystemService(android.os.PowerManager::class.java).isInteractive) armWakeIntro()
         resumed = false
         prefs.homeInFront = false
         main.removeCallbacks(idleFrame)

@@ -5,12 +5,22 @@ on:
     branches: [main]
     paths:
       - 'website/**'
+      - 'install.sh'
+      - 'AGENTS.md'
+      - 'webos/install.sh'
+      - 'docs/installation-compatibility.md'
+      - 'tools/check-install.py'
       - 'tools/download-release.py'
       - '.github/workflows/website.yml'
   push:
     branches: [main]
     paths:
       - 'website/**'
+      - 'install.sh'
+      - 'AGENTS.md'
+      - 'webos/install.sh'
+      - 'docs/installation-compatibility.md'
+      - 'tools/check-install.py'
       - 'tools/download-release.py'
       - '.github/workflows/website.yml'
   workflow_dispatch:

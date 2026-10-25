@@ -1,5 +1,8 @@
 # 安装、升级与还原
 
+> **统一安装验收 / Shared compatibility rules:** [按品牌排查、遥控器/U 盘安装、电脑检查与四项验收](installation-compatibility.md). AI 与手动安装使用同一个 `tools/check-install.py`；先验证 Home，失败才处理品牌限制。APK 安装不等于桌面接管，未测项目必须标记未验证。
+
+
 ## 1. 准备
 
 官方安装包需要 Android 9 或更新版本。电脑与电视连接同一网络，开启电视的网络 ADB 调试（Android 调试桥，用于电脑连接电视并安装应用），记下电视 IP。第一次连接时在电视上选择「允许」并勾选「始终允许」。各品牌操作见 [AGENTS.md](../AGENTS.md)。

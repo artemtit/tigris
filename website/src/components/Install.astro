@@ -1,6 +1,7 @@
 ---
 import type { Copy, Locale } from "../data/lang";
 import InstallQuick from "./InstallQuick.astro";
+import InstallationChecks from "./InstallationChecks.astro";
 import type { Step } from "../data/interfaces";
 
 interface Props {
@@ -45,6 +46,7 @@ const dl = locale === "zh" ? "打开 Releases" : "Open Releases";
     </div>
 
     <InstallQuick locale={locale} />
+    <InstallationChecks locale={locale} />
     <details class="manual-install"><summary>{locale === "zh" ? "手动安装 · 按电视品牌查看步骤" : "Manual installation · choose your TV brand"}</summary>
     <div class="table-wrap brand-table">
       <table>

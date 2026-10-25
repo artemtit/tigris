@@ -30,15 +30,16 @@ while [ "$#" -gt 0 ]; do
 done
 [ -n "$DEVICE" ] || { echo "Supply --device with your configured LG alias." >&2; usage; exit 2; }
 case "$DEVICE" in *[!a-zA-Z0-9._-]*|'') echo "Invalid device alias." >&2; exit 2;; esac
-for cmd in ares-setup-device ares-install ares-launch; do
+for cmd in ares-setup-device ares-device ares-install ares-launch; do
   command -v "$cmd" >/dev/null 2>&1 || { echo "Missing $cmd. Install @webos-tools/cli and pair with ares-setup-device." >&2; exit 3; }
 done
 echo "[webOS] Platform=LG webOS; transport=webOS CLI/Developer Mode SSH (not Android ADB)"
 echo "[webOS] Registered devices:"
 ares-setup-device --list
+ares-device --system-info --device "$DEVICE"
 echo "[webOS] Preflight device=$DEVICE; checking reachable installed-app inventory:"
 ares-install --device "$DEVICE" --list >/dev/null
-echo "[webOS] SSH/installer channel reachable."
+echo "[webOS] SSH/installer channel reachable. Renew Developer Mode before expiry; expiry may remove developer-installed apps."
 echo "[webOS] Native Home Helper: UNVERIFIED (no Tigris input-capture probe installed)."
 echo "[webOS] Root status: NOT CHECKED; no rooting or root service installation is performed."
 if [ "$MODE" = preflight ]; then
@@ -57,7 +58,7 @@ command -v ares-package >/dev/null 2>&1 || { echo "Missing ares-package." >&2; e
 TEMP=$(mktemp -d)
 trap 'rm -rf "$TEMP"' EXIT HUP INT TERM
 if [ -n "$SOURCE_DIR" ]; then
-  APP_DIR="$SOURCE_DIR/webos/app"
+  APP_DIR="$(cd "$SOURCE_DIR/webos/app" && pwd)"
 elif [ -f webos/app/appinfo.json ]; then
   APP_DIR="$(pwd)/webos/app"
 else

@@ -1,5 +1,8 @@
 # Installing Tigris — instructions for AI agents
 
+> **统一安装验收 / Shared compatibility rules:** [按品牌排查、遥控器/U 盘安装、电脑检查与四项验收](docs/installation-compatibility.md). AI 与手动安装使用同一个 `tools/check-install.py`；先验证 Home，失败才处理品牌限制。APK 安装不等于桌面接管，未测项目必须标记未验证。
+
+
 > **Platform check first:** These instructions and the current Tigris releases support **Android TV/Google TV** only. For **LG webOS**, do **not** use ADB or any Android `pm`, `am` or HOME commands. Read [docs/WEBOS_AI_INSTALL.md](docs/WEBOS_AI_INSTALL.md) for the future LG Developer Mode + SSH preflight, native Home Helper probe, safe installation gates and fallback. As of 2026-10-25, a separate webOS **source preview** and `webos/install.sh` can package/install a normal webOS application (subject to LG device authorization), but there is **no released stable IPK or tested Home Helper**. Never claim Home interception or TV hardware validation has been completed. If webOS is detected, explain this clearly and stop Android installation instructions. The preflight design allows a future AI installer to check compatibility before installing the full desktop, but a physical Home-key test is still required for final verification.
 
 You are installing Tigris, an Android TV launcher, onto the user's TV from their computer. Follow these steps in order. Talk to the user in their language (most users write Chinese). The TV is someone's home device: whenever a step below says to ask, ask first.
@@ -8,7 +11,7 @@ You are installing Tigris, an Android TV launcher, onto the user's TV from their
 
 - Never run `svc power shutdown`, `svc power reboot`, `reboot` or `input keyevent KEYCODE_POWER` / `KEYCODE_SLEEP` without asking. A powered-off TV can only be turned back on with its remote.
 - Never `pm uninstall` a system app or the TV's own launcher.
-- **Never disable the stock launcher on Xiaomi / Redmi** (`com.mitv.tvhome`, PatchWall). The fallback home refuses third-party launchers too, so the TV boots to a black screen. On Xiaomi, TCL and similar firmwares use the home guard (section 10) instead. On other TVs, disable a launcher only with the user's consent (step 5), and tell them how to undo it.
+- **Never disable or uninstall the stock launcher on any brand in the installation flow.** Keep it available for recovery; use verified default HOME or optional Home Guard.
 - Before you send `KEYCODE_DPAD_CENTER` / `ENTER` on the TV, check what is focused (step 6). Many Tigris buttons power the TV off or put it to sleep.
 - Do not change other TV settings (animation scales, app permissions, background restrictions) unless the user asks.
 
@@ -45,6 +48,7 @@ adb -s <TV_IP>:5555 shell getprop ro.product.model
 adb -s <TV_IP>:5555 shell cmd package resolve-activity -a android.intent.action.MAIN -c android.intent.category.HOME
 adb -s <TV_IP>:5555 shell settings get secure screensaver_components
 adb -s <TV_IP>:5555 shell settings get secure enabled_accessibility_services
+adb -s <TV_IP>:5555 shell settings get secure enabled_notification_listeners
 ```
 
 Note the current home activity (the stock launcher), the current screensaver and the accessibility services; you need them to undo the install. Tell the user which features they will get (see the compatibility table in README.md). Section 9 covers adapting the app when something doesn't work.
@@ -53,8 +57,8 @@ Note the current home activity (the stock launcher), the current screensaver and
 
 There are two builds:
 
-- `Tigris-vX.Y.Z.apk` (standard) declares itself a home screen. Use it everywhere except TCL.
-- `Tigris-guard-vX.Y.Z.apk` declares no home screen and appears as an ordinary app. TCL refuses any APK that declares one unless TCL signed it. The guard build is otherwise identical; the home guard (section 10) keeps it in front.
+- `Tigris-vX.Y.Z.apk` (standard) declares itself a home screen. Try the standard build unless this firmware is known to reject HOME APKs.
+- `Tigris-guard-vX.Y.Z.apk` declares no home screen and appears as an ordinary app. Some TCL/FFalcon firmware rejects APKs declaring HOME; do not generalize to all models. The guard build is otherwise identical; the home guard (section 10) keeps it in front.
 
 **Always resolve the latest Release asset**, instead of constructing a `releases/latest/download/Tigris.apk` URL (new assets include a version). The helper verifies SHA-256 and prints the downloaded filename:
 
@@ -94,7 +98,7 @@ adb -s <TV_IP>:5555 shell cmd package set-home-activity com.leslie.tvhome/.HomeA
 adb -s <TV_IP>:5555 shell input keyevent KEYCODE_HOME
 ```
 
-Then grant what only adb can grant. These are needed on every TV whose system keeps the Home key for its own launcher (Xiaomi, TCL, most Chinese firmwares), and harmless elsewhere:
+First run the shared checker from docs/installation-compatibility.md. Only if Home fails, or the user requests features needing these permissions, apply the following grants. Do not enable guard just because of the brand.
 
 ```sh
 P=com.leslie.tvhome
@@ -108,7 +112,7 @@ adb -s <TV_IP>:5555 shell appops set $P APP_ASSOC_START allow     # TCL only
 | Grant | What it is for |
 |---|---|
 | `WRITE_SECURE_SETTINGS` | Switches the home guard back on after the system turns it off; keeps the photo frame as screensaver; keeps ADB on; Xiaomi's backlight slider |
-| Notification listener | Restarts Tigris about half a second after the system kills it, and at boot. No notification is read |
+| Notification listener | Helps recover after process cleanup; timing and boot behavior need testing. No notification is read |
 | `SYSTEM_ALERT_WINDOW` | Opening the home screen from the background after boot |
 | TCL `APP_AUTO_START` / `APP_ASSOC_START` | TCL blocks third-party apps from starting at boot otherwise |
 
@@ -119,14 +123,15 @@ adb -s <TV_IP>:5555 shell am broadcast -a com.leslie.tvhome.CONFIG -n com.leslie
 # prints data="guard=true keep_adb=true secure_settings=true"
 ```
 
-The user can change both later in 设置 → 桌面守护 / 保持 ADB 调试开启. These rows only appear where they matter: 桌面守护 on Xiaomi, TCL, or wherever Tigris is not the default home; 保持 ADB 调试开启 on Xiaomi only.
+The user can change both later in 设置 → 桌面守护 / 保持 ADB 调试开启. The installation check and 桌面守护 rows are available on every Android brand; 保持 ADB 调试开启 on Xiaomi only.
 
 ## 5. Verify
 
 Take a screenshot and look at it:
 
 ```sh
-adb -s <TV_IP>:5555 exec-out screencap -p > tv.png
+adb -s <TV_IP>:5555 shell screencap -p /sdcard/tigris-check.png
+adb -s <TV_IP>:5555 pull /sdcard/tigris-check.png tv.png
 ```
 
 You should see a compact clock, two round controls and an optional profile portrait top-right, and a row of app tiles on a glass dock near the bottom. Back opens the Control Center: separate floating glass controls, or a dark panel on low-end TVs. Press Home (`input keyevent KEYCODE_HOME`) and check again.
@@ -134,12 +139,7 @@ You should see a compact clock, two round controls and an optional profile portr
 If the stock launcher appears instead:
 
 - On Xiaomi, TCL and other Chinese firmwares, turn on the home guard (step 4, section 10). **Do not disable the stock launcher on Xiaomi.**
-- On other TVs, run step 4 again and press Home once more. If it still comes back, try the guard first. Only if that fails, ask the user whether to disable the vendor launcher, and only then:
-
-```sh
-adb -s <TV_IP>:5555 shell pm disable-user --user 0 <stock launcher package>
-# undo: adb -s <TV_IP>:5555 shell pm enable <stock launcher package>
-```
+- On all other Android TVs, verify actual Home behavior and use the guard only if needed. Keep the stock launcher enabled. If verification still fails, report it without claiming incompatibility is permanent.
 
 On first start the app downloads background photos (needs internet). The first minute may show a gradient.
 
@@ -250,13 +250,13 @@ Tell the user what now works and what still doesn't. Their adapted build stays o
 
 Many Chinese TV systems (Xiaomi PatchWall, TCL, Hisense VIDAA-on-Android, Skyworth and others) aren't stock Android TV. What is known (from Tigris's own testing and from [Aerial](https://github.com/pengchujin/aerial-tv)'s device notes):
 
-- **Xiaomi** accepts `set-home-activity` and the HOME role, and both report success, yet Home still opens PatchWall (`com.mitv.tvhome`): only a system whitelist decides. On standby Xiaomi force-stops every third-party app, which also switches off their accessibility services. It also turns ADB off on each wake.
-- **TCL** refuses adb installs and home-screen APKs (step 3), blocks boot autostart for third-party apps, and may write its own screensaver back at boot.
+- **Some Xiaomi/Redmi firmware** may report HOME success yet still open PatchWall. Investigate this firmware’s candidate filtering; package allowlists are not proven by resolver output. Standby cleanup, service removal and ADB shutdown are separate firmware-dependent restrictions.
+- **Some TCL/FFalcon firmware** rejects ADB installs or HOME declarations (step 3), restricts autostart or restores its own screensaver. Diagnose the failing stage; these are not Xiaomi HOME allowlists.
 
 Tigris handles this without root, and without disabling or uninstalling anything:
 
 1. **Home guard**, an accessibility service ("主屏幕守护"). When the stock launcher's home screen comes to the front, Tigris is brought back on top (the user sees the stock launcher for about half a second). While the user deliberately opens the stock launcher from its tile, the Home key returns to Tigris. It watches window changes only, never screen content.
-2. **Revival**: the notification listener from step 4. Android rebinds it about half a second after the system kills Tigris, so Tigris restarts and switches the guard back on (with `WRITE_SECURE_SETTINGS`). It also starts Tigris at boot.
+2. **Revival**: the notification listener from step 4. Android may rebind the listener after process cleanup, allowing the guard to recover with `WRITE_SECURE_SETTINGS`. Timing and boot persistence require firmware testing.
 3. **Keep ADB on** (optional): when Xiaomi switches ADB debugging off, Tigris switches it straight back on.
 4. With the guard on, Tigris also puts its screensaver back when the firmware overwrites it.
 
@@ -273,7 +273,7 @@ Then ask the user to put the TV in standby and wake it, and check again that Tig
 
 If the guard is listed but `dumpsys accessibility` shows no bound service for it, Tigris re-registers it by itself within a few seconds of opening; if it stays unbound, toggle it off and on in 设置 → 桌面守护.
 
-If nothing works, tell the user plainly: that TV's system doesn't allow a replacement launcher, and Tigris can still be opened as an app.
+If verification fails, report the observed failure and unverified firmware restrictions. Tigris can still be opened as an app; do not claim a package allowlist is confirmed without firmware evidence.
 
 ## 11. Optional: remove preinstalled apps
 

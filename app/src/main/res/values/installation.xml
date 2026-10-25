@@ -1,0 +1,5 @@
+<resources>
+    <string name="install_home_check_title">Installation and Home check</string>
+    <string name="install_home_check_help">Installed does not mean Home takeover works. Test from another app with the remote.</string>
+    <string name="install_home_check_status">Default HOME resolves to Tigris: %1$s\nGuard service connected: %2$s\nSecure settings permission: %3$s\n\nThese are configuration checks, not proof of Home takeover. Open another app and press the remote Home key. If stock Home returns, enable Home Guard below; it may require ADB authorization. Keep the stock launcher enabled.\n\nPhysical Home, standby/wake and reboot: not verified by this screen. Test each separately. USB installation alone does not grant system permissions.</string>
+</resources>

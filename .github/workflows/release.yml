@@ -37,7 +37,7 @@ jobs:
           TIGRIS_KEY_ALIAS: ${{ secrets.TIGRIS_KEY_ALIAS }}
         run: |
           bash tools/test-install.sh
-          python3 -m unittest discover -s tools -p 'test_release_download.py' -v
+          python3 -m unittest discover -s tools -p 'test_*.py' -v
           bash ./gradlew --no-daemon testStandardDebugUnitTest testGuardDebugUnitTest assembleStandardRelease assembleGuardRelease lintStandardRelease lintGuardRelease
       - name: Verify release identity and checksums
         run: |

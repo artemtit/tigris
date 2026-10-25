@@ -32,7 +32,7 @@ assert.match(server, /"application\/javascript; charset=utf-8"/);
 assert.doesNotMatch(html, /[\u4e00-\u9fff]/, "Do not hard-code Chinese in English HTML/JS");
 
 // Ensure the localized strings cover every visible static and dynamic string key.
-const manifest = code.match(/var messages = ([\s\S]*?);\n  function t/);
+const manifest = code.match(/var messages = ([\s\S]*?);\r?\n  function t/);
 assert.ok(manifest, "Phone locale dictionaries must be parsable");
 const dictionaries = JSON.parse(manifest[1]);
 const keys = new Set([

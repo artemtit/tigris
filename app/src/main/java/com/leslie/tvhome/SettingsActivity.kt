@@ -410,8 +410,16 @@ class SettingsActivity : Activity() {
                 runOnUiThread { v.text = if (ok) I18n.text(R.string.i18n_settingsactivity_120) else I18n.text(R.string.i18n_settingsactivity_121) }
             }.start()
         }
-        // Only where the TV keeps Home for its own launcher; on Sony or stock Android TV Tigris is the real home.
-        if (Guard.needed(this)) row(I18n.text(R.string.i18n_settingsactivity_122), I18n.text(R.string.i18n_settingsactivity_123),
+        // Resolver success is not proof that the physical HOME key reaches us.
+        row(I18n.text(R.string.install_home_check_title), I18n.text(R.string.install_home_check_help), { "" }) {
+            android.app.AlertDialog.Builder(this)
+                .setTitle(I18n.text(R.string.install_home_check_title))
+                .setMessage(I18n.text(R.string.install_home_check_status,
+                    Guard.isDefaultHome(this).toString(), HomeGuardService.isRunning.toString(),
+                    Guard.hasSecureSettings(this).toString()))
+                .setPositiveButton(android.R.string.ok, null).show()
+        }
+        row(I18n.text(R.string.i18n_settingsactivity_122), I18n.text(R.string.i18n_settingsactivity_123),
             { if (!prefs.guard) I18n.text(R.string.i18n_settingsactivity_124) else if (HomeGuardService.isRunning) I18n.text(R.string.i18n_settingsactivity_125) else I18n.text(R.string.i18n_settingsactivity_126) }) { v ->
             val on = !prefs.guard
             v.text = I18n.text(R.string.i18n_settingsactivity_127)
