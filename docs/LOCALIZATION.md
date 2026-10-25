@@ -40,5 +40,13 @@ Android CI also runs this check, builds and tests both APK flavors, and runs lin
 
 Before merging, verify zh-CN and en-US/en-GB on an Android TV or emulator,
 including dialogs, the control center, app labels, settings, photo frame dates,
-notifications and long strings. The phone-based wallpaper upload web page
-has its own browser language and is outside this TV system-locale module.
+notifications and long strings.
+
+## Phone-based wallpaper upload page
+
+The companion web page opened via the TV's QR code is now localized separately.
+Its own browser locale selects Chinese or English (English fallback), regardless
+of the Android TV's system language. This is intentionally not implemented with
+Android XML resources: see [Phone localization](PHONE_LOCALIZATION.md) and
+`app/src/main/assets/web/i18n.js`. The URL, upload APIs and access token stay
+unchanged. Run `node tools/test_phone_i18n.cjs` for coverage.

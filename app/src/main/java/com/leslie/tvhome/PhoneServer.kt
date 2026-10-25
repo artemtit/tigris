@@ -41,6 +41,9 @@ class PhoneServer private constructor(private val ctx: Context, private val toke
         return runCatching {
             when {
                 path == "/" -> newFixedLengthResponse(Response.Status.OK, "text/html; charset=utf-8", page())
+                path == "/i18n.js" && !post ->
+                    newFixedLengthResponse(Response.Status.OK, "application/javascript; charset=utf-8",
+                        ctx.assets.open("web/i18n.js").bufferedReader().use { it.readText() })
                 path == "/api/state" -> json(state())
                 path.startsWith("/thumb/") -> thumb(path.removePrefix("/thumb/"))
                 post && path == "/api/background" -> {

@@ -1,0 +1,28 @@
+name: Phone companion localization
+on:
+  pull_request:
+    paths:
+      - 'app/src/main/assets/web/**'
+      - 'app/src/main/java/com/leslie/tvhome/PhoneServer.kt'
+      - 'tools/test_phone_i18n.cjs'
+      - '.github/workflows/phone-i18n.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/src/main/assets/web/**'
+      - 'app/src/main/java/com/leslie/tvhome/PhoneServer.kt'
+      - 'tools/test_phone_i18n.cjs'
+      - '.github/workflows/phone-i18n.yml'
+permissions:
+  contents: read
+jobs:
+  phone-i18n:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check app/src/main/assets/web/i18n.js
+      - run: node tools/test_phone_i18n.cjs

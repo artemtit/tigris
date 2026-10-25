@@ -1,0 +1,187 @@
+/* Tigris phone companion localization. Uses the PHONE browser's preferred language,
+ * independently of the Android TV's current language. No external dependencies or API. */
+(function (global) {
+  "use strict";
+  var preferred = (global.navigator.languages && global.navigator.languages[0]) || global.navigator.language || "en";
+  var lang = /^zh(?:-|$)/i.test(preferred) ? "zh" : "en";
+  var messages = {
+  "zh": {
+    "subtitle": "在手机上改，电视上马上生效",
+    "wallpaper": "主屏幕背景",
+    "saver": "屏保",
+    "photos": "照片",
+    "aerial": "Apple TV 航拍",
+    "saverHint": "航拍视频从 Apple 服务器在线播放（约 15–20 Mbps）；放不出来时自动换回照片。屏保内容跟随上面选的背景来源。",
+    "intro": "开机动画",
+    "introOff": "关",
+    "introBoot": "开机时",
+    "introWake": "开机和唤醒时",
+    "uploadIntro": "上传动画视频",
+    "introVideo": "内置 / 上传视频",
+    "introWordmark": "Tigris 字样",
+    "settingsBackdrop": "设置页背景",
+    "uploadBackdrop": "上传设置页背景",
+    "avatar": "头像",
+    "uploadAvatar": "上传头像",
+    "avatarHint": "图片会居中裁成正方形，显示为桌面右上角的圆形头像；返回桌面后生效。",
+    "settingsIcon": "设置图标",
+    "uploadIcon": "上传设置图标",
+    "myPhotos": "我的照片",
+    "choosePhotos": "选择照片上传",
+    "uploadPhotosHint": "上传后背景会切到“我的照片”。电视会把照片缩到 1920×1080 保存。",
+    "customLinks": "自定义图片链接",
+    "linksPlaceholder": "每行一个链接，例如\nhttps://example.com/wallpaper.jpg\nhttps://某个随机图接口/api",
+    "linksHint": "可以是一张图片的地址、每次打开都给一张新图的随机图接口，或者列出图片地址的网页 / JSON。电视每天自动去取一次，每个链接最多存几张。",
+    "save": "保存并开始获取",
+    "empty": "还没有",
+    "delete": "删除",
+    "deleted": "已删除",
+    "changedTo": "已换成 {0}",
+    "saverSet": "屏保：{0}",
+    "introSet": "开机动画：{0}",
+    "introSourceSet": "动画内容：{0}",
+    "backdropActive": "设置页正在用这张图，电视上可以在设置里切换成普通背景。",
+    "backdropDelete": "删除这张图",
+    "backdropDefault": "当前使用内置背景。可上传整个设置页的背景，16:9 横图；图左边放主体（比如一台电视），右边留给设置项。",
+    "avatarCustom": "已使用自定义头像。",
+    "avatarDefault": "正在使用默认头像。",
+    "avatarReset": "恢复默认头像",
+    "avatarResetDone": "已恢复默认头像",
+    "iconActive": "主屏幕和设置页正在用这张图。",
+    "iconReset": "换回默认齿轮",
+    "iconResetDone": "已换回默认图标",
+    "iconDefault": "主屏幕上「主屏幕设置」的图标和设置页左边的大图，最好是 16:9 的横图。",
+    "introUploaded": "已上传（{0} MB）。",
+    "introDelete": "删除",
+    "introDeleted": "已删除动画视频",
+    "introDefault": "最好是结尾停在黑底标志上的短视频：标志会放大，带你进入主屏幕。没有上传视频时使用内置开机动画。",
+    "uploadingPhotos": "正在上传 {0} 张…",
+    "uploadedPhotos": "已上传 {0} 张",
+    "invalidPhotos": "没有可用的图片",
+    "uploadFailed": "上传失败：{0}",
+    "uploading": "正在上传…",
+    "introSuccess": "已上传，可以在电视的设置里预览",
+    "introBad": "电视播放不了这个文件",
+    "backdropSuccess": "已换上，打开设置就能看到",
+    "iconSuccess": "已换上，回到主屏幕就能看到",
+    "avatarSuccess": "已换上，回到主屏幕就能看到",
+    "invalidImage": "不是可用的图片",
+    "saved": "已保存，电视正在获取图片",
+    "cleared": "已清空",
+    "offline": "连不上电视，请重新扫码",
+    "source_daily": "风景照片",
+    "source_scenery": "风景大片",
+    "source_fresh": "清新萌宠",
+    "source_anime": "二次元壁纸",
+    "source_art": "名画",
+    "source_mine": "我的照片",
+    "source_custom": "自定义链接",
+    "source_green": "绿色",
+    "source_blue": "蓝色",
+    "source_purple": "紫色",
+    "source_orange": "橙色",
+    "source_graphite": "深灰"
+  },
+  "en": {
+    "subtitle": "Make changes on your phone. See them instantly on your TV.",
+    "wallpaper": "Home Screen Wallpaper",
+    "saver": "Screen Saver",
+    "photos": "Photos",
+    "aerial": "Apple TV Aerials",
+    "saverHint": "Aerials stream from Apple's servers (approximately 15–20 Mbps). If playback fails, the screen saver falls back to photos. It uses the wallpaper source selected above.",
+    "intro": "Welcome Animation",
+    "introOff": "Off",
+    "introBoot": "On startup",
+    "introWake": "On startup and wake",
+    "uploadIntro": "Upload welcome video",
+    "introVideo": "Built-in / uploaded video",
+    "introWordmark": "Tigris wordmark",
+    "settingsBackdrop": "Settings Background",
+    "uploadBackdrop": "Upload Settings background",
+    "avatar": "Profile Picture",
+    "uploadAvatar": "Upload profile picture",
+    "avatarHint": "Your photo is center-cropped into a square and shown as a circular avatar in the upper-right corner of the Home Screen. It takes effect when you return home.",
+    "settingsIcon": "Settings Icon",
+    "uploadIcon": "Upload Settings icon",
+    "myPhotos": "My Photos",
+    "choosePhotos": "Choose photos to upload",
+    "uploadPhotosHint": "Uploading switches the wallpaper source to My Photos. Your TV saves a copy resized to 1920 × 1080.",
+    "customLinks": "Custom Image Links",
+    "linksPlaceholder": "One URL per line, for example:\nhttps://example.com/wallpaper.jpg\nhttps://example.com/random-image",
+    "linksHint": "Paste a direct image URL, a random-image endpoint, or a web page / JSON listing images. Your TV checks once per day and saves a few images per source.",
+    "save": "Save and Fetch Images",
+    "empty": "Nothing here yet",
+    "delete": "Delete",
+    "deleted": "Deleted",
+    "changedTo": "Changed to {0}",
+    "saverSet": "Screen Saver: {0}",
+    "introSet": "Welcome Animation: {0}",
+    "introSourceSet": "Animation: {0}",
+    "backdropActive": "This image is being used for the Settings screen. You can switch back to a standard background in TV Settings.",
+    "backdropDelete": "Remove this image",
+    "backdropDefault": "The built-in background is active. Upload a 16:9 landscape image for the Settings screen; place the subject on the left and leave room on the right for the menu.",
+    "avatarCustom": "Custom profile picture enabled.",
+    "avatarDefault": "Using the default profile picture.",
+    "avatarReset": "Restore default picture",
+    "avatarResetDone": "Default profile picture restored",
+    "iconActive": "This image is in use on the Home Screen and Settings screen.",
+    "iconReset": "Restore default gear icon",
+    "iconResetDone": "Default icon restored",
+    "iconDefault": "This image appears as the Home Screen Settings icon and the large illustration in Settings. A 16:9 landscape image works best.",
+    "introUploaded": "Uploaded ({0} MB).",
+    "introDelete": "Remove",
+    "introDeleted": "Welcome video deleted",
+    "introDefault": "Use a short video ending on a logo against black; the logo zooms into the Home Screen. The built-in animation plays when no video is uploaded.",
+    "uploadingPhotos": "Uploading {0} photos…",
+    "uploadedPhotos": "Uploaded {0} photos",
+    "invalidPhotos": "No usable images",
+    "uploadFailed": "Upload failed: {0}",
+    "uploading": "Uploading…",
+    "introSuccess": "Uploaded. Preview it in TV Settings.",
+    "introBad": "Your TV cannot play this file.",
+    "backdropSuccess": "Background updated. Open Settings to see it.",
+    "iconSuccess": "Icon updated. Return home to see it.",
+    "avatarSuccess": "Profile picture updated. Return home to see it.",
+    "invalidImage": "Unsupported image",
+    "saved": "Saved. Your TV is fetching images.",
+    "cleared": "Cleared",
+    "offline": "Cannot connect to your TV. Scan the QR code again.",
+    "source_daily": "Landscape Photos",
+    "source_scenery": "Landscapes",
+    "source_fresh": "Cute Pets",
+    "source_anime": "Anime Wallpapers",
+    "source_art": "Fine Art",
+    "source_mine": "My Photos",
+    "source_custom": "Custom Links",
+    "source_green": "Green",
+    "source_blue": "Blue",
+    "source_purple": "Purple",
+    "source_orange": "Orange",
+    "source_graphite": "Dark Gray"
+  }
+};
+  function t(key) {
+    var text = messages[lang][key] || messages.en[key] || key;
+    var args = Array.prototype.slice.call(arguments, 1);
+    return text.replace(/\{(\d+)\}/g, function (all, n) {
+      return args[Number(n)] === undefined ? all : String(args[Number(n)]);
+    });
+  }
+  var known = {daily:1, scenery:1, fresh:1, anime:1, art:1, mine:1, custom:1,
+               green:1, blue:1, purple:1, orange:1, graphite:1};
+  function sourceLabel(id, fallback) {
+    return known[id] ? t("source_" + id) : (fallback || id);
+  }
+  function apply(doc) {
+    doc.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+    var nodes = doc.querySelectorAll("[data-i18n]");
+    for (var i = 0; i < nodes.length; i++) {
+      nodes[i].textContent = t(nodes[i].getAttribute("data-i18n"));
+    }
+    nodes = doc.querySelectorAll("[data-i18n-placeholder]");
+    for (var j = 0; j < nodes.length; j++) {
+      nodes[j].setAttribute("placeholder", t(nodes[j].getAttribute("data-i18n-placeholder")));
+    }
+  }
+  global.TigrisPhoneI18n = {lang:lang, t:t, sourceLabel:sourceLabel, apply:apply};
+})(window);
