@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="media_quality_wall_title">Wallpaper Quality</string>
+    <string name="media_quality_wall_desc">Auto: use UHD on capable 4K TVs with enough free memory. 1080p: compatibility mode. Prefer 4K: attempt UHD and fall back when unavailable.</string>
+    <string name="media_quality_aerial_title">Aerial Video Quality</string>
+    <string name="media_quality_aerial_desc">Auto: use 4K HEVC on supported 4K TVs. Prefer 4K: try when hardware decoding is available. Compatible: use 2K. Playback automatically falls back.</string>
+    <string name="media_quality_4k">Prefer 4K</string>
+    <string name="media_quality_1080">1080p</string>
+    <string name="media_quality_auto">Automatic</string>
+    <string name="media_quality_compat">Compatible</string>
+</resources>

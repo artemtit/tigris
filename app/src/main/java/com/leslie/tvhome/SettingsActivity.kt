@@ -288,6 +288,22 @@ class SettingsActivity : Activity() {
                 if (prefs.background == Wallpapers.MINE) it else I18n.text(R.string.i18n_settingsactivity_064, it)
             }
         }, chevron = true) { startActivity(Intent(this, WallpaperActivity::class.java)) }
+        row(I18n.text(R.string.media_quality_wall_title), I18n.text(R.string.media_quality_wall_desc), {
+            when (prefs.wallQuality) {
+                MediaQuality.UHD -> I18n.text(R.string.media_quality_4k)
+                MediaQuality.COMPAT -> I18n.text(R.string.media_quality_1080)
+                else -> I18n.text(R.string.media_quality_auto)
+            }
+        }) {
+            prefs.wallQuality = when (prefs.wallQuality) {
+                MediaQuality.AUTO -> MediaQuality.UHD
+                MediaQuality.UHD -> MediaQuality.COMPAT
+                else -> MediaQuality.AUTO
+            }
+            Thread {
+                runCatching { Wallpapers(applicationContext, Wallpapers.sourceFor(prefs.background)).refresh(force = true) }
+            }.start()
+        }
         row(I18n.text(R.string.i18n_settingsactivity_065), I18n.text(R.string.i18n_settingsactivity_066), { minutesLabel(prefs.wallMinutes) }) {
             val opts = listOf(15, 30, 60, 180, 1440)
             prefs.wallMinutes = opts[(opts.indexOf(prefs.wallMinutes) + 1) % opts.size]
@@ -320,6 +336,19 @@ class SettingsActivity : Activity() {
         row(I18n.text(R.string.i18n_settingsactivity_076), I18n.text(R.string.i18n_settingsactivity_077),
             { if (prefs.saverMode == Prefs.SAVER_AERIAL) I18n.text(R.string.i18n_settingsactivity_078) else I18n.text(R.string.i18n_settingsactivity_079) }) {
             prefs.saverMode = if (prefs.saverMode == Prefs.SAVER_AERIAL) Prefs.SAVER_PHOTOS else Prefs.SAVER_AERIAL
+        }
+        row(I18n.text(R.string.media_quality_aerial_title), I18n.text(R.string.media_quality_aerial_desc), {
+            when (prefs.aerialQuality) {
+                MediaQuality.UHD -> I18n.text(R.string.media_quality_4k)
+                MediaQuality.COMPAT -> I18n.text(R.string.media_quality_compat)
+                else -> I18n.text(R.string.media_quality_auto)
+            }
+        }) {
+            prefs.aerialQuality = when (prefs.aerialQuality) {
+                MediaQuality.AUTO -> MediaQuality.UHD
+                MediaQuality.UHD -> MediaQuality.COMPAT
+                else -> MediaQuality.AUTO
+            }
         }
         row(I18n.text(R.string.i18n_settingsactivity_080), I18n.text(R.string.i18n_settingsactivity_081), { minutesLabel(idleMinutes()) }) { v ->
             val opts = listOf(1, 3, 5, 10, 15, 30)

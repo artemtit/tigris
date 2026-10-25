@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="media_quality_wall_title">壁纸画质</string>
+    <string name="media_quality_wall_desc">自动：仅在内存充足的 4K 电视上使用 UHD。1080p：兼容模式。优先 4K：尝试超高清，若资源不可用自动回退。</string>
+    <string name="media_quality_aerial_title">航拍画质</string>
+    <string name="media_quality_aerial_desc">自动：适配具备 4K HEVC 硬解能力的电视。优先 4K：支持硬解时尝试。兼容：使用 2K，失败自动回退。</string>
+    <string name="media_quality_4k">优先 4K</string>
+    <string name="media_quality_1080">1080p</string>
+    <string name="media_quality_auto">自动</string>
+    <string name="media_quality_compat">兼容</string>
+</resources>
