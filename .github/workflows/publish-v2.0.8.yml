@@ -78,25 +78,18 @@ jobs:
             grep -F '7d2b6be8a86ce8981e368dde4920869b90c8206137934a6d1fc89a2d1d1b6114' "$RUNNER_TEMP/cert.txt"
           done
           (cd dist && sha256sum "Tigris-$RELEASE_TAG.apk" "Tigris-guard-$RELEASE_TAG.apk" > "SHA256SUMS-$RELEASE_TAG.txt")
-      - name: Create release tag at this verified main commit and publish
+      - name: Publish signed release and create tag at verified commit
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # The gh CLI may print literal "null" for a missing ref even when the
-          # REST endpoint returns 404. Treat only a valid returned SHA as a tag.
-          TAG_SHA="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha // empty' 2>/dev/null || true)"
-          if [ "$TAG_SHA" = "null" ]; then TAG_SHA=""; fi
-          if [ -n "$TAG_SHA" ]; then
-            test "$TAG_SHA" = "$GITHUB_SHA" || { echo "::error::Tag points elsewhere"; exit 1; }
-          else
-            gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$RELEASE_TAG" -f sha="$GITHUB_SHA"
-          fi
+          # gh release create creates a missing tag at --target. The earlier
+          # git-fetch guard blocks any existing tag pointed elsewhere.
           gh release create "$RELEASE_TAG" \
             "dist/Tigris-$RELEASE_TAG.apk" \
             "dist/Tigris-guard-$RELEASE_TAG.apk" \
             "dist/SHA256SUMS-$RELEASE_TAG.txt" \
-            --verify-tag --title "Tigris 2.0.8" \
+            --target "$GITHUB_SHA" --title "Tigris 2.0.8" \
             --notes-file "docs/releases/$RELEASE_TAG.md" --latest
       - name: Verify published assets
         env:
