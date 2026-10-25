@@ -83,7 +83,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG_SHA="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha' 2>/dev/null || true)"
+          # The gh CLI may print literal "null" for a missing ref even when the
+          # REST endpoint returns 404. Treat only a valid returned SHA as a tag.
+          TAG_SHA="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha // empty' 2>/dev/null || true)"
+          if [ "$TAG_SHA" = "null" ]; then TAG_SHA=""; fi
           if [ -n "$TAG_SHA" ]; then
             test "$TAG_SHA" = "$GITHUB_SHA" || { echo "::error::Tag points elsewhere"; exit 1; }
           else
