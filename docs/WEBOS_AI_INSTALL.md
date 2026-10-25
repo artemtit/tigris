@@ -1,5 +1,7 @@
 # LG webOS AI installation preflight — design contract
 
+> **LG webOS 测试包 / Developer preview:** [webos-v0.1.0-preview.1](https://github.com/lesnolie/Tigris/releases/tag/webos-v0.1.0-preview.1) · [IPK 安装、启动、更新和卸载 / Setup guide](https://github.com/lesnolie/Tigris/blob/main/docs/webos-preview-install.md)。已提供打包 IPK，无需自行构建；未做实机测试，不是稳定版，不接管 Home。Prebuilt IPK available; hardware untested, no Home takeover.
+
 > **Status (2026-10-25): ordinary webOS application preview available; Home Helper planned.** The repository includes a developer-preview webOS application which can be packaged locally as an IPK, plus a read-only LG CLI preflight script. It does **not** ship a stable released webOS IPK, a native Tigris Home Helper or the safety probe described below. An agent may report ordinary application installation only after verifying it on the device; it MUST NOT equate that with Home-key takeover. The probe requirements below remain a future design contract.
 
 ## Platform routing is mandatory

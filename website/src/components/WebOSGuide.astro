@@ -8,7 +8,7 @@ const prompt = zh
 : "First identify whether my TV runs LG webOS. Read https://github.com/lesnolie/Tigris/blob/main/docs/WEBOS_AI_INSTALL.md and https://github.com/lesnolie/Tigris/blob/main/webos/README.md. Use LG Developer Mode, Key Server, @webos-tools/cli and SSH/Luna; never ADB. Run read-only preflight and report firmware and verified Home Helper status. Request pairing and protect SSH secrets. Only after consent build/install the source-preview IPK. Never root, flash, replace LG Home, or enable an unverified key helper. Verify D-pad, OK, apps, optional weather and stock Home recovery on the actual TV; don't claim untested success.";
 const preflight = "curl -fsSLo tigris-webos.sh https://raw.githubusercontent.com/lesnolie/Tigris/main/webos/install.sh && sh tigris-webos.sh --device myTV --preflight";
 const install = "sh tigris-webos.sh --device myTV --install";
-const manual = "npm install -g @webos-tools/cli\nares-setup-device\nares-setup-device --list\nares-novacom --device myTV --getkey\nares-device --system-info --device myTV\nares-package webos/app\nares-install --device myTV org.tigris.webos_0.1.0_all.ipk\nares-launch --device myTV org.tigris.webos";
+const manual = "npm install -g @webos-tools/cli\nares-setup-device\nares-setup-device --list\nares-novacom --device myTV --getkey\nares-device --system-info --device myTV\nares-install --device myTV org.tigris.webos_0.1.0_all.ipk\nares-launch --device myTV org.tigris.webos";
 const restore = "sh tigris-webos.sh --device myTV --uninstall\n# or: ares-install --device myTV --remove org.tigris.webos";
 ---
 <header class="site-header"><nav class="webos-navigation"><a href={home}>TIGRIS <span>webOS</span></a><div><a href={home}>{zh ? "官网" : "Home"}</a><a href={alternate}>{zh ? "English" : "中文"}</a></div></nav></header>
@@ -16,7 +16,9 @@ const restore = "sh tigris-webos.sh --device myTV --uninstall\n# or: ares-instal
   <p class="eyebrow">LG WEBOS · DEVELOPER PREVIEW</p>
   <h1>{zh ? "LG webOS 安装指南" : "LG webOS Installation"}</h1>
   <p class="lead">{zh ? "独立 IPK 桌面，非 Root 和已有 Root 模块。AI 安装、手动安装、一行命令、还原，以及默认关闭的天气卡片。" : "Standalone IPK launcher, no-root and existing-root modules. AI install, manual steps, one-line command, recovery, and weather off by default."}</p>
-  <p class="warning">{zh ? "目前仅提供源码开发预览：没有 LG 正式版 IPK，Home 键原生接管尚未实机验证。普通安装不接管 Home。" : "Source developer preview only: no official released LG IPK, and native Home-key takeover is not yet verified. Normal installs leave LG Home unchanged."}</p>
+  <p class="warning">{zh ? "已提供 0.1.0 测试 IPK；未做 LG 实机测试，不是稳定版，不接管 Home。下载包无需自行编译。" : "Prebuilt 0.1.0 test IPK available. Untested on physical LG TVs; not stable and does not intercept Home. No source build needed."}</p>
+  <p><a href="https://github.com/lesnolie/Tigris/releases/tag/webos-v0.1.0-preview.1">{zh ? "下载 LG webOS 0.1.0 测试 IPK" : "Download webOS 0.1.0 test IPK"} ↗</a> · <a href="https://github.com/lesnolie/Tigris/blob/main/docs/webos-preview-install.md">{zh ? "完整操作说明：校验、配对、安装、更新、卸载与测试反馈" : "Complete guide: checksums, pairing, install, update, remove and test feedback"} ↗</a></p>
+  <p>{zh ? "测试项：安装启动、方向键/OK/返回、设置弹窗、应用/HDMI、可选天气、原厂 Home、待机与重启。请在 GitHub Issues 写明型号、webOS/固件和逐项结果，勿公开配对码。更新使用新 IPK 执行 ares-install 覆盖；无需先卸载。" : "Please report model, firmware and installation, remote, settings, apps/HDMI, optional weather, LG Home, wake and reboot results in GitHub Issues. Do not share pairing secrets. Update with ares-install using the new IPK; no prior uninstall needed."}</p>
   <section><h2>{zh ? "1 · 连接前准备" : "1 · Prepare the TV"}</h2>
     <p>{zh ? "电视上开启 LG Developer Mode 与 Key Server；电脑安装 Node.js 和官方 @webos-tools/cli，使用 ares-setup-device 添加设备，再用 ares-novacom --getkey 获取密钥完成配对。它通过 SSH/Luna 通信，不是 Android ADB。" : "Enable LG Developer Mode and Key Server. Install Node.js and @webos-tools/cli on your computer, add the device with ares-setup-device, then retrieve its key with ares-novacom --getkey. webOS uses SSH/Luna, not ADB."}</p>
     <pre><code>npm install -g @webos-tools/cli
@@ -41,7 +43,7 @@ ares-device --system-info --device myTV</code></pre>
     <p>{zh ? "macOS/Linux POSIX Shell 适用。不会 Root、修改 LG Home 或启用未经验证的 Helper。" : "For POSIX shells on macOS/Linux. Never roots, modifies LG Home or enables an unverified Helper."}</p>
   </section>
   <section><h2>{zh ? "4 · 手动安装" : "4 · Manual install"}</h2>
-    <p>{zh ? "克隆仓库后，在根目录执行。Windows PowerShell 同样可以使用 ares-* CLI。" : "Clone the repository and run from its root. Windows PowerShell supports the same ares-* commands."}</p>
+    <p>{zh ? "下载测试版 IPK 和校验文件，核对 SHA-256 后，在下载目录执行。无需克隆或打包；Windows PowerShell 同样适用。" : "Download the preview IPK and checksum, verify SHA-256, then run in the download folder. No clone or packaging required; Windows PowerShell also works."}</p>
     <pre><code id="webos-manual">{manual}</code></pre><button class="copy-webos" data-copy="#webos-manual">{zh ? "复制" : "Copy"}</button>
   </section>
   <section><h2>{zh ? "5 · 两个适配模块" : "5 · Two capability modules"}</h2><div class="capabilities">

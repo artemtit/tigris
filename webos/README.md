@@ -1,6 +1,8 @@
 # LG webOS deployment — developer preview
 
-> **Actual state:** Tigris currently distributes Android APKs. This branch introduces a separately packaged **webOS prototype** and an honest install/preflight script. There is NO downloadable official stable LG IPK, native Home-key interception, or verified LG physical-TV test yet. Do not represent a source-built IPK as an official released installer.
+> **LG webOS 测试包 / Developer preview:** [webos-v0.1.0-preview.1](https://github.com/lesnolie/Tigris/releases/tag/webos-v0.1.0-preview.1) · [IPK 安装、启动、更新和卸载 / Setup guide](https://github.com/lesnolie/Tigris/blob/main/docs/webos-preview-install.md)。已提供打包 IPK，无需自行构建；未做实机测试，不是稳定版，不接管 Home。Prebuilt IPK available; hardware untested, no Home takeover.
+
+> **Actual state:** Tigris distributes Android APKs and a separate **webOS test IPK**. The prebuilt preview download is linked above; the script below remains an optional source-build route. There is NO downloadable official stable LG IPK, native Home-key interception, or verified LG physical-TV test yet. Use the tagged preview IPK for testing; source builds are a separate option.
 
 ## Two independent capability modules
 
