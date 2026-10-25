@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_wallpaperactivity_001" formatted="false">壁纸</string>
+    <string name="i18n_wallpaperactivity_002" formatted="false">选一个作为主屏幕背景，相框屏保也跟着用这个图源。</string>
+    <string name="i18n_wallpaperactivity_003" formatted="false">用手机设置</string>
+    <string name="i18n_wallpaperactivity_004" formatted="false">手机连同一个 Wi-Fi，用相机或微信扫码：上传照片，或者填图片链接（一张图、随机图接口、列出图片的网页或 JSON），电视每天自动去取。</string>
+    <string name="i18n_wallpaperactivity_005" formatted="false">正在启动…</string>
+    <string name="i18n_wallpaperactivity_006" formatted="false">电视没有连上网络，连上后再打开这里。</string>
+    <string name="i18n_wallpaperactivity_007" formatted="false">扫码上传照片</string>
+    <string name="i18n_wallpaperactivity_008" formatted="false">扫码填写图片链接</string>
+    <string name="i18n_wallpaperactivity_009" formatted="false">选中后开始下载</string>
+    <string name="i18n_wallpaperactivity_010" formatted="false">还没有照片，先用手机扫右边的二维码上传</string>
+    <string name="i18n_wallpaperactivity_011" formatted="false">还没有链接，先用手机扫右边的二维码填写</string>
+</resources>

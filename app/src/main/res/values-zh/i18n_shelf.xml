@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_shelf_001" formatted="false">哔哩哔哩 · 热门</string>
+    <string name="i18n_shelf_002" formatted="false">斗鱼 · 正在直播</string>
+    <string name="i18n_shelf_003">%1$s · %2$s播放</string>
+    <string name="i18n_shelf_004">%1$s · %2$s · %3$s热度</string>
+    <string name="i18n_shelf_005">%1$.1f亿</string>
+    <string name="i18n_shelf_006">%1$.1f万</string>
+</resources>

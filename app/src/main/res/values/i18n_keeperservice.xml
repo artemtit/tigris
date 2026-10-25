@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_keeperservice_001" formatted="false">Home screen background</string>
+    <string name="i18n_keeperservice_002" formatted="false">Home screen</string>
+    <string name="i18n_keeperservice_003" formatted="false">Free memory automatically in standby</string>
+</resources>

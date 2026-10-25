@@ -13,7 +13,7 @@ import java.util.Locale
 /**
  * Talks to the TV's own adbd on 127.0.0.1:5555 so a normal app can run
  * shell-privileged commands (force-stop, shutdown). The first connection
- * makes the TV show "允许调试吗？"; after "始终允许" it is silent.
+ * makes the TV show I18n.text(R.string.i18n_cleaner_001); after I18n.text(R.string.i18n_cleaner_002) it is silent.
  */
 object LocalAdb {
     private const val TAG = "LocalAdb"
@@ -52,9 +52,9 @@ object Cleaner {
     data class Result(val beforeMb: Long, val afterMb: Long, val stopped: Int, val viaAdb: Boolean, val failed: Int = 0, val skipped: Boolean = false) {
         val freedMb get() = (afterMb - beforeMb).coerceAtLeast(0)
         fun description(): String = when {
-            skipped -> "未能确认前台应用，已跳过自动清理"
-            viaAdb -> "已释放 ${freedMb} MB，停止 $stopped 个，失败 $failed 个"
-            else -> "已释放 ${freedMb} MB（仅缓存）"
+            skipped -> I18n.text(R.string.i18n_cleaner_003)
+            viaAdb -> I18n.text(R.string.i18n_cleaner_004, freedMb, stopped, failed)
+            else -> I18n.text(R.string.i18n_cleaner_005, freedMb)
         }
     }
 
@@ -100,7 +100,7 @@ object Cleaner {
         }
         Thread.sleep(1500)
         val r = Result(before, availMb(ctx), stopped, viaAdb, failed)
-        prefs.lastClean = SimpleDateFormat("M月d日 HH:mm", Locale.CHINA).format(Date()) +
+        prefs.lastClean = SimpleDateFormat(I18n.text(R.string.i18n_cleaner_006), Locale.CHINA).format(Date()) +
             "，${r.description()}"
         return r
     }

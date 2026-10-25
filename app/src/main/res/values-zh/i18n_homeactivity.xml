@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_homeactivity_001" formatted="false">网络设置</string>
+    <string name="i18n_homeactivity_002" formatted="false">控制中心</string>
+    <string name="i18n_homeactivity_003" formatted="false">主屏幕设置</string>
+    <string name="i18n_homeactivity_004" formatted="false">M月d日EEEE</string>
+    <string name="i18n_homeactivity_005">无法打开 %1$s</string>
+    <string name="i18n_homeactivity_006" formatted="false">编辑主屏幕</string>
+    <string name="i18n_homeactivity_007" formatted="false">从主屏幕移除</string>
+    <string name="i18n_homeactivity_008" formatted="false">取消</string>
+    <string name="i18n_homeactivity_009" formatted="false">编辑主屏幕</string>
+    <string name="i18n_homeactivity_010" formatted="false">移入文件夹</string>
+    <string name="i18n_homeactivity_011" formatted="false">隐藏</string>
+    <string name="i18n_homeactivity_012" formatted="false">取消</string>
+    <string name="i18n_homeactivity_013" formatted="false">应用信息</string>
+    <string name="i18n_homeactivity_014" formatted="false">删除 App</string>
+    <string name="i18n_homeactivity_015" formatted="false">取消</string>
+    <string name="i18n_homeactivity_016" formatted="false">文件夹名称</string>
+    <string name="i18n_homeactivity_017" formatted="false">保存</string>
+    <string name="i18n_homeactivity_018" formatted="false">取消</string>
+    <string name="i18n_homeactivity_019" formatted="false">请输入名称</string>
+    <string name="i18n_homeactivity_020" formatted="false">移入文件夹</string>
+    <string name="i18n_homeactivity_021" formatted="false">新建文件夹…</string>
+    <string name="i18n_homeactivity_022" formatted="false">新文件夹</string>
+    <string name="i18n_homeactivity_023" formatted="false">取消</string>
+    <string name="i18n_homeactivity_024">无法打开 %1$s</string>
+    <string name="i18n_homeactivity_025" formatted="false">管理</string>
+    <string name="i18n_homeactivity_026" formatted="false">返回</string>
+    <string name="i18n_homeactivity_027" formatted="false">文件夹为空，可长按桌面应用移入。</string>
+    <string name="i18n_homeactivity_028" formatted="false">重命名</string>
+    <string name="i18n_homeactivity_029" formatted="false">移出应用</string>
+    <string name="i18n_homeactivity_030" formatted="false">编辑主屏幕</string>
+    <string name="i18n_homeactivity_031" formatted="false">解散文件夹</string>
+    <string name="i18n_homeactivity_032" formatted="false">移回桌面</string>
+    <string name="i18n_homeactivity_033" formatted="false">取消</string>
+    <string name="i18n_homeactivity_034">解散 %1$s？</string>
+    <string name="i18n_homeactivity_035" formatted="false">应用图标将回到桌面，不会卸载应用。</string>
+    <string name="i18n_homeactivity_036" formatted="false">解散</string>
+    <string name="i18n_homeactivity_037" formatted="false">取消</string>
+    <string name="i18n_homeactivity_038" formatted="false">取消</string>
+    <string name="i18n_homeactivity_039" formatted="false">需要先授权本机调试</string>
+    <string name="i18n_homeactivity_040" formatted="false">删除电视预装的 App 要用到本机调试。点“开始”后，电视会弹出“允许调试吗？”，请勾选“始终允许”，再点“允许”。</string>
+    <string name="i18n_homeactivity_041" formatted="false">开始</string>
+    <string name="i18n_homeactivity_042" formatted="false">取消</string>
+    <string name="i18n_homeactivity_043" formatted="false">这是电视预装的 App。删除后它不会再出现在主屏幕上，也不会在后台运行。需要时可以在“主屏幕设置 → 已删除的预装 App”里恢复。</string>
+    <string name="i18n_homeactivity_044" formatted="false">这是一个桌面 App，可以在本桌面出问题时顶上。删除后，万一本桌面无法启动，电视就没有备用桌面了。App 和它的数据都会被删除。</string>
+    <string name="i18n_homeactivity_045" formatted="false">App 和它的数据都会被删除。</string>
+    <string name="i18n_homeactivity_046">删除“%1$s”？</string>
+    <string name="i18n_homeactivity_047" formatted="false">删除</string>
+    <string name="i18n_homeactivity_048" formatted="false">取消</string>
+    <string name="i18n_homeactivity_049" formatted="false">用方向键移动，按确认键完成</string>
+    <string name="i18n_homeactivity_050" formatted="false">开启关机和释放内存</string>
+    <string name="i18n_homeactivity_051" formatted="false">需要允许本机调试一次。点“开始”后，电视会弹出“允许调试吗？”，请勾选“始终允许”，再点“允许”。</string>
+    <string name="i18n_homeactivity_052" formatted="false">开始</string>
+    <string name="i18n_homeactivity_053" formatted="false">以后再说</string>
+    <string name="i18n_homeactivity_054" formatted="false">请在弹出的窗口中勾选“始终允许”并点“允许”</string>
+    <string name="i18n_homeactivity_055" formatted="false">已开启，关机和释放内存可以用了</string>
+    <string name="i18n_homeactivity_056" formatted="false">没有授权成功，可以在主屏幕设置里重试</string>
+    <string name="i18n_homeactivity_057">没有删除成功：%1$s</string>
+    <string name="i18n_homeactivity_058" formatted="false">本机调试不可用</string>
+</resources>

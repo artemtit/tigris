@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_keeperservice_001" formatted="false">主屏幕后台</string>
+    <string name="i18n_keeperservice_002" formatted="false">主屏幕</string>
+    <string name="i18n_keeperservice_003" formatted="false">待机时自动释放内存</string>
+</resources>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_wallpapers_001" formatted="false">360 壁纸</string>
+    <string name="i18n_wallpapers_002" formatted="false">栗次元</string>
+    <string name="i18n_wallpapers_003" formatted="false">克利夫兰艺术博物馆 · 公有领域</string>
+    <string name="i18n_wallpapers_004" formatted="false">二次元壁纸</string>
+    <string name="i18n_wallpapers_005" formatted="false">风景大片</string>
+    <string name="i18n_wallpapers_006" formatted="false">清新萌宠</string>
+    <string name="i18n_wallpapers_007" formatted="false">名画</string>
+    <string name="i18n_wallpapers_008" formatted="false">我的照片</string>
+    <string name="i18n_wallpapers_009" formatted="false">自定义链接</string>
+    <string name="i18n_wallpapers_010" formatted="false">风景照片</string>
+    <string name="i18n_wallpapers_011" formatted="false">绿色</string>
+    <string name="i18n_wallpapers_012" formatted="false">蓝色</string>
+    <string name="i18n_wallpapers_013" formatted="false">紫色</string>
+    <string name="i18n_wallpapers_014" formatted="false">橙色</string>
+    <string name="i18n_wallpapers_015" formatted="false">深灰</string>
+</resources>

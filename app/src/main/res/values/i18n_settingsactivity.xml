@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_settingsactivity_001" formatted="false">Keep when freeing memory</string>
+    <string name="i18n_settingsactivity_002" formatted="false">Hidden apps</string>
+    <string name="i18n_settingsactivity_003" formatted="false">Home Screen Settings</string>
+    <string name="i18n_settingsactivity_004" formatted="false">Software</string>
+    <string name="i18n_settingsactivity_005" formatted="false">Software updates &amp; casting</string>
+    <string name="i18n_settingsactivity_006" formatted="false">Check for new Tigris and MiracastReceiver versions, install the casting component, or turn on automatic updates.</string>
+    <string name="i18n_settingsactivity_007" formatted="false">Open</string>
+    <string name="i18n_settingsactivity_008" formatted="false">Appearance</string>
+    <string name="i18n_settingsactivity_009" formatted="false">Time format</string>
+    <string name="i18n_settingsactivity_010" formatted="false">Whether the clock on the home screen and in Control Center uses 12-hour (11:49 AM) or 24-hour (23:49) time.</string>
+    <string name="i18n_settingsactivity_011" formatted="false">24-hour</string>
+    <string name="i18n_settingsactivity_012" formatted="false">12-hour</string>
+    <string name="i18n_settingsactivity_013" formatted="false">Clock position</string>
+    <string name="i18n_settingsactivity_014" formatted="false">A small clock in the top-right corner, a large clock with the date in the top-left (the earlier style), or no clock at all.</string>
+    <string name="i18n_settingsactivity_015" formatted="false">Large clock, top left</string>
+    <string name="i18n_settingsactivity_016" formatted="false">Don\'t show</string>
+    <string name="i18n_settingsactivity_017" formatted="false">Top right</string>
+    <string name="i18n_settingsactivity_018" formatted="false">Settings background</string>
+    <string name="i18n_settingsactivity_019" formatted="false">Use your uploaded image as the settings background, or a plain dark background.</string>
+    <string name="i18n_settingsactivity_020" formatted="false">Image</string>
+    <string name="i18n_settingsactivity_021" formatted="false">Plain</string>
+    <string name="i18n_settingsactivity_022" formatted="false">Settings icon</string>
+    <string name="i18n_settingsactivity_023" formatted="false">The icon for this entry: your own uploaded image, or the built-in gear.</string>
+    <string name="i18n_settingsactivity_024" formatted="false">Uploaded image</string>
+    <string name="i18n_settingsactivity_025" formatted="false">Gear</string>
+    <string name="i18n_settingsactivity_026" formatted="false">Upload avatar</string>
+    <string name="i18n_settingsactivity_027" formatted="false">Scan the QR code with your phone, upload a photo under “Avatar” on the web page, then return to the home screen.</string>
+    <string name="i18n_settingsactivity_028" formatted="false">Upload from phone</string>
+    <string name="i18n_settingsactivity_029" formatted="false">Show avatar in the top-right corner</string>
+    <string name="i18n_settingsactivity_030" formatted="false">Press the avatar in the top-right corner to open Home Screen Settings.</string>
+    <string name="i18n_settingsactivity_031" formatted="false">Focus animation</string>
+    <string name="i18n_settingsactivity_032" formatted="false">tvOS: the selected app grows, tilts with the direction and catches a highlight. Simple: it only grows.</string>
+    <string name="i18n_settingsactivity_033" formatted="false">\n“Auto” uses Simple on lower-end TVs.</string>
+    <string name="i18n_settingsactivity_034" formatted="false">Simple</string>
+    <string name="i18n_settingsactivity_035" formatted="false">Control Center style</string>
+    <string name="i18n_settingsactivity_036" formatted="false">Glass: frosted glass that shows the image behind, and the selected button lights up its neighbours. Panel: the earlier dark panel, easier on performance.</string>
+    <string name="i18n_settingsactivity_037" formatted="false">\n“Auto” uses Panel on lower-end TVs.</string>
+    <string name="i18n_settingsactivity_038" formatted="false">Glass</string>
+    <string name="i18n_settingsactivity_039" formatted="false">Panel</string>
+    <string name="i18n_settingsactivity_040" formatted="false">Boot animation</string>
+    <string name="i18n_settingsactivity_041" formatted="false">Boot animation</string>
+    <string name="i18n_settingsactivity_042" formatted="false">Plays the first time the home screen appears after boot; the logo zooms into the desktop at the end. Press any key to skip.</string>
+    <string name="i18n_settingsactivity_043" formatted="false">\nPlays the built-in boot video by default; you can also upload your own.</string>
+    <string name="i18n_settingsactivity_044" formatted="false">On boot</string>
+    <string name="i18n_settingsactivity_045" formatted="false">On boot and wake</string>
+    <string name="i18n_settingsactivity_046" formatted="false">Off</string>
+    <string name="i18n_settingsactivity_047" formatted="false">Animation content</string>
+    <string name="i18n_settingsactivity_048" formatted="false">Uploaded video: for example Apple TV\'s boot animation, with the logo zooming in at the end. Tigris wordmark: the wordmark fades in and then zooms.</string>
+    <string name="i18n_settingsactivity_049" formatted="false">\nWithout an uploaded video, video mode uses the built-in animation.</string>
+    <string name="i18n_settingsactivity_050" formatted="false">Tigris wordmark</string>
+    <string name="i18n_settingsactivity_051" formatted="false">Uploaded video</string>
+    <string name="i18n_settingsactivity_052" formatted="false">Built-in video</string>
+    <string name="i18n_settingsactivity_053" formatted="false">Wait after wake</string>
+    <string name="i18n_settingsactivity_054" formatted="false">When waking from standby, stay black for this long before playing the animation. Many TVs (especially OLED) take a few seconds to actually light up; increase it if you miss the start of the animation, decrease it if the black screen lasts too long.</string>
+    <string name="i18n_settingsactivity_055" formatted="false">No wait</string>
+    <string name="i18n_settingsactivity_056">%1$s s</string>
+    <string name="i18n_settingsactivity_057" formatted="false">Boot animation sound</string>
+    <string name="i18n_settingsactivity_058" formatted="false">Play the audio from the animation video.</string>
+    <string name="i18n_settingsactivity_059" formatted="false">Preview boot animation</string>
+    <string name="i18n_settingsactivity_060" formatted="false">Play it once now, back on the home screen.</string>
+    <string name="i18n_settingsactivity_061" formatted="false">Wallpaper &amp; Screen Saver</string>
+    <string name="i18n_settingsactivity_062" formatted="false">Background</string>
+    <string name="i18n_settingsactivity_063" formatted="false">Home screen background: a theme, a wallpaper source, or your own photos.</string>
+    <string name="i18n_settingsactivity_064">%1$s · Auto</string>
+    <string name="i18n_settingsactivity_065" formatted="false">Change Wallpaper Every</string>
+    <string name="i18n_settingsactivity_066" formatted="false">How often the rotating background changes.</string>
+    <string name="i18n_settingsactivity_067" formatted="false">Change now</string>
+    <string name="i18n_settingsactivity_068" formatted="false">Fetch a new photo from the wallpaper source now. Photos are downloaded when shown, and old ones are cleaned up after a few days.</string>
+    <string name="i18n_settingsactivity_069">%1$s photos</string>
+    <string name="i18n_settingsactivity_070" formatted="false">Downloading…</string>
+    <string name="i18n_settingsactivity_071">%1$s photos</string>
+    <string name="i18n_settingsactivity_072" formatted="false">Start Screen Saver When Idle</string>
+    <string name="i18n_settingsactivity_073" formatted="false">Show photos or Aerials when your TV is idle.</string>
+    <string name="i18n_settingsactivity_074" formatted="false">Setting up…</string>
+    <string name="i18n_settingsactivity_075" formatted="false">Local debugging must be authorized first</string>
+    <string name="i18n_settingsactivity_076" formatted="false">Screen Saver Content</string>
+    <string name="i18n_settingsactivity_077" formatted="false">Choose photos or Aerials for your screen saver.</string>
+    <string name="i18n_settingsactivity_078" formatted="false">Aerials</string>
+    <string name="i18n_settingsactivity_079" formatted="false">Photos</string>
+    <string name="i18n_settingsactivity_080" formatted="false">Start After</string>
+    <string name="i18n_settingsactivity_081" formatted="false">How long without input before the frame appears.</string>
+    <string name="i18n_settingsactivity_082" formatted="false">Setting up…</string>
+    <string name="i18n_settingsactivity_083" formatted="false">Local debugging must be authorized first</string>
+    <string name="i18n_settingsactivity_084" formatted="false">Time per Photo</string>
+    <string name="i18n_settingsactivity_085" formatted="false">How long each photo is shown in the frame.</string>
+    <string name="i18n_settingsactivity_086">%1$s s</string>
+    <string name="i18n_settingsactivity_087" formatted="false">Memory &amp; power</string>
+    <string name="i18n_settingsactivity_088" formatted="false">Free memory automatically in standby</string>
+    <string name="i18n_settingsactivity_089" formatted="false">In standby, only cached processes are cleaned; apps are not force-stopped. Skipped when the foreground app can\'t be confirmed.</string>
+    <string name="i18n_settingsactivity_090" formatted="false">Scheduled memory freeing</string>
+    <string name="i18n_settingsactivity_091" formatted="false">Periodically clean cached processes without force-stopping apps. Off by default on new installs.</string>
+    <string name="i18n_settingsactivity_092" formatted="false">Off</string>
+    <string name="i18n_settingsactivity_093">Every %1$s h</string>
+    <string name="i18n_settingsactivity_094" formatted="false">Free memory now</string>
+    <string name="i18n_settingsactivity_095" formatted="false">Close background apps now.</string>
+    <string name="i18n_settingsactivity_096">%1$s MB available</string>
+    <string name="i18n_settingsactivity_097" formatted="false">Freeing…</string>
+    <string name="i18n_settingsactivity_098" formatted="false">Apps kept when freeing memory</string>
+    <string name="i18n_settingsactivity_099" formatted="false">Apps that won\'t be closed when freeing memory, such as casting and music.</string>
+    <string name="i18n_settingsactivity_100">%1$s</string>
+    <string name="i18n_settingsactivity_101" formatted="false">When you press power on the remote</string>
+    <string name="i18n_settingsactivity_102" formatted="false">Standby: as usual. Full power off: saves power, but boot takes longer.</string>
+    <string name="i18n_settingsactivity_103" formatted="false">Full power off</string>
+    <string name="i18n_settingsactivity_104" formatted="false">Standby</string>
+    <string name="i18n_settingsactivity_105" formatted="false">Requires local debugging authorization to take effect</string>
+    <string name="i18n_settingsactivity_106" formatted="false">Move recently opened apps to the front</string>
+    <string name="i18n_settingsactivity_107" formatted="false">When on, an app or folder that opens successfully moves to the front. When off, the current order is kept and only long-press “Edit Home Screen” changes it; launching apps won\'t reshuffle.</string>
+    <string name="i18n_settingsactivity_108" formatted="false">Hidden apps</string>
+    <string name="i18n_settingsactivity_109" formatted="false">Apps that don\'t appear on the home screen.</string>
+    <string name="i18n_settingsactivity_110">%1$s</string>
+    <string name="i18n_settingsactivity_111" formatted="false">Removed preinstalled apps</string>
+    <string name="i18n_settingsactivity_112" formatted="false">Preinstalled apps removed from the long-press menu can be restored here.</string>
+    <string name="i18n_settingsactivity_113">%1$s</string>
+    <string name="i18n_settingsactivity_114" formatted="false">System</string>
+    <string name="i18n_settingsactivity_115" formatted="false">Local debugging authorization</string>
+    <string name="i18n_settingsactivity_116" formatted="false">Let the home screen use local debugging for actions like power off and freeing memory. Choose “Always allow” in the dialog.</string>
+    <string name="i18n_settingsactivity_117" formatted="false">Authorized</string>
+    <string name="i18n_settingsactivity_118" formatted="false">Not authorized — press OK to authorize</string>
+    <string name="i18n_settingsactivity_119" formatted="false">Choose “Always allow” in the dialog</string>
+    <string name="i18n_settingsactivity_120" formatted="false">Authorized</string>
+    <string name="i18n_settingsactivity_121" formatted="false">Not authorized — press OK to retry</string>
+    <string name="i18n_settingsactivity_122" formatted="false">Home Screen Guard</string>
+    <string name="i18n_settingsactivity_123" formatted="false">When the Home key takes you to the stock launcher, come back here automatically.</string>
+    <string name="i18n_settingsactivity_124" formatted="false">Off</string>
+    <string name="i18n_settingsactivity_125" formatted="false">On</string>
+    <string name="i18n_settingsactivity_126" formatted="false">On (not running)</string>
+    <string name="i18n_settingsactivity_127" formatted="false">Setting up…</string>
+    <string name="i18n_settingsactivity_128" formatted="false">Local debugging must be authorized first</string>
+    <string name="i18n_settingsactivity_129" formatted="false">On</string>
+    <string name="i18n_settingsactivity_130" formatted="false">Off</string>
+    <string name="i18n_settingsactivity_131" formatted="false">The Home key will bring you back here</string>
+    <string name="i18n_settingsactivity_132" formatted="false">Keep ADB debugging on</string>
+    <string name="i18n_settingsactivity_133" formatted="false">Prevent the system from turning ADB debugging off.</string>
+    <string name="i18n_settingsactivity_134" formatted="false">Setting up…</string>
+    <string name="i18n_settingsactivity_135" formatted="false">Local debugging must be authorized first</string>
+    <string name="i18n_settingsactivity_136" formatted="false">System settings</string>
+    <string name="i18n_settingsactivity_137" formatted="false">Open the TV\'s built-in settings.</string>
+    <string name="i18n_settingsactivity_138" formatted="false">About</string>
+    <string name="i18n_settingsactivity_139" formatted="false">A tvOS-inspired home screen for Android TV.</string>
+    <string name="i18n_settingsactivity_140" formatted="false">Version </string>
+    <string name="i18n_settingsactivity_141" formatted="false">The selected apps won\'t be closed when memory is freed.</string>
+    <string name="i18n_settingsactivity_142" formatted="false">The selected apps won\'t appear on the home screen.</string>
+    <string name="i18n_settingsactivity_143" formatted="false">Removed preinstalled apps</string>
+    <string name="i18n_settingsactivity_144" formatted="false">Pick an app to reinstall it from the system partition.</string>
+    <string name="i18n_settingsactivity_145" formatted="false">No removed apps</string>
+    <string name="i18n_settingsactivity_146" formatted="false">Restore</string>
+    <string name="i18n_settingsactivity_147" formatted="false">Restoring…</string>
+    <string name="i18n_settingsactivity_148" formatted="false">Restored</string>
+    <string name="i18n_settingsactivity_149" formatted="false">Restore failed</string>
+    <string name="i18n_settingsactivity_150" formatted="false">In progress</string>
+    <string name="i18n_settingsactivity_151" formatted="false">Please check</string>
+    <string name="i18n_settingsactivity_152" formatted="false">On</string>
+    <string name="i18n_settingsactivity_153" formatted="false">Off</string>
+    <string name="i18n_settingsactivity_154" formatted="false">Auto (…)</string>
+    <string name="i18n_settingsactivity_155">Auto (%1$s)</string>
+    <string name="i18n_settingsactivity_156" formatted="false">Daily</string>
+    <string name="i18n_settingsactivity_157">%1$s h</string>
+    <string name="i18n_settingsactivity_158">%1$s min</string>
+</resources>

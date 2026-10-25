@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_controlcenter_001" formatted="false">Power off</string>
+    <string name="i18n_controlcenter_002" formatted="false">Power off</string>
+    <string name="i18n_controlcenter_003" formatted="false">The TV will fully power down. Turn it back on with the power button on the remote.</string>
+    <string name="i18n_controlcenter_004" formatted="false">Network</string>
+    <string name="i18n_controlcenter_005" formatted="false">Standby</string>
+    <string name="i18n_controlcenter_006" formatted="false">Clear memory</string>
+    <string name="i18n_controlcenter_007" formatted="false">Screen Saver</string>
+    <string name="i18n_controlcenter_008" formatted="false">Restart</string>
+    <string name="i18n_controlcenter_009" formatted="false">Restart</string>
+    <string name="i18n_controlcenter_010" formatted="false">The TV will restart. This takes about a minute.</string>
+    <string name="i18n_controlcenter_011" formatted="false">Settings</string>
+    <string name="i18n_controlcenter_012" formatted="false">Brightness</string>
+    <string name="i18n_controlcenter_013" formatted="false">Volume</string>
+    <string name="i18n_controlcenter_014" formatted="false">Input</string>
+    <string name="i18n_controlcenter_015" formatted="false">Brightness</string>
+    <string name="i18n_controlcenter_016" formatted="false">Volume</string>
+    <string name="i18n_controlcenter_017" formatted="false">Local debugging not authorized: power off, standby and deep clean unavailable</string>
+    <string name="i18n_controlcenter_018" formatted="false">Wired network</string>
+    <string name="i18n_controlcenter_019" formatted="false">Not connected</string>
+    <string name="i18n_controlcenter_020" formatted="false">Connected</string>
+    <string name="i18n_controlcenter_021" formatted="false">Input</string>
+    <string name="i18n_controlcenter_022" formatted="false">Show on Home Screen…</string>
+    <string name="i18n_controlcenter_023" formatted="false">Cancel</string>
+    <string name="i18n_controlcenter_024" formatted="false">Show on Home Screen</string>
+    <string name="i18n_controlcenter_025" formatted="false">The selected input becomes an icon on the home screen. Press it to switch.</string>
+    <string name="i18n_controlcenter_026" formatted="false">Done</string>
+    <string name="i18n_controlcenter_027" formatted="false">Freeing memory…</string>
+    <string name="i18n_controlcenter_028" formatted="false">Local debugging must be authorized first</string>
+    <string name="i18n_controlcenter_029" formatted="false">Select Start, then select “Always allow” when your TV asks for debugging permission.</string>
+    <string name="i18n_controlcenter_030" formatted="false">Start</string>
+    <string name="i18n_controlcenter_031" formatted="false">Cancel</string>
+    <string name="i18n_controlcenter_032" formatted="false">Cancel</string>
+</resources>

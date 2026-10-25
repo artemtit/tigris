@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_homeactivity_001" formatted="false">Network settings</string>
+    <string name="i18n_homeactivity_002" formatted="false">Control Center</string>
+    <string name="i18n_homeactivity_003" formatted="false">Home Screen Settings</string>
+    <string name="i18n_homeactivity_004" formatted="false">EEEE, MMM d</string>
+    <string name="i18n_homeactivity_005">Can\'t open %1$s</string>
+    <string name="i18n_homeactivity_006" formatted="false">Edit Home Screen</string>
+    <string name="i18n_homeactivity_007" formatted="false">Remove from Home Screen</string>
+    <string name="i18n_homeactivity_008" formatted="false">Cancel</string>
+    <string name="i18n_homeactivity_009" formatted="false">Edit Home Screen</string>
+    <string name="i18n_homeactivity_010" formatted="false">Move into folder</string>
+    <string name="i18n_homeactivity_011" formatted="false">Hide</string>
+    <string name="i18n_homeactivity_012" formatted="false">Cancel</string>
+    <string name="i18n_homeactivity_013" formatted="false">App info</string>
+    <string name="i18n_homeactivity_014" formatted="false">Uninstall app</string>
+    <string name="i18n_homeactivity_015" formatted="false">Cancel</string>
+    <string name="i18n_homeactivity_016" formatted="false">Folder name</string>
+    <string name="i18n_homeactivity_017" formatted="false">Save</string>
+    <string name="i18n_homeactivity_018" formatted="false">Cancel</string>
+    <string name="i18n_homeactivity_019" formatted="false">Enter a name</string>
+    <string name="i18n_homeactivity_020" formatted="false">Move into folder</string>
+    <string name="i18n_homeactivity_021" formatted="false">New folder…</string>
+    <string name="i18n_homeactivity_022" formatted="false">New folder</string>
+    <string name="i18n_homeactivity_023" formatted="false">Cancel</string>
+    <string name="i18n_homeactivity_024">Can\'t open %1$s</string>
+    <string name="i18n_homeactivity_025" formatted="false">Manage</string>
+    <string name="i18n_homeactivity_026" formatted="false">Back</string>
+    <string name="i18n_homeactivity_027" formatted="false">This folder is empty. Long-press an app on the home screen to move it in.</string>
+    <string name="i18n_homeactivity_028" formatted="false">Rename</string>
+    <string name="i18n_homeactivity_029" formatted="false">Move app out</string>
+    <string name="i18n_homeactivity_030" formatted="false">Edit Home Screen</string>
+    <string name="i18n_homeactivity_031" formatted="false">Delete folder</string>
+    <string name="i18n_homeactivity_032" formatted="false">Move back to Home Screen</string>
+    <string name="i18n_homeactivity_033" formatted="false">Cancel</string>
+    <string name="i18n_homeactivity_034">Delete %1$s?</string>
+    <string name="i18n_homeactivity_035" formatted="false">The app icons return to the home screen. Apps are not uninstalled.</string>
+    <string name="i18n_homeactivity_036" formatted="false">Delete</string>
+    <string name="i18n_homeactivity_037" formatted="false">Cancel</string>
+    <string name="i18n_homeactivity_038" formatted="false">Cancel</string>
+    <string name="i18n_homeactivity_039" formatted="false">Local debugging must be authorized first</string>
+    <string name="i18n_homeactivity_040" formatted="false">Select Start, then select “Always allow” when your TV asks for debugging permission.</string>
+    <string name="i18n_homeactivity_041" formatted="false">Start</string>
+    <string name="i18n_homeactivity_042" formatted="false">Cancel</string>
+    <string name="i18n_homeactivity_043" formatted="false">This is a preinstalled app. Once removed it won\'t appear on the home screen and won\'t run in the background. You can restore it in Home Screen Settings → Removed preinstalled apps.</string>
+    <string name="i18n_homeactivity_044" formatted="false">This is a home screen app that can step in if the current one fails. If you remove it and this launcher stops working, the TV will have no backup home screen. The app and its data will be deleted.</string>
+    <string name="i18n_homeactivity_045" formatted="false">The app and its data will be deleted.</string>
+    <string name="i18n_homeactivity_046">Uninstall “%1$s”?</string>
+    <string name="i18n_homeactivity_047" formatted="false">Uninstall</string>
+    <string name="i18n_homeactivity_048" formatted="false">Cancel</string>
+    <string name="i18n_homeactivity_049" formatted="false">Use the arrow keys to move, press OK when done</string>
+    <string name="i18n_homeactivity_050" formatted="false">Enable power off and memory freeing</string>
+    <string name="i18n_homeactivity_051" formatted="false">Select Start, then select “Always allow” when your TV asks for debugging permission.</string>
+    <string name="i18n_homeactivity_052" formatted="false">Start</string>
+    <string name="i18n_homeactivity_053" formatted="false">Not now</string>
+    <string name="i18n_homeactivity_054" formatted="false">In the dialog, check “Always allow” and tap Allow</string>
+    <string name="i18n_homeactivity_055" formatted="false">Enabled. Power off and memory freeing are ready.</string>
+    <string name="i18n_homeactivity_056" formatted="false">Authorization failed. You can retry in Home Screen Settings.</string>
+    <string name="i18n_homeactivity_057">Uninstall failed: %1$s</string>
+    <string name="i18n_homeactivity_058" formatted="false">Local debugging unavailable</string>
+</resources>

@@ -21,9 +21,9 @@ object Shelf {
     private const val UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
     private const val TTL = 15 * 60_000L
 
-    private val sources = mapOf(
-        "com.xiaodianshi.tv.yst" to Source("哔哩哔哩 · 热门", ::bilibili),
-        "com.douyu.xl.douyutv" to Source("斗鱼 · 正在直播", ::douyu),
+    private val sources get() = mapOf(
+        "com.xiaodianshi.tv.yst" to Source(I18n.text(R.string.i18n_shelf_001), ::bilibili),
+        "com.douyu.xl.douyutv" to Source(I18n.text(R.string.i18n_shelf_002), ::douyu),
     )
     private val cache = HashMap<String, Pair<Long, List<Item>>>()
 
@@ -97,7 +97,7 @@ object Shelf {
         return (0 until list.length()).map { list.getJSONObject(it) }.map { v ->
             Item(
                 v.optString("title"),
-                "${v.getJSONObject("owner").optString("name")} · ${count(v.getJSONObject("stat").optLong("view"))}播放",
+                I18n.text(R.string.i18n_shelf_003, v.getJSONObject("owner").optString("name"), count(v.getJSONObject("stat").optLong("view"))),
                 v.optString("pic").replace("http://", "https://") + "@1280w_720h_1c.jpg",
             )
         }
@@ -112,17 +112,25 @@ object Shelf {
             .map { r ->
                 Item(
                     r.optString("rn"),
-                    "${r.optString("nn")} · ${r.optString("c2name")} · ${count(r.optLong("ol"))}热度",
+                    I18n.text(R.string.i18n_shelf_004, r.optString("nn"), r.optString("c2name"), count(r.optLong("ol"))),
                     // "/dy4" is the 1280×720 JPEG rendition of the AVIF cover.
                     r.optString("rs16").substringBeforeLast('/') + "/dy4",
                 )
             }
     }
 
-    private fun count(n: Long) = when {
-        n >= 100_000_000 -> "%.1f亿".format(n / 100_000_000.0)
-        n >= 10_000 -> "%.1f万".format(n / 10_000.0)
-        else -> n.toString()
+    private fun count(n: Long): String = if (I18n.isChinese()) {
+        when {
+            n >= 100_000_000 -> I18n.text(R.string.i18n_shelf_005, n / 100_000_000.0)
+            n >= 10_000 -> I18n.text(R.string.i18n_shelf_006, n / 10_000.0)
+            else -> n.toString()
+        }
+    } else {
+        when {
+            n >= 1_000_000 -> I18n.text(R.string.i18n_shelf_005, n / 1_000_000.0)
+            n >= 1_000 -> I18n.text(R.string.i18n_shelf_006, n / 1_000.0)
+            else -> n.toString()
+        }
     }
 
     private fun get(url: String): ByteArray {

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_tcladapter_001" formatted="false">TCL input</string>
+    <string name="i18n_tcladapter_002" formatted="false">TCL input picker</string>
+</resources>

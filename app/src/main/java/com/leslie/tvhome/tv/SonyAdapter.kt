@@ -1,5 +1,8 @@
 package com.leslie.tvhome.tv
 
+import com.leslie.tvhome.I18n
+import com.leslie.tvhome.R
+
 import android.content.Context
 import android.os.Build
 import android.util.Log
@@ -40,7 +43,7 @@ class SonyAdapter(ctx: Context) : AndroidAdapter(ctx) {
 
     /** Sony reports the input being shown, so with Sony's inputs listed and none current, the TV is on the home screen. */
     override fun inputSummary(list: List<Input>) =
-        if (list.firstOrNull()?.uri?.startsWith(URI_PREFIX) == true) "当前：主屏幕" else super.inputSummary(list)
+        if (list.firstOrNull()?.uri?.startsWith(URI_PREFIX) == true) I18n.text(R.string.i18n_sonyadapter_001) else super.inputSummary(list)
 
     private companion object {
         const val URI_PREFIX = "extInput:"

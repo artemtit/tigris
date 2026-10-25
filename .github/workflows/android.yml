@@ -55,6 +55,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Validate locale resources and format placeholders
+        run: python3 tools/test_i18n.py
+
       - name: JVM unit tests - standard and guard
         run: bash ./gradlew --no-daemon :app:testStandardDebugUnitTest :app:testGuardDebugUnitTest --stacktrace
 

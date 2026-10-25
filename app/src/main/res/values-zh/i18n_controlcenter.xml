@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_controlcenter_001" formatted="false">关机</string>
+    <string name="i18n_controlcenter_002" formatted="false">关机</string>
+    <string name="i18n_controlcenter_003" formatted="false">电视会彻底断电关闭，用遥控器电源键开机。</string>
+    <string name="i18n_controlcenter_004" formatted="false">网络</string>
+    <string name="i18n_controlcenter_005" formatted="false">待机</string>
+    <string name="i18n_controlcenter_006" formatted="false">清理内存</string>
+    <string name="i18n_controlcenter_007" formatted="false">相框</string>
+    <string name="i18n_controlcenter_008" formatted="false">重启</string>
+    <string name="i18n_controlcenter_009" formatted="false">重启</string>
+    <string name="i18n_controlcenter_010" formatted="false">电视会重新启动，大约需要一分钟。</string>
+    <string name="i18n_controlcenter_011" formatted="false">设置</string>
+    <string name="i18n_controlcenter_012" formatted="false">亮度</string>
+    <string name="i18n_controlcenter_013" formatted="false">音量</string>
+    <string name="i18n_controlcenter_014" formatted="false">输入源</string>
+    <string name="i18n_controlcenter_015" formatted="false">亮度</string>
+    <string name="i18n_controlcenter_016" formatted="false">音量</string>
+    <string name="i18n_controlcenter_017" formatted="false">本机调试未授权：关机、待机、彻底清理不可用</string>
+    <string name="i18n_controlcenter_018" formatted="false">有线网络</string>
+    <string name="i18n_controlcenter_019" formatted="false">未连接</string>
+    <string name="i18n_controlcenter_020" formatted="false">已连接</string>
+    <string name="i18n_controlcenter_021" formatted="false">输入源</string>
+    <string name="i18n_controlcenter_022" formatted="false">在主屏幕上显示…</string>
+    <string name="i18n_controlcenter_023" formatted="false">取消</string>
+    <string name="i18n_controlcenter_024" formatted="false">在主屏幕上显示</string>
+    <string name="i18n_controlcenter_025" formatted="false">选中的输入源会成为主屏幕上的一个图标，按一下就切换过去。</string>
+    <string name="i18n_controlcenter_026" formatted="false">完成</string>
+    <string name="i18n_controlcenter_027" formatted="false">正在释放内存…</string>
+    <string name="i18n_controlcenter_028" formatted="false">需要先授权本机调试</string>
+    <string name="i18n_controlcenter_029" formatted="false">点“开始”后，电视会弹出“允许调试吗？”，请勾选“始终允许”，再点“允许”。</string>
+    <string name="i18n_controlcenter_030" formatted="false">开始</string>
+    <string name="i18n_controlcenter_031" formatted="false">取消</string>
+    <string name="i18n_controlcenter_032" formatted="false">取消</string>
+</resources>

@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_settingsactivity_001" formatted="false">释放内存时保留</string>
+    <string name="i18n_settingsactivity_002" formatted="false">隐藏的 App</string>
+    <string name="i18n_settingsactivity_003" formatted="false">主屏幕设置</string>
+    <string name="i18n_settingsactivity_004" formatted="false">软件</string>
+    <string name="i18n_settingsactivity_005" formatted="false">软件更新与投屏</string>
+    <string name="i18n_settingsactivity_006" formatted="false">检查 Tigris 和 MiracastReceiver 的新版本，安装投屏组件或开启自动更新。</string>
+    <string name="i18n_settingsactivity_007" formatted="false">打开</string>
+    <string name="i18n_settingsactivity_008" formatted="false">外观</string>
+    <string name="i18n_settingsactivity_009" formatted="false">时间格式</string>
+    <string name="i18n_settingsactivity_010" formatted="false">主屏幕和控制中心里的时间用 12 小时制（11:49 AM）还是 24 小时制（23:49）。</string>
+    <string name="i18n_settingsactivity_011" formatted="false">24 小时</string>
+    <string name="i18n_settingsactivity_012" formatted="false">12 小时</string>
+    <string name="i18n_settingsactivity_013" formatted="false">时钟位置</string>
+    <string name="i18n_settingsactivity_014" formatted="false">右上角的小时钟，或者左上角带日期的大时钟（之前的样式），也可以不显示。</string>
+    <string name="i18n_settingsactivity_015" formatted="false">左上角大时钟</string>
+    <string name="i18n_settingsactivity_016" formatted="false">不显示</string>
+    <string name="i18n_settingsactivity_017" formatted="false">右上角</string>
+    <string name="i18n_settingsactivity_018" formatted="false">设置页背景</string>
+    <string name="i18n_settingsactivity_019" formatted="false">设置页用上传的背景图，或者普通的深色背景。</string>
+    <string name="i18n_settingsactivity_020" formatted="false">图片</string>
+    <string name="i18n_settingsactivity_021" formatted="false">普通</string>
+    <string name="i18n_settingsactivity_022" formatted="false">设置图标</string>
+    <string name="i18n_settingsactivity_023" formatted="false">这个设置的图标：自己上传的图片，或者自带的齿轮。</string>
+    <string name="i18n_settingsactivity_024" formatted="false">上传的图片</string>
+    <string name="i18n_settingsactivity_025" formatted="false">齿轮</string>
+    <string name="i18n_settingsactivity_026" formatted="false">上传头像</string>
+    <string name="i18n_settingsactivity_027" formatted="false">手机扫描二维码，在网页的「头像」中上传照片，返回桌面后显示。</string>
+    <string name="i18n_settingsactivity_028" formatted="false">手机上传</string>
+    <string name="i18n_settingsactivity_029" formatted="false">显示右上角头像</string>
+    <string name="i18n_settingsactivity_030" formatted="false">右上角的头像，按它可以打开主屏幕设置。</string>
+    <string name="i18n_settingsactivity_031" formatted="false">聚焦动画</string>
+    <string name="i18n_settingsactivity_032" formatted="false">tvOS：选中的 App 放大、跟着方向倾斜，表面有一道光。简洁：只放大。</string>
+    <string name="i18n_settingsactivity_033" formatted="false">\n“自动”在配置较低的电视上用简洁。</string>
+    <string name="i18n_settingsactivity_034" formatted="false">简洁</string>
+    <string name="i18n_settingsactivity_035" formatted="false">控制中心样式</string>
+    <string name="i18n_settingsactivity_036" formatted="false">玻璃：透出背后画面的毛玻璃，选中的按钮会照亮旁边的按钮。面板：之前的深色面板，更省性能。</string>
+    <string name="i18n_settingsactivity_037" formatted="false">\n“自动”在配置较低的电视上用面板。</string>
+    <string name="i18n_settingsactivity_038" formatted="false">玻璃</string>
+    <string name="i18n_settingsactivity_039" formatted="false">面板</string>
+    <string name="i18n_settingsactivity_040" formatted="false">开机动画</string>
+    <string name="i18n_settingsactivity_041" formatted="false">开机动画</string>
+    <string name="i18n_settingsactivity_042" formatted="false">开机后第一次显示主屏幕时播放，最后标志放大进入桌面。按任意键可以跳过。</string>
+    <string name="i18n_settingsactivity_043" formatted="false">\n默认播放内置开机视频，也可上传自己的视频。</string>
+    <string name="i18n_settingsactivity_044" formatted="false">开机时</string>
+    <string name="i18n_settingsactivity_045" formatted="false">开机和唤醒时</string>
+    <string name="i18n_settingsactivity_046" formatted="false">关</string>
+    <string name="i18n_settingsactivity_047" formatted="false">动画内容</string>
+    <string name="i18n_settingsactivity_048" formatted="false">上传的视频：比如 Apple TV 的开机动画，结尾的标志放大进入桌面。Tigris 字样：Tigris 字样淡入后放大。</string>
+    <string name="i18n_settingsactivity_049" formatted="false">\n没有上传视频时，视频模式使用内置动画。</string>
+    <string name="i18n_settingsactivity_050" formatted="false">Tigris 字样</string>
+    <string name="i18n_settingsactivity_051" formatted="false">上传的视频</string>
+    <string name="i18n_settingsactivity_052" formatted="false">内置视频</string>
+    <string name="i18n_settingsactivity_053" formatted="false">唤醒后等待</string>
+    <string name="i18n_settingsactivity_054" formatted="false">从待机唤醒时，先黑屏这么久再播放动画。不少电视（尤其是 OLED）在系统亮屏后过几秒画面才真正亮起；看不到动画开头就调长，黑屏太久就调短。</string>
+    <string name="i18n_settingsactivity_055" formatted="false">不等待</string>
+    <string name="i18n_settingsactivity_056">%1$s 秒</string>
+    <string name="i18n_settingsactivity_057" formatted="false">开机动画声音</string>
+    <string name="i18n_settingsactivity_058" formatted="false">播放动画视频里的声音。</string>
+    <string name="i18n_settingsactivity_059" formatted="false">预览开机动画</string>
+    <string name="i18n_settingsactivity_060" formatted="false">现在回到主屏幕播放一次。</string>
+    <string name="i18n_settingsactivity_061" formatted="false">背景与相框</string>
+    <string name="i18n_settingsactivity_062" formatted="false">背景</string>
+    <string name="i18n_settingsactivity_063" formatted="false">主屏幕的背景：主题、壁纸来源或者自己的照片。</string>
+    <string name="i18n_settingsactivity_064">%1$s（自动更换）</string>
+    <string name="i18n_settingsactivity_065" formatted="false">照片更换频率</string>
+    <string name="i18n_settingsactivity_066" formatted="false">自动更换的背景多久换一张。</string>
+    <string name="i18n_settingsactivity_067" formatted="false">立即换一张</string>
+    <string name="i18n_settingsactivity_068" formatted="false">现在从壁纸来源取一张新照片。照片要显示时才下载，旧的过几天自动清理。</string>
+    <string name="i18n_settingsactivity_069">已有 %1$s 张</string>
+    <string name="i18n_settingsactivity_070" formatted="false">正在下载…</string>
+    <string name="i18n_settingsactivity_071">已有 %1$s 张</string>
+    <string name="i18n_settingsactivity_072" formatted="false">电视空闲时显示相框</string>
+    <string name="i18n_settingsactivity_073" formatted="false">电视空闲一段时间后全屏轮播照片或航拍视频，代替电视自带的屏保。</string>
+    <string name="i18n_settingsactivity_074" formatted="false">正在设置…</string>
+    <string name="i18n_settingsactivity_075" formatted="false">需要先授权本机调试</string>
+    <string name="i18n_settingsactivity_076" formatted="false">屏保内容</string>
+    <string name="i18n_settingsactivity_077" formatted="false">相框里放背景照片，还是 Apple TV 的航拍视频。</string>
+    <string name="i18n_settingsactivity_078" formatted="false">Apple TV 航拍视频</string>
+    <string name="i18n_settingsactivity_079" formatted="false">照片</string>
+    <string name="i18n_settingsactivity_080" formatted="false">空闲多久显示相框</string>
+    <string name="i18n_settingsactivity_081" formatted="false">多久没有操作后显示相框。</string>
+    <string name="i18n_settingsactivity_082" formatted="false">正在设置…</string>
+    <string name="i18n_settingsactivity_083" formatted="false">需要先授权本机调试</string>
+    <string name="i18n_settingsactivity_084" formatted="false">相框每张照片停留</string>
+    <string name="i18n_settingsactivity_085" formatted="false">相框里每张照片显示多久。</string>
+    <string name="i18n_settingsactivity_086">%1$s 秒</string>
+    <string name="i18n_settingsactivity_087" formatted="false">内存与电源</string>
+    <string name="i18n_settingsactivity_088" formatted="false">待机时自动释放内存</string>
+    <string name="i18n_settingsactivity_089" formatted="false">待机时仅清理缓存进程，不强制停止应用；无法确认前台时跳过。</string>
+    <string name="i18n_settingsactivity_090" formatted="false">定时释放内存</string>
+    <string name="i18n_settingsactivity_091" formatted="false">定时清理缓存进程，不强制停止应用。新安装默认关闭。</string>
+    <string name="i18n_settingsactivity_092" formatted="false">关闭</string>
+    <string name="i18n_settingsactivity_093">每 %1$s 小时</string>
+    <string name="i18n_settingsactivity_094" formatted="false">立即释放内存</string>
+    <string name="i18n_settingsactivity_095" formatted="false">现在关掉后台的 App。</string>
+    <string name="i18n_settingsactivity_096">可用 %1$s MB</string>
+    <string name="i18n_settingsactivity_097" formatted="false">正在释放…</string>
+    <string name="i18n_settingsactivity_098" formatted="false">释放内存时保留的 App</string>
+    <string name="i18n_settingsactivity_099" formatted="false">释放内存时不会被关掉的 App，比如投屏和音乐。</string>
+    <string name="i18n_settingsactivity_100">%1$s 个</string>
+    <string name="i18n_settingsactivity_101" formatted="false">按遥控器电源键时</string>
+    <string name="i18n_settingsactivity_102" formatted="false">待机：和平时一样。彻底关机：省电，但开机要等更久。</string>
+    <string name="i18n_settingsactivity_103" formatted="false">彻底关机</string>
+    <string name="i18n_settingsactivity_104" formatted="false">待机</string>
+    <string name="i18n_settingsactivity_105" formatted="false">需要先授权本机调试才会生效</string>
+    <string name="i18n_settingsactivity_106" formatted="false">最近打开的 App 自动置顶</string>
+    <string name="i18n_settingsactivity_107" formatted="false">开启时，成功打开的应用或文件夹会移动到最前面；关闭后保持当前排列，只通过长按「编辑主屏幕」手动调整，重新启动应用也不会打乱顺序。</string>
+    <string name="i18n_settingsactivity_108" formatted="false">隐藏的 App</string>
+    <string name="i18n_settingsactivity_109" formatted="false">不在主屏幕上显示的 App。</string>
+    <string name="i18n_settingsactivity_110">%1$s 个</string>
+    <string name="i18n_settingsactivity_111" formatted="false">已删除的预装 App</string>
+    <string name="i18n_settingsactivity_112" formatted="false">从长按菜单里删除的预装 App，可以在这里恢复。</string>
+    <string name="i18n_settingsactivity_113">%1$s 个</string>
+    <string name="i18n_settingsactivity_114" formatted="false">系统</string>
+    <string name="i18n_settingsactivity_115" formatted="false">本机调试授权</string>
+    <string name="i18n_settingsactivity_116" formatted="false">允许主屏幕通过本机调试完成关机、释放内存等系统操作。授权时在弹窗中选择“始终允许”。</string>
+    <string name="i18n_settingsactivity_117" formatted="false">已授权</string>
+    <string name="i18n_settingsactivity_118" formatted="false">未授权，按确认键授权</string>
+    <string name="i18n_settingsactivity_119" formatted="false">请在弹窗中选择“始终允许”</string>
+    <string name="i18n_settingsactivity_120" formatted="false">已授权</string>
+    <string name="i18n_settingsactivity_121" formatted="false">未授权，按确认键重试</string>
+    <string name="i18n_settingsactivity_122" formatted="false">桌面守护</string>
+    <string name="i18n_settingsactivity_123" formatted="false">按主页键回到原厂桌面时，自动回到这里。</string>
+    <string name="i18n_settingsactivity_124" formatted="false">关</string>
+    <string name="i18n_settingsactivity_125" formatted="false">开</string>
+    <string name="i18n_settingsactivity_126" formatted="false">开（未运行）</string>
+    <string name="i18n_settingsactivity_127" formatted="false">正在设置…</string>
+    <string name="i18n_settingsactivity_128" formatted="false">需要先授权本机调试</string>
+    <string name="i18n_settingsactivity_129" formatted="false">开</string>
+    <string name="i18n_settingsactivity_130" formatted="false">关</string>
+    <string name="i18n_settingsactivity_131" formatted="false">按主页键回到原厂桌面时会自动回到这里</string>
+    <string name="i18n_settingsactivity_132" formatted="false">保持 ADB 调试开启</string>
+    <string name="i18n_settingsactivity_133" formatted="false">防止系统自动关掉 ADB 调试。</string>
+    <string name="i18n_settingsactivity_134" formatted="false">正在设置…</string>
+    <string name="i18n_settingsactivity_135" formatted="false">需要先授权本机调试</string>
+    <string name="i18n_settingsactivity_136" formatted="false">系统设置</string>
+    <string name="i18n_settingsactivity_137" formatted="false">打开电视自带的设置。</string>
+    <string name="i18n_settingsactivity_138" formatted="false">关于</string>
+    <string name="i18n_settingsactivity_139" formatted="false">Tigris 主屏幕，仿 tvOS 的 Android TV 桌面。</string>
+    <string name="i18n_settingsactivity_140" formatted="false">版本 </string>
+    <string name="i18n_settingsactivity_141" formatted="false">选中的 App 在释放内存时不会被关掉。</string>
+    <string name="i18n_settingsactivity_142" formatted="false">选中的 App 不会出现在主屏幕上。</string>
+    <string name="i18n_settingsactivity_143" formatted="false">已删除的预装 App</string>
+    <string name="i18n_settingsactivity_144" formatted="false">选择一个 App，从系统分区重新安装它。</string>
+    <string name="i18n_settingsactivity_145" formatted="false">没有已删除的 App</string>
+    <string name="i18n_settingsactivity_146" formatted="false">恢复</string>
+    <string name="i18n_settingsactivity_147" formatted="false">正在恢复…</string>
+    <string name="i18n_settingsactivity_148" formatted="false">已恢复</string>
+    <string name="i18n_settingsactivity_149" formatted="false">恢复失败</string>
+    <string name="i18n_settingsactivity_150" formatted="false">正在</string>
+    <string name="i18n_settingsactivity_151" formatted="false">请在</string>
+    <string name="i18n_settingsactivity_152" formatted="false">开</string>
+    <string name="i18n_settingsactivity_153" formatted="false">关</string>
+    <string name="i18n_settingsactivity_154" formatted="false">自动（…）</string>
+    <string name="i18n_settingsactivity_155">自动（%1$s）</string>
+    <string name="i18n_settingsactivity_156" formatted="false">每天</string>
+    <string name="i18n_settingsactivity_157">%1$s 小时</string>
+    <string name="i18n_settingsactivity_158">%1$s 分钟</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_cleaner_001" formatted="false">允许调试吗？</string>
+    <string name="i18n_cleaner_002" formatted="false">始终允许</string>
+    <string name="i18n_cleaner_003" formatted="false">未能确认前台应用，已跳过自动清理</string>
+    <string name="i18n_cleaner_004">已释放 %1$s MB，停止 %2$s 个，失败 %3$s 个</string>
+    <string name="i18n_cleaner_005">已释放 %1$s MB（仅缓存）</string>
+    <string name="i18n_cleaner_006" formatted="false">M月d日 HH:mm</string>
+</resources>

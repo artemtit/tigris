@@ -36,14 +36,14 @@ class UpdateActivity : Activity() {
     }
     private fun renderStatus() {
         status.text = Updates.products.joinToString("\n\n") { p ->
-            p.name + "\n" + Updates.prefs(this).getString(p.pkg + ".status", Updates.installed(this, p)?.let { "已安装 $it" } ?: "未安装")
+            p.name + "\n" + Updates.prefs(this).getString(p.pkg + ".status", Updates.installed(this, p)?.let { I18n.text(R.string.i18n_updateactivity_001, it) } ?: I18n.text(R.string.i18n_updateactivity_002))
         }
     }
     private fun show() {
         val root = FrameLayout(this).apply { setBackgroundColor(Color.rgb(20, 27, 43)) }
         val background = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP }
         root.addView(background, FrameLayout.LayoutParams(-1, -1))
-        val heading = text(29f, weight = 600).apply { text = "软件更新"; gravity = Gravity.CENTER }
+        val heading = text(29f, weight = 600).apply { text = I18n.text(R.string.i18n_updateactivity_003); gravity = Gravity.CENTER }
         root.addView(heading, FrameLayout.LayoutParams(-1, dp(70)).apply { topMargin = dp(18) })
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; clipChildren = false; clipToPadding = false
@@ -54,14 +54,14 @@ class UpdateActivity : Activity() {
             orientation = LinearLayout.VERTICAL; setPadding(dp(26), dp(28), dp(26), dp(28))
         }
         val infoGlass = FrostGlass(info, dp(30).toFloat()); info.background = infoGlass; surfaces += infoGlass
-        info.addView(text(36f, weight = 600).apply { text = "始终保持新鲜" })
+        info.addView(text(36f, weight = 600).apply { text = I18n.text(R.string.i18n_updateactivity_004) })
         info.addView(text(17f, Color.argb(200,255,255,255)).apply {
-            text = "桌面与投屏，一起更新。"; setPadding(0, dp(12), 0, dp(20))
+            text = I18n.text(R.string.i18n_updateactivity_005); setPadding(0, dp(12), 0, dp(20))
         })
         status = text(16f).apply { setLineSpacing(dp(4).toFloat(), 1f) }
         info.addView(status); renderStatus()
         info.addView(text(13f, Color.argb(175,255,255,255)).apply {
-            text = "自动检查正式版。需要安装确认时会通知你，更新保留应用配置。"
+            text = I18n.text(R.string.i18n_updateactivity_006)
             setPadding(0, dp(24), 0, 0)
         })
         content.addView(info, LinearLayout.LayoutParams(0, -2, 0.46f).apply { marginEnd = dp(36) })
@@ -88,32 +88,32 @@ class UpdateActivity : Activity() {
                 if (!isDestroyed) { background.setImageBitmap(blurred); surfaces.forEach { it.texture(blurred) } }
             }
         }.start()
-        val check = button("检查更新") { work { Updates.check(applicationContext) } }
+        val check = button(I18n.text(R.string.i18n_updateactivity_007)) { work { Updates.check(applicationContext) } }
         lateinit var auto: TextView
-        fun autoLabel() = "自动更新    " + if (Updates.prefs(this).getBoolean("auto", false)) "已开启" else "已关闭"
+        fun autoLabel() = I18n.text(R.string.i18n_updateactivity_008) + if (Updates.prefs(this).getBoolean("auto", false)) I18n.text(R.string.i18n_updateactivity_009) else I18n.text(R.string.i18n_updateactivity_010)
         auto = button(autoLabel()) {
             val prefs = Updates.prefs(this)
             prefs.edit().putBoolean("auto", !prefs.getBoolean("auto", false)).apply()
             auto.text = autoLabel()
         }
         check.requestFocus()
-        button("允许 Tigris 安装更新") {
+        button(I18n.text(R.string.i18n_updateactivity_011)) {
             runCatching { startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName"))) }
-                .onFailure { Toast.makeText(this, "这台电视未提供安装授权页", Toast.LENGTH_LONG).show() }
+                .onFailure { Toast.makeText(this, I18n.text(R.string.i18n_updateactivity_012), Toast.LENGTH_LONG).show() }
         }
         for (p in Updates.products) {
-            button("安装 / 更新 ${p.name}") { work { Updates.install(applicationContext, p) } }
+            button(I18n.text(R.string.i18n_updateactivity_013, p.name)) { work { Updates.install(applicationContext, p) } }
         }
-        button("打开 MiracastReceiver 投屏") {
+        button(I18n.text(R.string.i18n_updateactivity_014)) {
             val pm = packageManager; val pkg = Updates.products[1].pkg
             val intent = pm.getLeanbackLaunchIntentForPackage(pkg) ?: pm.getLaunchIntentForPackage(pkg)
-            if (intent == null) Toast.makeText(this, "先检查更新并安装投屏组件", Toast.LENGTH_LONG).show() else startActivity(intent)
+            if (intent == null) Toast.makeText(this, I18n.text(R.string.i18n_updateactivity_015), Toast.LENGTH_LONG).show() else startActivity(intent)
         }
-        button("返回") { finish() }
+        button(I18n.text(R.string.i18n_updateactivity_016)) { finish() }
     }
     private fun work(block: () -> Unit) {
         if (busy) return
-        busy = true; status.text = "正在处理，请稍候…"
+        busy = true; status.text = I18n.text(R.string.i18n_updateactivity_017)
         Updates.executor.execute {
             val error = runCatching(block).exceptionOrNull()
             runOnUiThread {

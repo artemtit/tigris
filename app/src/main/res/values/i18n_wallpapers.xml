@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_wallpapers_001" formatted="false">360 Wallpapers</string>
+    <string name="i18n_wallpapers_002" formatted="false">Liziyuan</string>
+    <string name="i18n_wallpapers_003" formatted="false">Cleveland Museum of Art · Public domain</string>
+    <string name="i18n_wallpapers_004" formatted="false">Anime wallpapers</string>
+    <string name="i18n_wallpapers_005" formatted="false">Landscapes</string>
+    <string name="i18n_wallpapers_006" formatted="false">Cute pets</string>
+    <string name="i18n_wallpapers_007" formatted="false">Fine art</string>
+    <string name="i18n_wallpapers_008" formatted="false">My photos</string>
+    <string name="i18n_wallpapers_009" formatted="false">Custom link</string>
+    <string name="i18n_wallpapers_010" formatted="false">Landscape photos</string>
+    <string name="i18n_wallpapers_011" formatted="false">Green</string>
+    <string name="i18n_wallpapers_012" formatted="false">Blue</string>
+    <string name="i18n_wallpapers_013" formatted="false">Purple</string>
+    <string name="i18n_wallpapers_014" formatted="false">Orange</string>
+    <string name="i18n_wallpapers_015" formatted="false">Dark gray</string>
+</resources>

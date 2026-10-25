@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_updates_001" formatted="false">Tigris home screen</string>
+    <string name="i18n_updates_002" formatted="false">MiracastReceiver casting</string>
+    <string name="i18n_updates_003" formatted="false">No compatible package in this release</string>
+    <string name="i18n_updates_004">Not installed · %1$s available</string>
+    <string name="i18n_updates_005">%1$s · up to date (stable %2$s)</string>
+    <string name="i18n_updates_006">New version %1$s available — open the update center</string>
+    <string name="i18n_updates_007">Check failed: %1$s, try again later</string>
+    <string name="i18n_updates_008" formatted="false">Allow Tigris to install unknown apps first</string>
+    <string name="i18n_updates_009" formatted="false">An install is already pending; check the software update notification and confirm</string>
+    <string name="i18n_updates_010" formatted="false">Check for updates first</string>
+    <string name="i18n_updates_011" formatted="false">Unexpected package size</string>
+    <string name="i18n_updates_012" formatted="false">Download is larger than the release metadata</string>
+    <string name="i18n_updates_013" formatted="false">Download incomplete</string>
+    <string name="i18n_updates_014" formatted="false">Package verification failed</string>
+    <string name="i18n_updates_015" formatted="false">Can\'t read the package</string>
+    <string name="i18n_updates_016" formatted="false">Package identity mismatch</string>
+    <string name="i18n_updates_017" formatted="false">Unsupported TV system version</string>
+    <string name="i18n_updates_018" formatted="false">No newer version, nothing to install</string>
+    <string name="i18n_updates_019" formatted="false">Package signature missing</string>
+    <string name="i18n_updates_020" formatted="false">Different signature: can\'t upgrade keeping settings; the old version was not uninstalled</string>
+    <string name="i18n_updates_021" formatted="false">Untrusted casting signature</string>
+    <string name="i18n_updates_022" formatted="false">Install submitted; you may need to confirm on the TV</string>
+    <string name="i18n_updates_023" formatted="false">Software update</string>
+    <string name="i18n_updates_024" formatted="false">Update failed</string>
+    <string name="i18n_updates_025" formatted="false">Please confirm the update install</string>
+    <string name="i18n_updates_026" formatted="false">Installed successfully</string>
+    <string name="i18n_updates_027">Install incomplete: %1$s</string>
+    <string name="i18n_updates_028" formatted="false">Network unavailable</string>
+</resources>

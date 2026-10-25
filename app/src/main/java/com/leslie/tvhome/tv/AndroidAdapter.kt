@@ -1,5 +1,8 @@
 package com.leslie.tvhome.tv
 
+import com.leslie.tvhome.I18n
+import com.leslie.tvhome.R
+
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
@@ -110,7 +113,7 @@ open class AndroidAdapter(protected val ctx: Context) : TvAdapter {
     }
 
     override fun inputSummary(list: List<Input>) =
-        if (list.isEmpty()) "无法读取电视的输入源" else "${list.size} 个 HDMI 输入"
+        if (list.isEmpty()) I18n.text(R.string.i18n_androidadapter_001) else I18n.text(R.string.i18n_androidadapter_002, list.size)
 
     override fun settingsIntent() = Intent(Settings.ACTION_SETTINGS)
 
