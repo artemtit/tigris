@@ -1,0 +1,54 @@
+---
+import type { Locale } from "../data/lang";
+const zh = Astro.props.locale === "zh";
+const home = zh ? "/" : "/en/";
+const alternate = zh ? "/en/webos/" : "/webos/";
+const prompt = zh
+? "请先识别我的电视是否为 LG webOS。读取 https://github.com/lesnolie/Tigris/blob/main/docs/WEBOS_AI_INSTALL.md 和 https://github.com/lesnolie/Tigris/blob/main/webos/README.md。不要用 ADB；使用官方 LG Developer Mode、Key Server、@webos-tools/cli 与 SSH/Luna。先进行只读预检并报告设备、固件和 Home Helper 是否真正可用。提示我完成配对；保护 SSH 私钥。经我批准后再构建/安装 webOS 预览 IPK。不得 Root、刷机、改写 LG Home 或启用未验证的按键辅助程序。安装后实机测试方向键、OK、应用启动、天气（仅在启用后）、原厂 Home 恢复；没有测试的不得声称通过。"
+: "First identify whether my TV runs LG webOS. Read https://github.com/lesnolie/Tigris/blob/main/docs/WEBOS_AI_INSTALL.md and https://github.com/lesnolie/Tigris/blob/main/webos/README.md. Use LG Developer Mode, Key Server, @webos-tools/cli and SSH/Luna; never ADB. Run read-only preflight and report firmware and verified Home Helper status. Request pairing and protect SSH secrets. Only after consent build/install the source-preview IPK. Never root, flash, replace LG Home, or enable an unverified key helper. Verify D-pad, OK, apps, optional weather and stock Home recovery on the actual TV; don't claim untested success.";
+const preflight = "curl -fsSLo tigris-webos.sh https://raw.githubusercontent.com/lesnolie/Tigris/main/webos/install.sh && sh tigris-webos.sh --device myTV --preflight";
+const install = "sh tigris-webos.sh --device myTV --install";
+const manual = "npm install -g @webos-tools/cli\nares-setup-device\nares-setup-device --list\nares-package webos/app\nares-install --device myTV org.tigris.webos_0.1.0_all.ipk\nares-launch --device myTV org.tigris.webos";
+const restore = "sh tigris-webos.sh --device myTV --uninstall\n# or: ares-install --device myTV --remove org.tigris.webos";
+---
+<header class="site-header"><nav class="webos-navigation"><a href={home}>TIGRIS <span>webOS</span></a><div><a href={home}>{zh ? "官网" : "Home"}</a><a href={alternate}>{zh ? "English" : "中文"}</a></div></nav></header>
+<main class="webos-page" id="main"><div class="wrap">
+  <p class="eyebrow">LG WEBOS · DEVELOPER PREVIEW</p>
+  <h1>{zh ? "LG webOS 安装指南" : "LG webOS Installation"}</h1>
+  <p class="lead">{zh ? "独立 IPK 桌面，非 Root 和已有 Root 模块。AI 安装、手动安装、一行命令、还原，以及默认关闭的天气卡片。" : "Standalone IPK launcher, no-root and existing-root modules. AI install, manual steps, one-line command, recovery, and weather off by default."}</p>
+  <p class="warning">{zh ? "目前仅提供源码开发预览：没有 LG 正式版 IPK，Home 键原生接管尚未实机验证。普通安装不接管 Home。" : "Source developer preview only: no official released LG IPK, and native Home-key takeover is not yet verified. Normal installs leave LG Home unchanged."}</p>
+  <section><h2>{zh ? "1 · 连接前准备" : "1 · Prepare the TV"}</h2>
+    <p>{zh ? "电视上开启 LG Developer Mode 与 Key Server；电脑安装 Node.js 和官方 @webos-tools/cli，并使用 ares-setup-device 配对。它通过 SSH/Luna 通信，不是 Android ADB。" : "Enable LG Developer Mode and Key Server. Install Node.js and @webos-tools/cli on your computer, then pair using ares-setup-device. webOS uses SSH/Luna, not ADB."}</p>
+    <pre><code>npm install -g @webos-tools/cli
+ares-setup-device
+ares-setup-device --list</code></pre>
+    <p>{zh ? "默认 Developer Mode SSH 通常为 prisoner@电视IP:9922。myTV 是 CLI 中配置的电视别名，不是电视 IP。勿公开 SSH 私钥、配对码。" : "Developer Mode commonly uses prisoner@TV_IP:9922. myTV is your configured device alias, not its IP. Never disclose SSH keys or pairing codes."}</p>
+    <p><a href="https://webostv.developer.lge.com/develop/tools/cli-dev-guide">{zh ? "LG 官方 CLI 文档" : "LG official CLI guide"}</a></p>
+  </section>
+  <section><h2>{zh ? "2 · AI 安装（推荐）" : "2 · Install with AI"}</h2>
+    <p>{zh ? "发给能在本地执行命令的 AI。预检必须先于安装，禁止以 SSH 成功冒充 Home 接管成功。" : "Send this to an agent able to execute commands. Preflight must precede installation; an SSH connection is not proof of Home-key takeover."}</p>
+    <pre><code id="webos-ai">{prompt}</code></pre><button class="copy-webos" data-copy="#webos-ai">{zh ? "复制 AI 提示词" : "Copy AI prompt"}</button>
+    <p><a href="https://github.com/lesnolie/Tigris/blob/main/docs/WEBOS_AI_INSTALL.md">{zh ? "完整 AI 安装和安全探针规范" : "Full AI and safe-helper preflight specification"}</a></p>
+  </section>
+  <section><h2>{zh ? "3 · 一行命令" : "3 · One-line installer"}</h2>
+    <p>{zh ? "先配置设备并做只读预检。确认后才从 main 源码打包普通 IPK。下面的地址将在本模块合并至 main 后可用，尚非稳定包下载。" : "Pair the TV, run read-only preflight, then opt into building a normal IPK from main source. This URL only becomes available once the branch is merged; it is not a stable download."}</p>
+    <h3>{zh ? "只读预检" : "Read-only preflight"}</h3>
+    <pre><code id="webos-preflight">{preflight}</code></pre><button class="copy-webos" data-copy="#webos-preflight">{zh ? "复制" : "Copy"}</button>
+    <h3>{zh ? "确认后安装预览版" : "Install preview after approval"}</h3>
+    <pre><code id="webos-install">{install}</code></pre><button class="copy-webos" data-copy="#webos-install">{zh ? "复制" : "Copy"}</button>
+    <p>{zh ? "macOS/Linux POSIX Shell 适用。不会 Root、修改 LG Home 或启用未经验证的 Helper。" : "For POSIX shells on macOS/Linux. Never roots, modifies LG Home or enables an unverified Helper."}</p>
+  </section>
+  <section><h2>{zh ? "4 · 手动安装" : "4 · Manual install"}</h2>
+    <p>{zh ? "克隆仓库后，在根目录执行。Windows PowerShell 同样可以使用 ares-* CLI。" : "Clone the repository and run from its root. Windows PowerShell supports the same ares-* commands."}</p>
+    <pre><code id="webos-manual">{manual}</code></pre><button class="copy-webos" data-copy="#webos-manual">{zh ? "复制" : "Copy"}</button>
+  </section>
+  <section><h2>{zh ? "5 · 两个适配模块" : "5 · Two capability modules"}</h2><div class="capabilities">
+    <article><h3>{zh ? "非 Root" : "No Root"}</h3><p>{zh ? "Developer Mode 普通桌面、Luna 应用与输入源、遥控器、可选天气。Home Helper 尚未交付，快捷启动可用 LG Quick Access。" : "Normal Developer Mode app, Luna app/inputs, remote navigation and optional weather. Native Home Helper isn't shipped; LG Quick Access is an alternative."}</p></article>
+    <article><h3>{zh ? "已 Root" : "Already Rooted"}</h3><p>{zh ? "仅检查现有 Homebrew/Root 能力，不负责 Root、不闪存、不修改系统。高级 Home 接管需要独立安全测试才能交付。" : "Checks existing Homebrew/Root capability only. No root exploits, flashing or system modifications. Advanced Home routing needs separate validated recovery."}</p></article>
+  </div></section>
+  <section><h2>{zh ? "6 · 天气（默认关闭）" : "6 · Weather (off by default)"}</h2><p>{zh ? "Open-Meteo；手动选择城市后开启，约每 30 分钟更新，最多保留 6 小时的有效缓存。关闭后不发天气请求，也不进行 IP 自动定位。" : "Open-Meteo; manual city selection, ~30-minute refresh and up to six hours of cache. No requests while off and no silent IP geolocation."}</p></section>
+  <section><h2>{zh ? "7 · 卸载和还原" : "7 · Uninstall and recovery"}</h2><pre><code>{restore}</code></pre><p>{zh ? "仅移除 Tigris 的 webOS 应用。此预览版未修改 LG Home；LG 快速访问快捷键需在电视端自行取消。" : "Removes only the webOS Tigris app. LG Home was never modified by this preview; remove Quick Access bindings on the TV."}</p></section>
+</div></main>
+<style>
+.webos-navigation{margin:auto;max-width:1100px;display:flex;justify-content:space-between;align-items:center;padding:18px}.webos-navigation a{color:#fff}.webos-navigation>div{display:flex;gap:24px}.webos-navigation span{color:#b5cadf}.webos-page{padding:72px 0 120px}.webos-page h1{font-size:clamp(2.8rem,5vw,5rem)}.webos-page section{margin:60px 0}.webos-page section h2{font-size:clamp(1.8rem,3vw,2.6rem);margin:0 0 18px}.webos-page h3{font-size:20px;margin:20px 0 10px}.webos-page .lead{max-width:920px;font-size:21px;margin:20px 0}.warning{background:rgba(25,41,67,.65);border:1px solid rgba(255,255,255,.2);padding:18px 24px;border-radius:16px}.webos-page pre{padding:19px;border-radius:15px;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid rgba(255,255,255,.17);background:#0a1423}.webos-page code{font-family:var(--font-mono);font-size:13px;line-height:1.7}.webos-page a{color:#b9d4ff;text-decoration:underline}.webos-page .copy-webos{border:1px solid #53657f;border-radius:10px;padding:8px 18px;color:#fff;background:rgba(255,255,255,.1);cursor:pointer}.webos-page .capabilities{display:grid;grid-template-columns:1fr 1fr;gap:18px}.capabilities article{padding:23px;border:1px solid rgba(255,255,255,.16);border-radius:18px;background:rgba(255,255,255,.05)}@media(max-width:720px){.webos-page .capabilities{grid-template-columns:1fr}}
+</style>

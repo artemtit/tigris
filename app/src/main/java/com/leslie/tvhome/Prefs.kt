@@ -135,6 +135,28 @@ class Prefs(ctx: Context) {
         get() = sp.getStringSet("pinned_inputs", emptySet())!!.toSet()
         set(v) = sp.edit().putStringSet("pinned_inputs", v).apply()
 
+    /** Explicit opt-in. Never request weather or geolocation while false. */
+    var weatherEnabled: Boolean
+        get() = sp.getBoolean("weather_enabled", false)
+        set(v) = sp.edit().putBoolean("weather_enabled", v).apply()
+
+    var weatherFahrenheit: Boolean
+        get() = sp.getBoolean("weather_fahrenheit", false)
+        set(v) = sp.edit().putBoolean("weather_fahrenheit", v).apply()
+
+    /** Chosen by the user via Open-Meteo geocoding, never inferred from IP. */
+    var weatherCity: String
+        get() = sp.getString("weather_city", "")!!
+        set(v) = sp.edit().putString("weather_city", v).apply()
+
+    var weatherLatitude: Double
+        get() = sp.getString("weather_latitude", "0")!!.toDoubleOrNull() ?: 0.0
+        set(v) = sp.edit().putString("weather_latitude", v.toString()).apply()
+
+    var weatherLongitude: Double
+        get() = sp.getString("weather_longitude", "0")!!.toDoubleOrNull() ?: 0.0
+        set(v) = sp.edit().putString("weather_longitude", v.toString()).apply()
+
     /** 24-hour clock ("14:05") instead of "2:05 PM". */
     var clock24: Boolean
         get() = sp.getBoolean("clock_24", false)

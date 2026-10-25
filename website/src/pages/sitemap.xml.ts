@@ -21,6 +21,20 @@ export const GET: APIRoute = () =>
     <xhtml:link rel="alternate" hreflang="zh-CN" href="${brand.site}/"/>
     <xhtml:link rel="alternate" hreflang="en" href="${brand.site}/en/"/>
   </url>
+  <url>
+    <loc>${brand.site}/webos/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="${brand.site}/webos/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="${brand.site}/en/webos/"/>
+  </url>
+  <url>
+    <loc>${brand.site}/en/webos/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="${brand.site}/webos/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="${brand.site}/en/webos/"/>
+  </url>
 </urlset>
 `,
     { headers: { "content-type": "application/xml; charset=utf-8" } }

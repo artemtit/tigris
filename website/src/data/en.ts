@@ -13,6 +13,7 @@ export const en = {
     { href: "#aerial", label: "Aerial" },
     { href: "#compare", label: "Compare" },
     { href: "#install", label: "Install" },
+    { href: "#webos", label: "LG webOS" },
     { href: "#compatibility", label: "Compatibility" },
     { href: "#faq", label: "FAQ" },
   ],

@@ -68,6 +68,9 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     private lateinit var backdrop: FrameLayout
     private lateinit var bg: ImageView
     private lateinit var header: FrameLayout
+    private lateinit var weatherCard: TextView
+    private var weatherLoading = false
+    private var lastWeatherAttempt = 0L
     private lateinit var clockText: TextView
     /** The large clock top left, with the date above it ([Prefs.CLOCK_LARGE]). */
     private lateinit var bigClock: LinearLayout
@@ -188,6 +191,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     private val ticker = object : Runnable {
         override fun run() {
             updateClock()
+            refreshWeather()
             applyBackground()
             main.postDelayed(this, 60_000 - System.currentTimeMillis() % 60_000 + 50)
         }
@@ -344,6 +348,23 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         header.addView(icons, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.TOP).apply {
             rightMargin = dp(32); topMargin = dp(26)
         })
+        // Weather is opt-in. The compact translucent card sits below the status icons,
+        // does not steal D-pad focus, and leaves the normal Dock layout unchanged.
+        weatherCard = text(15f, Color.WHITE, weight = 500).apply {
+            maxLines = 2
+            setPadding(dp(17), dp(10), dp(17), dp(10))
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(Color.argb(45, 255, 255, 255))
+                cornerRadius = dp(17).toFloat()
+                setStroke(dp(1), Color.argb(62, 255, 255, 255))
+            }
+            isFocusable = false
+            visibility = if (prefs.weatherEnabled) View.VISIBLE else View.GONE
+        }
+        header.addView(weatherCard, FrameLayout.LayoutParams(dp(310), dp(69),
+            Gravity.TOP or Gravity.END).apply {
+            rightMargin = dp(31); topMargin = dp(79)
+        })
         listOf(netButton, ccButton, avatar).forEach { b ->
             b.setOnKeyListener { _, code, e ->
                 if (e.action != KeyEvent.ACTION_DOWN) false else when {
@@ -404,6 +425,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 val expansion = (off / (rowPitch * 0.7f)).coerceIn(0f, 1f)
                 dock.translationY = -off
                 icons.translationY = -off
+                weatherCard.alpha = 1f - expansion
                 // Off-screen controls must also leave remote-control focus navigation.
                 icons.visibility = if (off > 0f && off >= icons.bottom) View.INVISIBLE else View.VISIBLE
                 dock.alpha = 1f
@@ -417,6 +439,38 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         scene.addView(grid, match())
         header.bringToFront()
         setContentView(root)
+    }
+
+    /** Called by the home-screen minute ticker only; never does network work while off. */
+    private fun refreshWeather() {
+        if (!prefs.weatherEnabled) {
+            weatherCard.visibility = View.GONE
+            lastWeatherAttempt = 0L
+            return
+        }
+        weatherCard.visibility = View.VISIBLE
+        val name = prefs.weatherCity
+        if (name.isBlank()) {
+            weatherCard.text = I18n.text(R.string.weather_weather_pending)
+            return
+        }
+        val city = Weather.City(name, prefs.weatherLatitude, prefs.weatherLongitude)
+        Weather.cached(this, city)?.let { weatherCard.text = Weather.format(it, prefs.weatherFahrenheit) }
+            ?: run { weatherCard.text = I18n.text(R.string.weather_weather_unavailable) }
+        val now = System.currentTimeMillis()
+        if (weatherLoading || now - lastWeatherAttempt < 2 * 60_000L) return
+        weatherLoading = true
+        lastWeatherAttempt = now
+        io.execute {
+            val observed = Weather.load(applicationContext, city)
+            main.post {
+                weatherLoading = false
+                if (!isDestroyed && prefs.weatherEnabled && prefs.weatherCity == city.name) {
+                    weatherCard.text = observed?.let { Weather.format(it, prefs.weatherFahrenheit) }
+                        ?: I18n.text(R.string.weather_weather_unavailable)
+                }
+            }
+        }
     }
 
     /**

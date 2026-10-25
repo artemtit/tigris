@@ -62,5 +62,15 @@ jobs:
               assert f"{path}  {releases}  302" in redirects, path
           assert "releases/download/" not in redirects
           assert Path("dist/install.sh").exists()
+          for page in ("dist/webos/index.html", "dist/en/webos/index.html"):
+              html = Path(page).read_text()
+              assert "WEBOS" in html.upper(), f"Missing webOS content: {page}"
+              assert "weather" in html.lower() or "天气" in html, f"Missing weather module info: {page}"
+              assert "Root" in html, f"Missing module information: {page}"
+          shell = Path("dist/webos/install.sh")
+          assert shell.exists(), "Missing independent webOS installer route"
+          assert "ares-install" in shell.read_text()
+          assert "adb connect" not in shell.read_text()
+
           print("Website Releases entry points and locale routes OK")
           PY

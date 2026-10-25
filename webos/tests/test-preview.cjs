@@ -1,0 +1,18 @@
+const assert=require("node:assert/strict");const fs=require("node:fs");const vm=require("node:vm");const path=require("node:path");
+const cache={};let called=0;const globals={isFinite,Date,Math,JSON,Promise,encodeURIComponent,localStorage:{getItem(k){return cache[k]||null},setItem(k,v){cache[k]=v}},XMLHttpRequest:function(){called++;}};globals.window=globals;
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,"../app/weather.js"),"utf8"),globals);
+const w=globals.TigrisWeather;
+assert.equal(called,0,"module initialization must not access the network");
+assert.equal(w.valid({lat:121,lon:0}),false);
+assert.equal(w.valid({lat:31.2,lon:121.5}),true);
+assert.equal(w.glyph(0),"☀");assert.equal(w.glyph(95),"⚡");
+const p=w.parse({current:{temperature_2m:23.7,weather_code:3},daily:{temperature_2m_max:[27.1],temperature_2m_min:[19.4]}},{name:"Shanghai",lat:31.23,lon:121.47},1000);
+assert.equal(p.temp,24);assert.equal(p.high,27);assert.equal(p.low,19);
+const app=JSON.parse(fs.readFileSync(path.join(__dirname,"../app/appinfo.json"),"utf8"));
+assert.equal(app.id,"org.tigris.webos");assert.equal(app.type,"web");
+const noRoot=fs.readFileSync(path.join(__dirname,"../app/platform/no-root.js"),"utf8");
+const root=fs.readFileSync(path.join(__dirname,"../app/platform/root.js"),"utf8");
+assert.ok(!/EVIOCGRAB|\brootmytv\b/i.test(noRoot+root));
+const runtime=fs.readFileSync(path.join(__dirname,"../app/runtime.js"),"utf8");
+assert.ok(runtime.includes('load("weather-enabled",false)'));
+console.log("webOS preview weather parser, opt-in default, and platform module checks PASS");

@@ -1,0 +1,15 @@
+{
+  "id": "org.tigris.webos",
+  "version": "0.1.0",
+  "vendor": "Tigris Contributors",
+  "type": "web",
+  "main": "index.html",
+  "title": "Tigris",
+  "appDescription": "Tigris LG webOS developer preview",
+  "icon": "icon.png",
+  "largeIcon": "icon.png",
+  "bgColor": "#070a12",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true,
+  "transparent": false
+}

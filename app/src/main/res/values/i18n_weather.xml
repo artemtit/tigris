@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="weather_settings">Weather Card</string>
+  <string name="weather_settings_help">Optional Open-Meteo weather on the Home Screen; off by default.</string>
+  <string name="weather_city_settings">Weather City</string>
+  <string name="weather_city_help">Search for a city. No automatic location detection.</string>
+  <string name="weather_choose_city">Choose a City</string>
+  <string name="weather_search_city">Search a city by name</string>
+  <string name="weather_city_unknown">Not selected</string>
+  <string name="weather_city_none">No matching cities found</string>
+  <string name="weather_city_error">Unable to search cities. Check your network.</string>
+  <string name="weather_weather_pending">Choose a city in Settings</string>
+  <string name="weather_weather_unavailable">Weather unavailable</string>
+  <string name="weather_card_text">%1$s  %2$s · %3$s°%7$s · %6$s\nH %4$s°%7$s · L %5$s°%7$s</string>
+  <string name="weather_clear">Clear</string><string name="weather_partly">Partly cloudy</string>
+  <string name="weather_cloud">Cloudy</string><string name="weather_fog">Fog</string>
+  <string name="weather_rain">Rain</string><string name="weather_snow">Snow</string>
+  <string name="weather_storm">Thunderstorm</string>
+  <string name="weather_unit_settings">Temperature Unit</string>
+  <string name="weather_unit_help">Celsius or Fahrenheit.</string>
+</resources>

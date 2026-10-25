@@ -1,0 +1,24 @@
+---
+import type { Locale } from "../data/lang";
+const zh = Astro.props.locale === "zh";
+const route = zh ? "/webos/" : "/en/webos/";
+---
+<section class="section webos-home" id="webos">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <p class="eyebrow">LG WEBOS · DEVELOPER PREVIEW</p>
+      <h2>{zh ? "LG webOS：独立适配，安全接管。" : "LG webOS: a separate platform, safely integrated."}</h2>
+      <p class="lede">{zh ? "Tigris 不会把 Android APK 伪装成 LG 安装包。LG 版采用独立 IPK、非 Root 与已有 Root 两套能力模块；自动跟随电视语言，天气卡片默认关闭。" : "A real standalone webOS IPK—not an Android APK. Separate unrooted and already-rooted capability modules, system-language UI and an opt-in weather card."}</p>
+    </div>
+    <div class="webos-tiles reveal">
+      <article class="webos-tile"><strong>{zh ? "标准 · 不需要 Root" : "Standard · No Root"}</strong><p>{zh ? "LG Developer Mode 安装普通桌面，遥控器与 Luna 接口。Home Helper 需独立安全验证，目前未启用。Quick Access 可作快捷入口。" : "Normal Developer Mode installation with remote and Luna integration. Native Home interception is not yet shipped; Quick Access remains a fallback."}</p></article>
+      <article class="webos-tile"><strong>{zh ? "高级 · 已 Root 用户" : "Advanced · Already Rooted"}</strong><p>{zh ? "只检查已有 Homebrew 权限，不自动 Root、不刷机、不改写 LG 原厂桌面。高级接管需要独立验证与可撤销能力。" : "Inspect existing Homebrew permissions only. No rooting, flashing or replacing LG Home. Advanced Home routing requires separate recovery-tested support."}</p></article>
+      <article class="webos-tile"><strong>{zh ? "天气 · 默认关闭" : "Weather · Off by default"}</strong><p>{zh ? "Open-Meteo、手动选择城市、30 分钟刷新与 6 小时离线缓存。关闭后不请求天气数据。" : "Open-Meteo, manually chosen city, 30-minute refresh and six-hour cache. No weather requests while disabled."}</p></article>
+    </div>
+    <p class="webos-caution">{zh ? "当前仅有源码开发预览，尚未发布 LG 正式 IPK，也未通过 LG 实机 Home 键接管测试。普通安装不会接管 HOME。" : "Source developer preview only: no official LG release, and physical Home-key takeover has not been verified. Normal installation does not intercept Home."}</p>
+    <p class="webos-link"><a href={route}>{zh ? "查看 LG webOS 完整安装指南：AI、手动、一行命令、恢复" : "Full webOS guide: AI, manual, one-line command, recovery"} <span aria-hidden="true">→</span></a></p>
+  </div>
+</section>
+<style>
+.webos-home{background:linear-gradient(180deg,transparent,rgba(21,32,52,.45))}.webos-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.webos-tile{border:1px solid rgba(255,255,255,.14);border-radius:22px;padding:26px;background:rgba(255,255,255,.04)}.webos-tile strong{font-size:20px;color:#f8fbff;display:block;margin-bottom:15px}.webos-tile p{font-size:15px;line-height:1.7;color:#afbdd1;margin:0}.webos-caution{margin:24px auto 14px;max-width:880px;color:#bbc3d5;font-size:14px;text-align:center}.webos-link{text-align:center}.webos-link a{display:inline-block;border-radius:12px;border:1px solid rgba(255,255,255,.3);padding:12px 23px;color:#fff;font-weight:600}.webos-link a:hover{background:rgba(255,255,255,.13)}@media(max-width:750px){.webos-tiles{grid-template-columns:1fr}}
+</style>

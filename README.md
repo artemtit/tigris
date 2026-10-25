@@ -66,6 +66,66 @@
 
 仓库为界面展示打包了默认开机视频，并在线播放 Apple TV 航拍内容。这些素材不附带 Apple 或任何第三方的额外授权，也不代表 Tigris 与 Apple 有关联。对外分发、商用或再发布时，请确认素材授权；也可以在设置中改用 Tigris 字样动画或上传自己拥有权利的视频。截图中的影视封面、摄影作品和第三方图标版权归各自权利人所有。
 
+## LG webOS 专区（独立平台 · 开发预览版）
+
+> **状态：** Android APK 仍不能安装到 LG webOS。仓库已新增独立 `webos/` 源码、**非 Root 模块**和**已有 Root 用户的高级模块**、天气卡片，以及面向 webOS 的构建/安装脚本。**尚无已发布的 LG 正式 IPK；尚未实机验证 HOME 键接管。** 不要将下面的源码预览安装说明误认为正式版下载。
+
+- **无需 Root：** LG Developer Mode + Key Server 配对，安装普通 Tigris webOS 应用；应用启动、遥控器操作、Luna API 和 HDMI 输入源以实际固件权限为准。默认**不拦截 Home**，可通过电视自带 LG Quick Access 绑定数字键快速打开。
+- **已有 Root：** 可以额外检测现有 Homebrew / Root 能力；Tigris **不会 Root、刷机或静默修改系统**。系统级 Home Helper 需要独立验证与恢复功能后才可启用，目前不包含在开发预览包中。
+- **非 Root Home Helper：** 计划参考 Clean Your TV 的原生输入处理方案。**AI 可在正式安装前进行 SSH 只读预检，但只有装入隔离的安全探针、验证遥控器实体 Home 键与紧急退出后，才能宣称兼容**。当前探针仍待实现；仅连通 SSH 不等于可以接管 Home。
+- **天气：** 新增独立模块，采用 Open-Meteo（30 分钟更新、6 小时缓存），用户明确打开并选城市后才请求网络；默认关闭，不申请定位权限。
+
+### LG 用 AI 安装（先识别平台）
+
+把下面内容发给能在电脑上执行命令的 AI Agent（如 Codex、Claude Code）。**LG webOS 不是 Android：不执行 `adb connect`、`adb shell` 或 Android 包管理命令。**
+
+```text
+我要在 LG webOS 电视上安装 Tigris。先判断电视系统，不要仅凭电视品牌推断。
+请阅读：
+https://github.com/lesnolie/Tigris/blob/main/docs/WEBOS_AI_INSTALL.md
+https://github.com/lesnolie/Tigris/blob/main/webos/README.md
+请使用 LG Developer Mode、Key Server、@webos-tools/cli 和 SSH/Luna（不是 ADB）。
+先只读检查电视配对、固件和权限，并报告非 Root Home Helper 的实际状态。
+需要电视端授权时请提醒我；不得索取或泄露私人配对密钥。
+我同意后，才构建和安装 webOS 开发预览 IPK。
+不要 Root、停用/覆盖 LG Home、未经确认重启或开启未测试的 HOME 拦截。
+安装后验证应用/输入源、遥控器按键和原厂 LG Home 的恢复路径。
+当前未实现的 Home Helper 必须报告为“未验证/未提供”，不能声称成功。
+```
+
+### LG 一行命令：先预检，再按需安装
+
+在 macOS / Linux 上先安装 Node.js + `@webos-tools/cli`，通过 `ares-setup-device` 配对 LG Developer Mode，并将设备命名为 `myTV`。电视 IP 不等于 CLI 的设备别名。
+
+```sh
+# 只读预检，不安装、不接管 HOME
+curl -fsSLo tigris-webos.sh https://raw.githubusercontent.com/lesnolie/Tigris/main/webos/install.sh && sh tigris-webos.sh --device myTV --preflight
+
+# 用户确认后：从仓库源码构建 IPK，安装并启动普通桌面（仍不接管 HOME）
+sh tigris-webos.sh --device myTV --install
+```
+
+**重要：** 以上是**代码合并至 main 后**可使用的源码预览入口，而非已发布的稳定 LG 安装包。命令会在确认 CLI 已配对后下载源码、使用官方工具构建；不会自动 Root 或安装未验证的 Home Helper。首次运行前应检查脚本内容。
+
+### LG 手动安装和还原
+
+```sh
+npm install -g @webos-tools/cli
+ares-setup-device                  # 按向导添加电视、完成 Dev Mode 配对
+ares-setup-device --list
+ares-package webos/app
+ares-install --device myTV org.tigris.webos_0.1.0_all.ipk
+ares-launch --device myTV org.tigris.webos
+# 还原（仅移除 Tigris webOS，原厂 Home 未被改变）：
+ares-install --device myTV --remove org.tigris.webos
+```
+
+Windows 可在 PowerShell 执行 `ares-*` 指令；一行 Shell 脚本需要 macOS/Linux 或兼容的 POSIX Shell。**配对码、SSH 私钥、IP 不要上传到公开 Issue。**
+
+详细说明与英文版：**[LG webOS 独立安装指南](webos/README.md)** · **[AI 与 Home Helper 安全预检规范](docs/WEBOS_AI_INSTALL.md)** · **[官网 webOS 专区](https://tigris-tv.pages.dev/webos/)**。
+
+---
+
 ## 2. 安装指南
 
 > [!CAUTION]
@@ -77,7 +137,7 @@
 >
 > **签名不一致时不要直接卸载。** `INSTALL_FAILED_UPDATE_INCOMPATIBLE` 表示新 APK 与原包签名不同；直接卸载会丢失设置和授权。应先找到原签名密钥重新签名。
 
-Tigris 官方包要求 **Android 9 / API 28 或更高**，不支持 LG webOS、三星 Tizen、华为鸿蒙智慧屏等非 Android 系统。
+Tigris 现有**正式 APK** 要求 Android 9 / API 28 或更高，不能安装到 LG webOS、三星 Tizen 等非 Android 系统。LG webOS 是上方介绍的**独立 IPK 开发预览项目**，并非现有 APK 的兼容品牌。
 
 ### 2.1 打开电视的 ADB 调试
 
@@ -486,7 +546,7 @@ Android 没有统一的电视背光 API。目前只适配了索尼 BRAVIA 和小
 
 **支持哪些系统？**
 
-官方 APK 支持 Android 9 / API 28 及以上。LG webOS、三星 Tizen、华为鸿蒙智慧屏等非 Android 系统不能安装；Android 8 及更老版本需要单独维护 Fork。
+正式 APK 支持 Android 9 / API 28 及以上。LG webOS 不能安装 Android APK，请看上方独立 webOS IPK 开发预览；三星 Tizen 等其他非 Android 系统尚不支持。Android 8 及更老版本需要单独维护 Fork。
 
 **投屏要另装吗？**
 

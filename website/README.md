@@ -96,3 +96,17 @@ public/404.html         static 404 served by Cloudflare Pages
 
 Production account: `1b14747dd35d66e9f7941beaf412c3fe` (migrated 2026-10-24).
 Production URL: https://tigris-tv.pages.dev . Set the account explicitly; old Wrangler caches may point to the previous account.
+
+
+## LG webOS section
+
+The bilingual homepage has `#webos` links and dedicated guides at
+`/webos/` and `/en/webos/`. Both routes are informational and explicitly
+label the LG source-built IPK a **developer preview**, not a stable release.
+The `/webos/install.sh` endpoint serves `webos/install.sh` from the same
+repository; this installer uses LG `@webos-tools/cli`, **not Android ADB**.
+It must never offer a fake release asset, silently enable a native Home
+Helper, or suggest that already-rooted LG devices should be rooted again.
+Whenever the source-preview status changes, update the Chinese/English
+website pages, `README.md`, `webos/README.md`, and the AI instructions
+together. Weather is disabled by default.

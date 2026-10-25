@@ -8,6 +8,7 @@ import Features from "../components/Features.astro";
 import Compare from "../components/Compare.astro";
 import Gallery from "../components/Gallery.astro";
 import Film from "../components/Film.astro";
+import WebOS from "../components/WebOS.astro";
 import Install from "../components/Install.astro";
 import Compatibility from "../components/Compatibility.astro";
 import Faq from "../components/Faq.astro";
@@ -28,6 +29,7 @@ const copy = getCopy(locale);
     <Compare copy={copy} locale={locale} />
     <Gallery copy={copy} locale={locale} />
     <Install copy={copy} locale={locale} />
+    <WebOS locale={locale} />
     <Compatibility copy={copy} />
     <Faq copy={copy} locale={locale} />
   </main>

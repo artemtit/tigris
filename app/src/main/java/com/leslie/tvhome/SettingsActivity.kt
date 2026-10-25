@@ -9,6 +9,7 @@ import android.provider.Settings
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.KeyEvent
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -233,6 +234,24 @@ class SettingsActivity : Activity() {
             prefs.ccStyle = next(prefs.ccStyle, Prefs.CC_GLASS, Prefs.CC_PANEL)
         }
 
+        // Weather is a self-contained optional card. No network traffic until opt-in.
+        section(I18n.text(R.string.weather_settings))
+        row(I18n.text(R.string.weather_settings), I18n.text(R.string.weather_settings_help),
+            { onOff(prefs.weatherEnabled) }) { prefs.weatherEnabled = !prefs.weatherEnabled }
+        row(I18n.text(R.string.weather_unit_settings), I18n.text(R.string.weather_unit_help),
+            { if (prefs.weatherFahrenheit) "°F" else "°C" }) {
+            prefs.weatherFahrenheit = !prefs.weatherFahrenheit
+        }
+        row(I18n.text(R.string.weather_city_settings), I18n.text(R.string.weather_city_help),
+            { prefs.weatherCity.ifBlank { I18n.text(R.string.weather_city_unknown) } }, chevron = true) { value ->
+            selectWeatherCity { city ->
+                prefs.weatherCity = city.name
+                prefs.weatherLatitude = city.latitude
+                prefs.weatherLongitude = city.longitude
+                value.text = city.name
+            }
+        }
+
         section(I18n.text(R.string.i18n_settingsactivity_040))
         val video = Intro.videoFile(this) != null
         row(I18n.text(R.string.i18n_settingsactivity_041), I18n.text(R.string.i18n_settingsactivity_042) +
@@ -422,6 +441,43 @@ class SettingsActivity : Activity() {
                 }.start()
             }
         }
+    }
+
+    /** Uses the TV keyboard. Search only on explicit user request. */
+    private fun selectWeatherCity(onChosen: (Weather.City) -> Unit) {
+        val input = EditText(this).apply {
+            isSingleLine = true
+            hint = I18n.text(R.string.weather_search_city)
+            setText(prefs.weatherCity)
+            setSelection(text.length)
+            setPadding(dp(20), dp(12), dp(20), dp(12))
+        }
+        android.app.AlertDialog.Builder(this)
+            .setTitle(I18n.text(R.string.weather_choose_city))
+            .setView(input)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(I18n.text(R.string.weather_search_city)) { _, _ ->
+                val query = input.text.toString().trim()
+                if (query.length < 2) return@setPositiveButton
+                Toast.makeText(this, I18n.text(R.string.weather_search_city), Toast.LENGTH_SHORT).show()
+                Thread {
+                    val cities = runCatching { Weather.search(query) }.getOrNull()
+                    runOnUiThread {
+                        if (isFinishing || isDestroyed) return@runOnUiThread
+                        when {
+                            cities == null -> Toast.makeText(this, I18n.text(R.string.weather_city_error), Toast.LENGTH_LONG).show()
+                            cities.isEmpty() -> Toast.makeText(this, I18n.text(R.string.weather_city_none), Toast.LENGTH_LONG).show()
+                            else -> android.app.AlertDialog.Builder(this)
+                                .setTitle(I18n.text(R.string.weather_choose_city))
+                                .setItems(cities.map { it.name }.toTypedArray()) { _, which ->
+                                    onChosen(cities[which])
+                                }
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .show()
+                        }
+                    }
+                }.start()
+            }.show()
     }
 
     /** A small grey group title above a run of rows. */

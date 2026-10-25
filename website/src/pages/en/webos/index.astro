@@ -1,0 +1,18 @@
+---
+import Base from "../../../layouts/Base.astro";
+import WebOSGuide from "../../../components/WebOSGuide.astro";
+import { getCopy } from "../../../data/copy";
+import { brand } from "../../../data/site";
+const locale = "en" as const;
+const original = getCopy(locale);
+const copy = {...original, meta: {...original.meta,
+ title: "LG webOS Installation: AI, Manual and One Line | Tigris",
+ description: "Tigris LG webOS developer preview, AI install, manual and one-line commands, no-root and existing-root capabilities, weather, recovery.",
+ canonical: brand.site + "/en/webos/",
+ alts: [{hreflang:"zh-CN",href:brand.site+"/webos/"},{hreflang:"en",href:brand.site+"/en/webos/"}]
+}};
+---
+<Base copy={copy} locale={locale}>
+ <WebOSGuide locale={locale}/>
+ <script>import "../../../scripts/main";</script>
+</Base>

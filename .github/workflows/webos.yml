@@ -1,0 +1,41 @@
+name: webOS preview checks
+on:
+  pull_request:
+    paths:
+      - 'webos/**'
+      - '.github/workflows/webos.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'webos/**'
+      - '.github/workflows/webos.yml'
+permissions:
+  contents: read
+jobs:
+  webos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks for TV scripts
+        run: |
+          for f in webos/app/*.js webos/app/platform/*.js; do node --check "$f"; done
+          sh -n webos/install.sh
+      - name: Weather, platform and manifest assertions
+        run: node webos/tests/test-preview.cjs
+      - name: Package app with official webOS CLI
+        run: |
+          npm install -g @webos-tools/cli
+          ares-package webos/app
+          test -n "$(find . -maxdepth 1 -name 'org.tigris.webos_*_all.ipk' -print -quit)"
+      - name: Upload developer-preview IPK (not an official Release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: tigris-webos-source-preview
+          path: org.tigris.webos_*_all.ipk
+          retention-days: 7
+          if-no-files-found: error
+

@@ -14,6 +14,7 @@ export const zh = {
       { href: "#aerial", label: "航拍屏保" },
       { href: "#compare", label: "前后对比" },
       { href: "#install", label: "安装" },
+      { href: "#webos", label: "LG webOS" },
       { href: "#compatibility", label: "兼容性" },
       { href: "#faq", label: "常见问题" },
     ],

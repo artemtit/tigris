@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tigris for webOS</title><link rel="stylesheet" href="style.css"></head>
+<body><div id="backdrop"></div>
+<header><div class="mark">TIGRIS <small>WEBOS PREVIEW</small></div>
+<div><span id="clock">00:00</span><button id="settings" aria-label="Settings">⚙ <span data-t="settings">Settings</span></button></div></header>
+<main><section class="intro"><p data-t="welcome">Welcome home</p><h1 data-t="headline">Your TV, beautifully simple.</h1>
+<p id="status">Developer preview · LG Home is unchanged.</p>
+<button hidden id="weather" class="weather-card"><span id="weather-glyph">☀</span><span><strong id="weather-value">—</strong><small id="weather-range"></small></span></button></section>
+<section class="apps"><div class="line"><h2 data-t="apps">Apps &amp; Inputs</h2><small id="apps-message"></small></div><div id="dock" class="dock"></div></section></main>
+<div id="dialog" class="dialog" hidden><div class="dialog-panel"><div class="line"><h2 data-t="settings">Settings</h2><button id="close" data-t="close">Close</button></div>
+<label class="option"><input type="checkbox" id="weather-switch"> <span data-t="weatherOn">Show weather card (off by default)</span></label>
+<label class="option"><input type="checkbox" id="fahrenheit"> <span data-t="fahrenheit">Use Fahrenheit (°F)</span></label>
+<label class="option"><span data-t="city">Weather city</span><input type="text" id="city" maxlength="60" placeholder="Search for a city"></label>
+<button id="city-search" data-t="search">Search</button><div id="results"></div>
+<p class="hint" data-t="attribution">Weather data: Open-Meteo. Only selected city coordinates are sent when enabled.</p>
+<div class="option"><span data-t="home">Home button</span><strong id="home-status" data-t="notEnabled">Not enabled</strong></div>
+<button id="root-check" data-t="rootCheck">Check existing Root capabilities</button>
+<p class="hint" data-t="quick">The optional native Home Helper is not yet shipped; use LG Quick Access to assign Tigris to a number key.</p>
+</div></div>
+<script src="platform/core.js"></script><script src="platform/no-root.js"></script><script src="platform/root.js"></script><script src="weather.js"></script><script src="runtime.js"></script>
+</body></html>

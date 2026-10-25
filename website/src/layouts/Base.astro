@@ -12,6 +12,7 @@ interface Props {
 const { copy, locale } = Astro.props;
 const t = uiStrings[locale];
 const canonical = `${brand.site}${copy.meta.canonical.replace(brand.site, "")}`;
+const webosPage = Astro.url.pathname === "/webos/" || Astro.url.pathname === "/en/webos/";
 ---
 <!DOCTYPE html>
 <html lang={locale === "zh" ? "zh-CN" : "en"} class="no-js">
@@ -53,8 +54,8 @@ const canonical = `${brand.site}${copy.meta.canonical.replace(brand.site, "")}`;
     url: brand.site,
     description: copy.meta.description,
     applicationCategory: "UtilitiesApplication",
-    operatingSystem: "Android 9+ (Android TV)",
-    downloadUrl: brand.apk,
+    operatingSystem: webosPage ? "LG webOS (source developer preview)" : "Android 9+ (Android TV)",
+    downloadUrl: webosPage ? undefined : brand.apk,
     license: brand.license,
     isAccessibleForFree: true,
     offers: { "@type": "Offer", price: "0", priceCurrency: "CNY" },

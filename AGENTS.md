@@ -1,5 +1,7 @@
 # Installing Tigris — instructions for AI agents
 
+> **Platform check first:** These instructions and the current Tigris releases support **Android TV/Google TV** only. For **LG webOS**, do **not** use ADB or any Android `pm`, `am` or HOME commands. Read [docs/WEBOS_AI_INSTALL.md](docs/WEBOS_AI_INSTALL.md) for the future LG Developer Mode + SSH preflight, native Home Helper probe, safe installation gates and fallback. As of 2026-10-25, a separate webOS **source preview** and `webos/install.sh` can package/install a normal webOS application (subject to LG device authorization), but there is **no released stable IPK or tested Home Helper**. Never claim Home interception or TV hardware validation has been completed. If webOS is detected, explain this clearly and stop Android installation instructions. The preflight design allows a future AI installer to check compatibility before installing the full desktop, but a physical Home-key test is still required for final verification.
+
 You are installing Tigris, an Android TV launcher, onto the user's TV from their computer. Follow these steps in order. Talk to the user in their language (most users write Chinese). The TV is someone's home device: whenever a step below says to ask, ask first.
 
 ## Hard rules
