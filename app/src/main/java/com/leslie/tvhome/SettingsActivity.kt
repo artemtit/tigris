@@ -103,6 +103,8 @@ class SettingsActivity : Activity() {
     /** The main-page row that opened the current sub-page, focused again on the way back. */
     private var opener = 0
     private var entry = Page.MAIN
+    /** onCreate has just shown the page; showing it again started a second Wi-Fi probe. */
+    private var firstResume = true
 
     private enum class Page { MAIN, KEEP, HIDDEN, REMOVED, SHELF_APP, NETWORK, DEVICE }
 
@@ -249,7 +251,8 @@ class SettingsActivity : Activity() {
         super.onResume()
         backdropKey = null
         showBackdrop()
-        if (page == Page.MAIN) show(Page.MAIN, opener)
+        if (firstResume) firstResume = false
+        else if (page == Page.MAIN) show(Page.MAIN, opener)
         else if (page == Page.NETWORK || page == Page.DEVICE) show(page)
     }
 
@@ -1012,6 +1015,8 @@ class SettingsActivity : Activity() {
             v.setTextColor(if (on) FOCUS_VALUE else IDLE_VALUE)
             arrow?.setTextColor(if (on) FOCUS_VALUE else IDLE_VALUE)
             check?.setTextColor(if (on) FOCUS_TEXT else Color.WHITE)
+            // Grown from the label's left edge, so the text keeps the column and only the plate reaches past it.
+            r.pivotX = l.left.toFloat()
             r.tweenScale(if (on) 1.04f else 1f, if (on) 180 else 150, Motion.ease)
             if (on) {
                 focusedTitle.text = label

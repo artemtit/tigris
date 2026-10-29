@@ -290,11 +290,6 @@ class Prefs(ctx: Context) {
         get() = sp.getBoolean("welcome_completed", false)
         set(v) = sp.edit().putBoolean("welcome_completed", v).apply()
 
-    /** Apps opened from the home screen, newest first, as "package@epochMillis" ([RecentOrder.recordLaunch]). */
-    var recentLaunches: List<String>
-        get() = sp.getString("recent_launches", "")!!.split(',').filter { it.isNotEmpty() }
-        set(v) = sp.edit().putString("recent_launches", v.joinToString(",")).apply()
-
     companion object {
         const val SAVER_PHOTOS = "photos"
         const val SAVER_AERIAL = "aerial"

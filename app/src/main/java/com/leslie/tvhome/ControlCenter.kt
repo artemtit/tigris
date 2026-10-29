@@ -807,12 +807,16 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
                 inputs = list
                 inputModule.sub.visibility = View.VISIBLE
                 inputModule.sub.text = list.firstOrNull { it.uri == cur }?.name ?: summary
+                if (pickPending) { pickPending = false; if (list.isNotEmpty()) pickInput() }
             }
         }
     }
 
+    /** The evo button pressed before the inputs were read: the list opens once they are. */
+    private var pickPending = false
+
     fun pickInput() {
-        if (inputs.isEmpty()) return
+        if (inputs.isEmpty()) { pickPending = true; refresh(); return }
         // The list replaces the panel instead of stacking on top of it.
         close()
         val sheet = Sheet(host).title(I18n.text(R.string.i18n_controlcenter_021)).message(null)
