@@ -1373,7 +1373,11 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             return
         }
         if (welcome != null) return
-        if (intent.getBooleanExtra(EXTRA_INPUTS, false)) { intent.removeExtra(EXTRA_INPUTS); control.pickInput(); return } // remapped evo button
+        if (intent.getBooleanExtra(EXTRA_INPUTS, false)) { intent.removeExtra(EXTRA_INPUTS)
+            // A second press closes the list instead of stacking another one (and its dimming) on top.
+            if (sheets.isNotEmpty()) sheets.toList().forEach { it.dismiss() } else control.pickInput()
+            return
+        } // remapped evo button
         if (intent.getBooleanExtra(Intro.EXTRA_PREVIEW, false)) { playIntro(preview = true); return }
         if (intent.getBooleanExtra(EXTRA_WAKE, false)) return // consume only the pending wake, never re-arm
         // Home pressed while already home: close everything and go back to the top.

@@ -292,6 +292,7 @@ internal class VideoWallpaper(
     private fun fetch(gen: Long, url: String, part: File, dir: File): Boolean {
         val have = part.length()
         val c = URL(url).openConnection() as HttpURLConnection
+        c.instanceFollowRedirects = false // stay on the catalogue host
         c.connectTimeout = 10_000
         c.readTimeout = 15_000
         if (have > 0) c.setRequestProperty("Range", "bytes=$have-")
@@ -300,6 +301,7 @@ internal class VideoWallpaper(
             if (code == 404) return false
             if (code == 416) { part.delete(); throw IOException("HTTP 416") }
             if (code != 200 && code != 206) throw IOException("HTTP $code")
+            if (code == 206 && c.getHeaderField("Content-Range")?.startsWith("bytes $have-") != true) throw IOException("bad range")
             val resumed = if (code == 206) have else 0L
             val length = c.contentLengthLong
             if (length <= 0) return false
