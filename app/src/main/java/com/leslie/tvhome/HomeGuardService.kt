@@ -244,7 +244,12 @@ class HomeGuardService : AccessibilityService() {
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
         RemoteRemap.prefKey(event.keyCode)?.let { key ->
-            if (event.action == KeyEvent.ACTION_UP && !event.isCanceled) runRemap(key)
+            // Unassigned or not installed: the button keeps its own action. DOWN and UP resolve alike, never split.
+            val intent = remapIntent(key) ?: return false
+            if (event.action == KeyEvent.ACTION_UP && !event.isCanceled) {
+                Log.i(TAG, "remote button $key -> ${intent.component?.flattenToShortString()}")
+                runCatching { startActivity(intent) }.onFailure { Log.w(TAG, "remap $key failed", it) }
+            }
             return true
         }
         if (!Guard.guardOn(this)) return false
@@ -256,24 +261,17 @@ class HomeGuardService : AccessibilityService() {
         return true
     }
 
-    private fun runRemap(key: String) {
+    private fun remapIntent(key: String): Intent? {
         val target = Prefs(this).remap(key)
-        Log.i(TAG, "remote button $key -> '$target'")
-        if (target.isEmpty()) return
-        runCatching {
-            val intent = if (target == RemoteRemap.INPUTS) {
-                Intent(this, HomeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .putExtra(HomeActivity.EXTRA_INPUTS, true)
-            } else {
-                (packageManager.getLeanbackLaunchIntentForPackage(target) ?: packageManager.getLaunchIntentForPackage(target))
-                    ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            } ?: run { Log.w(TAG, "remap target $target is not installed"); return }
-            startActivity(intent)
-            if (target != RemoteRemap.INPUTS) {
-                val p = Prefs(this)
-                p.recentLaunches = RecentOrder.recordLaunch(target, p.recentLaunches, System.currentTimeMillis())
-            }
-        }.onFailure { Log.w(TAG, "remap $key failed", it) }
+        if (target.isEmpty()) return null
+        if (target == RemoteRemap.INPUTS) {
+            return Intent(this, HomeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .putExtra(HomeActivity.EXTRA_INPUTS, true)
+        }
+        return runCatching {
+            (packageManager.getLeanbackLaunchIntentForPackage(target) ?: packageManager.getLaunchIntentForPackage(target))
+                ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }.getOrNull()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {

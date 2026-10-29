@@ -49,7 +49,6 @@ import java.util.concurrent.Executors
 class HomeActivity : Activity(), TileAdapter.Listener {
     companion object {
         const val SHELF_SECONDS = 8
-        const val SHOW_RECENT = false
         private const val EXTRA_GUARD = "com.leslie.tvhome.GUARD"
         private const val EXTRA_WAKE = "com.leslie.tvhome.WAKE"
         const val EXTRA_INPUTS = "com.leslie.tvhome.INPUTS"
@@ -165,27 +164,17 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         }
     }
 
-    /** "Recent": apps opened from here, above the dock while no Top Shelf is up. */
-    private lateinit var recent: LinearLayout
-    private lateinit var recentRow: LinearLayout
-    private var recentApps: List<AppEntry> = emptyList()
-    private var recentShown = false
-    private var recentW = 0
-    private var recentGap = 0
-    private var dockGap = 0
-    private var recentDx = 0
-    private var recentDy = 0
-    private var gridBlocked = false
-
     /** Position being dragged in "edit home screen" mode, or -1. */
     private var moving = -1
+
+    /** Films may be left in the cache from an earlier run, so the first non-aerial background clears them. */
+    private var aerialsCached = true
 
     private val pkgReceiver = object : BroadcastReceiver() {
         override fun onReceive(c: Context, i: Intent) {
             val pkg = i.data?.schemeSpecificPart
             repo.invalidate(pkg)
             reload(pkg)
-            refreshRecent()
         }
     }
 
@@ -235,6 +224,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         intent.removeExtra(Welcome.EXTRA_PREVIEW)
         if (welcomePreview || !prefs.welcomeCompleted) playWelcome(preview = welcomePreview)
         else if (Intro.dueAfterBoot(this)) playIntro()
+        // The remapped evo button can be what started the home screen.
+        if (welcome == null && intent.getBooleanExtra(EXTRA_INPUTS, false)) { intent.removeExtra(EXTRA_INPUTS); control.pickInput() }
         reload()
         registerReceiver(pkgReceiver, IntentFilter().apply {
             addAction(Intent.ACTION_PACKAGE_ADDED)
@@ -404,8 +395,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         scene.addView(dockFrost, FrameLayout.LayoutParams(dockRect.width(), dockRect.height()).apply {
             leftMargin = dockRect.left; topMargin = dockRect.top
         })
-        dockGap = gap
-        buildRecent(side)
 
         // A persistent status row, also visible over Top Shelf and the expanded app grid.
         header = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
@@ -543,7 +532,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 // The date, weather and large clock drift up and give way to the rows coming up under them.
                 bigClock.translationY = -expansion * dp(28)
                 if (!shelfShown) bigClock.alpha = 1f - expansion
-                updateRecent()
             }
         })
         scene.addView(grid, match())
@@ -571,7 +559,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         Weather.cached(this, city)?.let { showWeather(Weather.compact(it, prefs.weatherFahrenheit)) }
             ?: run { showWeather(I18n.text(R.string.weather_weather_unavailable)) }
         val now = System.currentTimeMillis()
-        if (weatherLoading || now - lastWeatherAttempt < 2 * 60_000L) return
+        // The line lives in the large clock; the corner clock and no clock leave it unseen.
+        if (prefs.clockStyle != Prefs.CLOCK_LARGE || weatherLoading || now - lastWeatherAttempt < 2 * 60_000L) return
         weatherLoading = true
         lastWeatherAttempt = now
         io.execute {
@@ -592,6 +581,12 @@ class HomeActivity : Activity(), TileAdapter.Listener {
      */
     private fun applyBackground() {
         val theme = prefs.background
+        if (theme == VideoWallpaper.AERIAL) aerialsCached = true
+        else if (aerialsCached) {
+            // Once per switch, not every minute: the films are hundreds of MB on a small TV.
+            aerialsCached = false
+            io.execute { VideoWallpaper.aerialDir(this).deleteRecursively() }
+        }
         if (theme in VideoWallpaper.SOURCES) {
             showBackground("graphite", null)
             if (resumed && intro == null && welcome == null && getSystemService(android.os.PowerManager::class.java).isInteractive)
@@ -711,120 +706,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         dockShown = next
     }
 
-    // ------------------------------------------------------------------ recent
-
-    /** Built once: a title and [RecentOrder.RECENT_MAX] small dock tiles, rebound in [bindRecent]. */
-    private fun buildRecent(side: Int) {
-        recentW = tileW * 3 / 5
-        val recentH = recentW * 9 / 16
-        recentGap = dockGap * 3 / 5
-        val title = text(16f, Color.argb(200, 255, 255, 255), weight = 600).apply {
-            text = I18n.text(R.string.recent_title)
-            setShadowLayer(dp(10).toFloat(), 0f, dp(1).toFloat(), Color.argb(150, 0, 0, 0))
-        }
-        recentRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; clipChildren = false; clipToPadding = false }
-        repeat(RecentOrder.RECENT_MAX) { i ->
-            val cell = TileCell(this, recentW, recentH).apply { visibility = View.GONE; isLongClickable = false }
-            cell.setOnFocusChangeListener { _, f -> cell.setFocusedLook(f, recentDx, recentDy, showLabel = false, tvos = adapter.tvosFocus) }
-            cell.setOnClickListener { recentApps.getOrNull(i)?.let { launchApp(it, cell.card) } }
-            cell.setOnKeyListener { _, code, e -> e.action == KeyEvent.ACTION_DOWN && onRecentKey(i, cell, code) }
-            recentRow.addView(cell, LinearLayout.LayoutParams(recentW, recentH).apply { if (i > 0) marginStart = recentGap })
-        }
-        recent = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            clipChildren = false
-            clipToPadding = false
-            alpha = 0f
-            visibility = View.INVISIBLE
-            descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
-            addView(title, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(2) })
-            addView(recentRow, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(12) })
-        }
-        // Left-aligned with the dock, just above it; the large clock stays well clear at the top.
-        scene.addView(recent, FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.START).apply {
-            leftMargin = side; bottomMargin = sh - dockRect.top + dp(30)
-        })
-    }
-
-    private fun refreshRecent() {
-        // ponytail: the strip is switched off (the owner disliked it); delete buildRecent & co. if it stays off.
-        if (!SHOW_RECENT) return
-        io.execute {
-            val all = repo.allApps().associateBy { it.pkg }
-            val list = RecentOrder.recentPackages(prefs.recentLaunches).filterNot { repo.isOwn(it) }.mapNotNull { all[it] }
-            main.post { if (!isDestroyed) bindRecent(list) }
-        }
-    }
-
-    private fun bindRecent(list: List<AppEntry>) {
-        if (list != recentApps) {
-            // A focused tile about to disappear hands focus on first, so it never drops to nowhere.
-            val focused = (0 until recentRow.childCount).firstOrNull { recentRow.getChildAt(it).isFocused }
-            if (focused != null && focused >= list.size) {
-                if (list.isNotEmpty()) recentRow.getChildAt(list.size - 1).requestFocus() else focusAt(focusedPos)
-            }
-            recentApps = list
-            for (i in 0 until recentRow.childCount) {
-                val cell = recentRow.getChildAt(i) as TileCell
-                val app = list.getOrNull(i)
-                cell.tag = app?.pkg
-                cell.visibility = if (app == null) View.GONE else View.VISIBLE
-                if (app == null) { cell.image.setImageDrawable(null); continue }
-                cell.contentDescription = app.label
-                val cached = repo.cachedTile(app.pkg)
-                if (cached != null) cell.image.setImageBitmap(cached) else {
-                    cell.image.setImageDrawable(null)
-                    io.execute {
-                        val b = repo.tile(app)
-                        main.post { if (cell.tag == app.pkg) cell.image.setImageBitmap(b) }
-                    }
-                }
-            }
-        }
-        updateRecent()
-    }
-
-    /** Shown only on the plain home screen: no shelf, overlay, expanded grid or move mode. */
-    private fun updateRecent() {
-        val want = recentApps.isNotEmpty() && !shelfShown && !gridBlocked && moving < 0 && scrollY < rowPitch / 4 &&
-            focusedPos < cols && adapter.apps.getOrNull(focusedPos)?.pkg?.let { Shelf.has(it, shelfCustom()) } != true
-        if (want == recentShown) return
-        recentShown = want
-        if (!want && recent.hasFocus()) focusAt(focusedPos)
-        recent.descendantFocusability = if (want) ViewGroup.FOCUS_AFTER_DESCENDANTS else ViewGroup.FOCUS_BLOCK_DESCENDANTS
-        recent.animate().cancel()
-        if (want) recent.visibility = View.VISIBLE
-        recent.animate().alpha(if (want) 1f else 0f).setDuration(if (want) 350 else 200)
-            .withEndAction { if (!recentShown) recent.visibility = View.INVISIBLE }.start()
-    }
-
-    private fun onRecentKey(i: Int, cell: TileCell, code: Int): Boolean = when (code) {
-        KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
-            val dx = if (code == KeyEvent.KEYCODE_DPAD_LEFT) -1 else 1
-            if (i + dx in recentApps.indices) {
-                recentDx = dx; recentDy = 0
-                recentRow.getChildAt(i + dx).requestFocus()
-            } else Motion.bump(cell.card, dx, 0)
-            true
-        }
-        KeyEvent.KEYCODE_DPAD_DOWN -> {
-            // The dock tile under this one's centre.
-            val x = i * (recentW + recentGap) + recentW / 2f
-            adapter.lastDx = 0; adapter.lastDy = 1
-            focusAt(Math.round((x - tileW / 2f) / (tileW + dockGap)).coerceIn(0, minOf(cols, adapter.itemCount) - 1))
-            true
-        }
-        KeyEvent.KEYCODE_DPAD_UP -> { ccButton.requestFocus(); true }
-        else -> false
-    }
-
-    /** Up from dock column [col]: the recent tile above its centre. */
-    private fun focusRecentAbove(col: Int) {
-        val x = col * (tileW + dockGap) + tileW / 2f
-        recentDx = 0; recentDy = -1
-        recentRow.getChildAt(Math.round((x - recentW / 2f) / (recentW + recentGap)).coerceIn(0, recentApps.size - 1)).requestFocus()
-    }
-
     // ------------------------------------------------------------------- shelf
 
     private fun buildShelf(side: Int) {
@@ -916,7 +797,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     private fun setShelfVisible(v: Boolean) {
         if (v == shelfShown) return
         shelfShown = v
-        updateRecent()
         if (v) shelf.visibility = View.VISIBLE else bg.visibility = View.VISIBLE
         shelf.animate().cancel()
         // The large clock gives way to the shelf.
@@ -1054,7 +934,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 main.postDelayed(shelfShow, 300)
             }
         } else hideShelf()
-        updateRecent()
     }
 
     override fun onTileClicked(pos: Int, cell: TileCell) {
@@ -1062,32 +941,19 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         val app = adapter.apps.getOrNull(pos) ?: return
         app.folder?.let { openFolder(it); return }
         app.input?.let { i -> io.execute { tv.setInput(i) }; return }
-        launchApp(app, cell.card)
-    }
-
-    /** Shared by dock/grid tiles and the recent strip, so every launch is remembered the same way. */
-    private fun launchApp(app: AppEntry, from: View) {
         // The stock launcher (Xiaomi's PatchWall) can only be opened through the system Home action.
         if (HomeGuardService.isStockHome(app.pkg) && HomeGuardService.openStockLauncher()) {
-            recordRecent(app.pkg)
             rememberOpened(app.pkg)
             return
         }
         val intent = repo.launchIntent(app) ?: return
-        val opts = ActivityOptions.makeScaleUpAnimation(from, 0, 0, from.width, from.height)
+        val opts = ActivityOptions.makeScaleUpAnimation(cell.card, 0, 0, cell.card.width, cell.card.height)
         try {
             startActivity(intent, opts.toBundle())
-            recordRecent(app.pkg)
             rememberOpened(app.pkg)
         } catch (e: Exception) {
             Toast.makeText(this, I18n.text(R.string.i18n_homeactivity_005, app.label), Toast.LENGTH_SHORT).show()
         }
-    }
-
-    /** Feeds the recent strip; Tigris's own screens and TV inputs are left out. Shown again in onResume. */
-    private fun recordRecent(pkg: String) {
-        if (repo.isOwn(pkg)) return
-        prefs.recentLaunches = RecentOrder.recordLaunch(pkg, prefs.recentLaunches, System.currentTimeMillis())
     }
 
     /** A disabled recent-first preference preserves manual order, including folders. */
@@ -1177,7 +1043,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 try {
                     val intent = repo.launchIntent(app) ?: return@setItems
                     if (!HomeGuardService.isStockHome(app.pkg) || !HomeGuardService.openStockLauncher()) startActivity(intent)
-                    recordRecent(app.pkg)
                     rememberOpened(folder.id)
                 } catch (_: Exception) { Toast.makeText(this, I18n.text(R.string.i18n_homeactivity_024, app.label), Toast.LENGTH_SHORT).show() }
             }.setNeutralButton(I18n.text(R.string.i18n_homeactivity_025)) { _, _ -> manageFolder(folder, focusedPos) }
@@ -1274,8 +1139,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             return true
         }
         if (dy < 0 && pos < cols) {
-            // Up from the first row reaches the recent strip when it is up, else the buttons in the top-right corner.
-            if (recentShown) focusRecentAbove(col) else ccButton.requestFocus()
+            // Up from the first row reaches the buttons in the top-right corner.
+            ccButton.requestFocus()
             return true
         }
         if (atEdge) {
@@ -1294,7 +1159,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         moving = pos
         adapter.movingPkg = adapter.apps[pos].pkg
         adapter.notifyItemChanged(pos)
-        updateRecent()
         grid.post { focusAt(pos) }
         Toast.makeText(this, I18n.text(R.string.i18n_homeactivity_049), Toast.LENGTH_SHORT).show()
     }
@@ -1305,7 +1169,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         adapter.movingPkg = null
         adapter.notifyItemChanged(pos)
         prefs.order = adapter.apps.map { it.pkg }
-        updateRecent()
         grid.post { focusAt(pos) }
     }
 
@@ -1330,8 +1193,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         val mode = if (blocked) ViewGroup.FOCUS_BLOCK_DESCENDANTS else ViewGroup.FOCUS_AFTER_DESCENDANTS
         grid.descendantFocusability = mode
         header.descendantFocusability = mode
-        gridBlocked = blocked
-        updateRecent()
     }
 
     fun restoreGridFocus() {
@@ -1356,7 +1217,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 sheets.isNotEmpty() -> sheets.last().dismiss()
                 control.isOpen -> control.close()
                 moving >= 0 -> endMove()
-                header.hasFocus() || recent.hasFocus() -> focusAt(focusedPos)
+                header.hasFocus() -> focusAt(focusedPos)
                 else -> control.open()
             }
             return true
@@ -1398,6 +1259,12 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         main.postDelayed({ Guard.rebindIfStalled(this) }, 5_000)
     }
 
+    // Home pressed on Home only pauses and resumes, so the film goes on; another app in front frees the decoder.
+    override fun onStop() {
+        videoWallpaper.stop()
+        super.onStop()
+    }
+
     override fun onResume() {
         super.onResume()
         // Rebuild only after Settings changes column count; order/folders remain in Prefs.
@@ -1410,7 +1277,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         control.applyStyle()
         if (getSystemService(android.os.PowerManager::class.java).isInteractive) consumeWakeIntro()
         resumed = true
-        main.removeCallbacks(stopVideo)
         welcome?.resume()
         prefs.homeInFront = true
         HomeGuardService.onHomeResumed()
@@ -1420,18 +1286,13 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         main.removeCallbacks(ticker)
         ticker.run()
         control.refresh()
-        refreshRecent()
         if (shelfShown && !control.isOpen) resumeShelfRotation()
     }
-
-    private val stopVideo = Runnable { videoWallpaper.stop() }
 
     override fun onPause() {
         HomeGuardService.onHomePaused()
         resumed = false
         prefs.unobserve(wallpaperChanges)
-        // Home pressed on Home pauses and resumes at once; stopping here restarted the film.
-        main.postDelayed(stopVideo, 1_000)
         // Leaving for another app (or standby) ends the intro rather than leaving it half played.
         intro?.finish()
         welcome?.pause()
