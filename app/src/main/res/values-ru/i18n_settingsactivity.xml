@@ -135,8 +135,8 @@
     <string name="i18n_settingsactivity_133" formatted="false">Не давать системе отключать отладку ADB.</string>
     <string name="i18n_settingsactivity_134" formatted="false">Настройка…</string>
     <string name="i18n_settingsactivity_135" formatted="false">Сначала нужно разрешить локальную отладку</string>
-    <string name="i18n_settingsactivity_136" formatted="false">Системные настройки</string>
-    <string name="i18n_settingsactivity_137" formatted="false">Открыть встроенные настройки телевизора.</string>
+    <string name="i18n_settingsactivity_136" formatted="false">Системные настройки Android</string>
+    <string name="i18n_settingsactivity_137" formatted="false">Bluetooth, изображение, звук, дата и время, сети: Tigris не может менять их без системных прав.</string>
     <string name="i18n_settingsactivity_138" formatted="false">О Tigris</string>
     <string name="i18n_settingsactivity_139" formatted="false">Главный экран для Android TV в стиле tvOS.</string>
     <string name="i18n_settingsactivity_140" formatted="false">Версия</string>
@@ -158,4 +158,31 @@
     <string name="i18n_settingsactivity_156" formatted="false">Ежедневно</string>
     <string name="i18n_settingsactivity_157">%1$s ч</string>
     <string name="i18n_settingsactivity_158">%1$s мин</string>
+    <string name="settings_android_section">Android</string>
+    <string name="settings_network">Сеть</string>
+    <string name="settings_network_help">Состояние подключения. Сменить сеть можно в настройках Android.</string>
+    <string name="settings_network_status">Состояние</string>
+    <string name="settings_network_type">Подключение</string>
+    <string name="settings_network_ethernet">Кабель (Ethernet)</string>
+    <string name="settings_network_none">Нет подключения</string>
+    <string name="settings_network_name">Имя сети</string>
+    <string name="settings_network_name_help">Видно, если разрешена локальная отладка: иначе Android скрывает имя сети от приложений.</string>
+    <string name="settings_network_internet">Интернет</string>
+    <string name="settings_network_online">Доступен</string>
+    <string name="settings_network_offline">Нет доступа</string>
+    <string name="settings_network_ip">IP-адрес</string>
+    <string name="settings_unavailable">Недоступно</string>
+    <string name="settings_network_change">Выбрать сеть Wi‑Fi</string>
+    <string name="settings_network_change_help">Откроются настройки Android: подключение к сети требует системных прав.</string>
+    <string name="settings_device">Об устройстве</string>
+    <string name="settings_device_help">Сведения о телевизоре, только для просмотра.</string>
+    <string name="settings_device_model">Модель</string>
+    <string name="settings_device_android">Версия Android</string>
+    <string name="settings_device_screen">Разрешение</string>
+    <string name="settings_device_memory">Оперативная память</string>
+    <string name="settings_device_storage">Хранилище</string>
+    <string name="settings_free_of">%1$s свободно из %2$s</string>
+    <string name="settings_device_time">Дата и время</string>
+    <string name="settings_device_timezone">Часовой пояс</string>
+    <string name="settings_device_tigris">Версия Tigris</string>
 </resources>

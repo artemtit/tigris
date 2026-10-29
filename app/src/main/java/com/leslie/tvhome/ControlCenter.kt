@@ -42,8 +42,8 @@ import kotlin.math.roundToInt
 class ControlCenter(private val home: HomeActivity, private val host: FrameLayout) {
     private val ctx = home
     private val prefs = Prefs(ctx)
-    private val gap = ctx.dp(12)
-    private val cell = ctx.dp(47)
+    private val gap = ctx.dp(10)
+    private val cell = ctx.dp(44)
     private val width = cell * 4 + gap * 3
     private var glassStyle = prefs.ccGlass(ctx)
     private val surfaces = ArrayList<GlassSurface>()
@@ -193,7 +193,8 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         val right = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; clipChildren = false }
         networkModule = GlassButton(I18n.text(R.string.i18n_controlcenter_004), R.drawable.ic_wifi, Shape.CAPSULE, accent = Color.rgb(48, 222, 239)) {
             close()
-            runCatching { ctx.startActivity(tv.wifiIntent()) }
+            // Tigris's own network page; joining another network is one row further, in Android settings.
+            ctx.startActivity(Intent(ctx, SettingsActivity::class.java).putExtra(SettingsActivity.EXTRA_PAGE, SettingsActivity.PAGE_NETWORK))
         }
         right.addView(networkModule, LinearLayout.LayoutParams(-1, cell))
         right.addView(GlassButton(I18n.text(R.string.i18n_controlcenter_005), R.drawable.ic_moon, Shape.CAPSULE) { needAdb { close(); Cleaner.sleep(ctx) } },
@@ -223,9 +224,9 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         panel.addView(utilities, LinearLayout.LayoutParams(-1, -2).apply { topMargin = gap })
 
         brightness = Slider(R.drawable.ic_sun, I18n.text(R.string.i18n_controlcenter_012)) { v -> tv.setBrightness(v) }.also { focusables += it }
-        panel.addView(brightness, LinearLayout.LayoutParams(-1, ctx.dp(38)).apply { topMargin = gap })
+        panel.addView(brightness, LinearLayout.LayoutParams(-1, ctx.dp(36)).apply { topMargin = gap })
         volume = Slider(R.drawable.ic_volume, I18n.text(R.string.i18n_controlcenter_013), steps = 50) { v -> tv.setVolume(volumeTarget, v) }.also { focusables += it }
-        panel.addView(volume, LinearLayout.LayoutParams(-1, ctx.dp(38)).apply { topMargin = gap })
+        panel.addView(volume, LinearLayout.LayoutParams(-1, ctx.dp(36)).apply { topMargin = gap })
         inputModule = GlassButton(I18n.text(R.string.i18n_controlcenter_014), R.drawable.ic_input, Shape.CAPSULE) { pickInput() }
         panel.addView(inputModule, LinearLayout.LayoutParams(-1, cell).apply { topMargin = gap })
         panel.addView(status, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ctx.dp(10) })
@@ -542,7 +543,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         private val steps: Int = 25,
         private val send: (Int) -> Unit,
     ) : FrameLayout(ctx) {
-        private val corner = ctx.dp(19).toFloat()
+        private val corner = ctx.dp(18).toFloat()
         private val glass = glassFor(this, corner).apply { focusWash = 0 }
         private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         private val fillClip = android.graphics.Path()

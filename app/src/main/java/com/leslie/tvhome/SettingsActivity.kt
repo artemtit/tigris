@@ -71,7 +71,14 @@ class SettingsActivity : Activity() {
         }
 
         private val IDLE_TEXT = Color.argb(235, 255, 255, 255)
-        private val IDLE_VALUE = Color.argb(195, 255, 255, 255)
+        private val IDLE_VALUE = Color.argb(170, 255, 255, 255)
+        private val FOCUS_TEXT = Color.rgb(28, 28, 30)
+        private val FOCUS_VALUE = Color.argb(140, 0, 0, 0)
+
+        /** Opens straight on a sub-page (the Home and Control Center network buttons); Back then leaves. */
+        const val EXTRA_PAGE = "page"
+        const val PAGE_NETWORK = "network"
+        const val PAGE_DEVICE = "device"
     }
 
     private lateinit var prefs: Prefs
@@ -95,8 +102,9 @@ class SettingsActivity : Activity() {
     private var page = Page.MAIN
     /** The main-page row that opened the current sub-page, focused again on the way back. */
     private var opener = 0
+    private var entry = Page.MAIN
 
-    private enum class Page { MAIN, KEEP, HIDDEN, REMOVED, SHELF_APP }
+    private enum class Page { MAIN, KEEP, HIDDEN, REMOVED, SHELF_APP, NETWORK, DEVICE }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,9 +126,21 @@ class SettingsActivity : Activity() {
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }
         root.addView(pageShade, FrameLayout.LayoutParams(-1, -1))
-        heading = text(30f, weight = 600).apply { maxLines = 2 }
-        root.addView(heading, FrameLayout.LayoutParams(dp(350), -2).apply {
-            leftMargin = dp(56); topMargin = dp(42)
+        // tvOS: rows float over a dimmed picture, no slabs; the dim deepens towards the list.
+        root.addView(View(this).apply {
+            background = android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+                intArrayOf(0x33000000, 0x59000000, 0x8c000000.toInt()))
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, FrameLayout.LayoutParams(-1, -1))
+        // Safe area ~90 x 60 px at 1080p (Android TV is 960 x 540 dp at any density); list ~52 % wide.
+        val sideMargin = dp(45)
+        val safeTop = dp(30)
+        val listWidth = (resources.displayMetrics.widthPixels * 0.52f).toInt()
+        val leftWidth = resources.displayMetrics.widthPixels - listWidth - sideMargin * 2 - dp(24)
+        heading = text(22f, weight = 600).apply { maxLines = 2; letterSpacing = -0.01f }
+        root.addView(heading, FrameLayout.LayoutParams(leftWidth, -2).apply {
+            leftMargin = sideMargin; topMargin = safeTop
         })
         val left = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
         icon = ImageView(this).apply {
@@ -128,38 +148,40 @@ class SettingsActivity : Activity() {
             scaleType = ImageView.ScaleType.FIT_CENTER
             clipRounded(dp(18).toFloat())
         }
-        left.addView(icon, FrameLayout.LayoutParams(dp(140), dp(140), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
-            topMargin = dp(30)
+        left.addView(icon, FrameLayout.LayoutParams(dp(132), dp(132), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
+            topMargin = dp(28)
         })
         val description = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        focusedTitle = text(19f, weight = 500).apply {
+        focusedTitle = text(15f, weight = 600).apply {
             maxLines = 2; ellipsize = TextUtils.TruncateAt.END
         }
         description.addView(focusedTitle, LinearLayout.LayoutParams(-1, -2))
-        about = text(14f, Color.argb(215, 255, 255, 255)).apply {
+        about = text(12.5f, Color.argb(200, 255, 255, 255)).apply {
             maxLines = 4; ellipsize = TextUtils.TruncateAt.END
-            setLineSpacing(dp(3).toFloat(), 1f)
+            setLineSpacing(dp(2).toFloat(), 1f)
         }
-        description.addView(about, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(10) })
-        left.addView(description, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { bottomMargin = dp(72) })
-        back = text(16f, weight = 500).apply {
+        description.addView(about, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6) })
+        left.addView(description, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { bottomMargin = dp(52) })
+        back = text(13f, weight = 500).apply {
             text = I18n.text(R.string.i18n_updateactivity_016); gravity = Gravity.CENTER
             isFocusable = true; isClickable = true
-            setOnClickListener { if (page == Page.MAIN) finish() else show(Page.MAIN, opener) }
+            setOnClickListener { if (page == Page.MAIN || page == entry) finish() else show(Page.MAIN, opener) }
         }
-        val backGlass = glass.control(back)
+        back.background = rounded(Color.argb(40, 255, 255, 255), dp(16).toFloat())
         back.setOnFocusChangeListener { _, on ->
-            backGlass.focus(on)
-            back.tweenScale(if (on) 1.045f else 1f, 220)
+            back.background = rounded(if (on) Color.WHITE else Color.argb(40, 255, 255, 255), dp(16).toFloat())
+            back.setTextColor(if (on) FOCUS_TEXT else Color.WHITE)
+            back.tweenScale(if (on) 1.04f else 1f, if (on) 180 else 150)
         }
-        left.addView(back, FrameLayout.LayoutParams(dp(112), dp(44), Gravity.BOTTOM))
-        root.addView(left, FrameLayout.LayoutParams(dp(344), -1).apply {
-            leftMargin = dp(56); topMargin = dp(120); bottomMargin = dp(34)
+        left.addView(back, FrameLayout.LayoutParams(dp(96), dp(32), Gravity.BOTTOM))
+        root.addView(left, FrameLayout.LayoutParams(leftWidth, -1).apply {
+            leftMargin = sideMargin; topMargin = dp(84); bottomMargin = safeTop
         })
         list = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             clipChildren = false; clipToPadding = false
-            setPadding(dp(16), dp(16), dp(16), dp(18))
+            // Room for the focused row to grow into (scale 1.04 of ~480 dp is ~10 dp per side).
+            setPadding(dp(12), dp(10), dp(12), dp(14))
         }
         scroll = object : ScrollView(this) {
             override fun requestChildRectangleOnScreen(child: View, rectangle: Rect, immediate: Boolean) = false
@@ -179,13 +201,18 @@ class SettingsActivity : Activity() {
         scroll.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
             v.clipBounds = Rect(0, 0, v.width, v.height)
         }
-        root.addView(viewport, FrameLayout.LayoutParams(-1, -1).apply {
-            leftMargin = dp(438); rightMargin = dp(40); topMargin = dp(38); bottomMargin = dp(30)
+        root.addView(viewport, FrameLayout.LayoutParams(listWidth + dp(24), -1, Gravity.END).apply {
+            rightMargin = sideMargin - dp(12); topMargin = safeTop - dp(10); bottomMargin = safeTop - dp(14)
         })
         root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> glass.refresh() }
         setContentView(root)
         showBackdrop()
-        show(Page.MAIN)
+        entry = when (intent.getStringExtra(EXTRA_PAGE)) {
+            PAGE_NETWORK -> Page.NETWORK
+            PAGE_DEVICE -> Page.DEVICE
+            else -> Page.MAIN
+        }
+        show(entry)
     }
 
     private fun show(p: Page, focusIndex: Int = 0) {
@@ -203,6 +230,8 @@ class SettingsActivity : Activity() {
             }
             Page.REMOVED -> removedApps()
             Page.SHELF_APP -> shelfAppPicker()
+            Page.NETWORK -> network()
+            Page.DEVICE -> device()
         }
         list.post {
             val target = list.getChildAt(focusIndex.coerceIn(0, maxOf(list.childCount - 1, 0)))
@@ -221,6 +250,7 @@ class SettingsActivity : Activity() {
         backdropKey = null
         showBackdrop()
         if (page == Page.MAIN) show(Page.MAIN, opener)
+        else if (page == Page.NETWORK || page == Page.DEVICE) show(page)
     }
 
     private fun optionalAssetRow(asset: OptionalAssets.Asset, title: Int) {
@@ -555,6 +585,11 @@ class SettingsActivity : Activity() {
         }
 
         section(I18n.text(R.string.i18n_settingsactivity_114))
+        row(I18n.text(R.string.settings_network), I18n.text(R.string.settings_network_help), { networkLabel() }, chevron = true) {
+            show(Page.NETWORK)
+        }
+        row(I18n.text(R.string.settings_device), I18n.text(R.string.settings_device_help),
+            { android.os.Build.MODEL }, chevron = true) { show(Page.DEVICE) }
         row(I18n.text(R.string.i18n_settingsactivity_115), I18n.text(R.string.i18n_settingsactivity_116),
             { if (prefs.adbAuthorized) I18n.text(R.string.i18n_settingsactivity_117) else I18n.text(R.string.i18n_settingsactivity_118) }) { v ->
             v.text = I18n.text(R.string.i18n_settingsactivity_119)
@@ -612,12 +647,89 @@ class SettingsActivity : Activity() {
                 runOnUiThread { v.text = if (ok) onOff(prefs.keepAdb) else I18n.text(R.string.i18n_settingsactivity_135) }
             }.start()
         }
-        row(I18n.text(R.string.i18n_settingsactivity_136), I18n.text(R.string.i18n_settingsactivity_137), { "" }, chevron = true) { runCatching { startActivity(TvControls(this).settingsIntent()) } }
         row(I18n.text(R.string.i18n_settingsactivity_138), I18n.text(R.string.i18n_settingsactivity_139),
             { packageManager.getPackageInfo(packageName, 0).versionName ?: "" }, chevron = true) {
             dialog(I18n.text(R.string.i18n_settingsactivity_138),
                 I18n.text(R.string.settings_about, packageManager.getPackageInfo(packageName, 0).versionName ?: ""))
         }
+
+        // Everything that needs system permissions (Bluetooth, picture, sound, joining networks):
+        // one clearly labelled way out instead of grey jumps scattered through the list.
+        section(I18n.text(R.string.settings_android_section))
+        row(I18n.text(R.string.i18n_settingsactivity_136), I18n.text(R.string.i18n_settingsactivity_137), { "" }, chevron = true) { runCatching { startActivity(TvControls(this).settingsIntent()) } }
+    }
+
+    /** Read-only connection status; Android only lets apps read, not change, without system rights. */
+    private fun network() {
+        heading.text = I18n.text(R.string.settings_network)
+        about.text = I18n.text(R.string.settings_network_help)
+        val cm = getSystemService(android.net.ConnectivityManager::class.java)
+        val net = runCatching { cm?.activeNetwork }.getOrNull()
+        val caps = runCatching { cm?.getNetworkCapabilities(net) }.getOrNull()
+        val wired = caps?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) == true
+        val online = caps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+        val ip = runCatching { cm?.getLinkProperties(net)?.linkAddresses }.getOrNull()
+            ?.map { it.address }?.firstOrNull { it is java.net.Inet4Address }?.hostAddress
+        val help = I18n.text(R.string.settings_network_help)
+        section(I18n.text(R.string.settings_network_status))
+        row(I18n.text(R.string.settings_network_type), help, {
+            when { caps == null -> I18n.text(R.string.settings_network_none); wired -> I18n.text(R.string.settings_network_ethernet); else -> "Wi‑Fi" }
+        }) {}
+        if (caps != null && !wired) {
+            val name = row(I18n.text(R.string.settings_network_name), I18n.text(R.string.settings_network_name_help),
+                { I18n.text(R.string.settings_unavailable) }) {}
+            // Without location permission Android hides the SSID; local adb (if allowed) can still read it.
+            if (prefs.adbAuthorized) Thread {
+                val out = LocalAdb.shell(applicationContext, "dumpsys wifi | grep -m1 mWifiInfo")
+                val ssid = out?.let { Regex("SSID: \"?([^\",]+)\"?,").find(it)?.groupValues?.get(1) }
+                    ?.takeIf { it.isNotBlank() && !it.contains("unknown ssid") }
+                if (ssid != null) runOnUiThread { if (!isDestroyed && page == Page.NETWORK) name.text = ssid }
+            }.start()
+        }
+        row(I18n.text(R.string.settings_network_internet), help, {
+            I18n.text(if (online) R.string.settings_network_online else R.string.settings_network_offline)
+        }) {}
+        row(I18n.text(R.string.settings_network_ip), help, { ip ?: "—" }) {}
+        section(I18n.text(R.string.settings_android_section))
+        row(I18n.text(R.string.settings_network_change), I18n.text(R.string.settings_network_change_help), { "" }, chevron = true) {
+            runCatching { startActivity(TvControls(this).wifiIntent()) }
+        }
+    }
+
+    /** About this TV: what any app may read, shown here instead of in the grey system page. */
+    private fun device() {
+        heading.text = I18n.text(R.string.settings_device)
+        val help = I18n.text(R.string.settings_device_help)
+        about.text = help
+        val size = { bytes: Long -> android.text.format.Formatter.formatShortFileSize(this, bytes) }
+        val metrics = android.util.DisplayMetrics().also {
+            @Suppress("DEPRECATION") windowManager.defaultDisplay.getRealMetrics(it)
+        }
+        val mem = android.app.ActivityManager.MemoryInfo().also {
+            getSystemService(android.app.ActivityManager::class.java)?.getMemoryInfo(it)
+        }
+        val stat = runCatching { android.os.StatFs(android.os.Environment.getDataDirectory().path) }.getOrNull()
+        section(I18n.text(R.string.settings_device))
+        row(I18n.text(R.string.settings_device_model), help, {
+            "${android.os.Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} ${android.os.Build.MODEL}"
+        }) {}
+        row(I18n.text(R.string.settings_device_android), help, {
+            "${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})"
+        }) {}
+        row(I18n.text(R.string.settings_device_screen), help, { "${metrics.widthPixels} × ${metrics.heightPixels}" }) {}
+        row(I18n.text(R.string.settings_device_memory), help, {
+            I18n.text(R.string.settings_free_of, size(mem.availMem), size(mem.totalMem))
+        }) {}
+        row(I18n.text(R.string.settings_device_storage), help, {
+            stat?.let { I18n.text(R.string.settings_free_of, size(it.availableBytes), size(it.totalBytes)) } ?: "—"
+        }) {}
+        row(I18n.text(R.string.settings_device_time), help, {
+            java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.LONG, java.text.DateFormat.SHORT).format(java.util.Date())
+        }) {}
+        row(I18n.text(R.string.settings_device_timezone), help, {
+            java.util.TimeZone.getDefault().getDisplayName(false, java.util.TimeZone.LONG)
+        }) {}
+        row(I18n.text(R.string.settings_device_tigris), help, { packageManager.getPackageInfo(packageName, 0).versionName ?: "" }) {}
     }
 
     /** One dock app. The shelf appears when that tile is focused in the first row. */
@@ -643,6 +755,16 @@ class SettingsActivity : Activity() {
         val url = prefs.shelfCustomUrl
         if (url.isBlank()) return I18n.text(R.string.shelf_custom_unset)
         return runCatching { java.net.URI(url).host }.getOrNull()?.takeIf { it.isNotBlank() } ?: url
+    }
+
+    private fun networkLabel(): String {
+        val cm = getSystemService(android.net.ConnectivityManager::class.java)
+        val caps = runCatching { cm?.getNetworkCapabilities(cm.activeNetwork) }.getOrNull()
+        return when {
+            caps == null -> I18n.text(R.string.settings_network_none)
+            caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) -> I18n.text(R.string.settings_network_ethernet)
+            else -> "Wi‑Fi"
+        }
     }
 
     private fun shelfAppLabel(): String {
@@ -799,9 +921,9 @@ class SettingsActivity : Activity() {
 
     private fun section(title: String) {
         val first = list.childCount == 0
-        list.addView(text(13f, Color.argb(185,255,255,255), weight = 500).apply { text = title },
+        list.addView(text(11.5f, Color.argb(150, 255, 255, 255), weight = 600).apply { text = title },
             LinearLayout.LayoutParams(-1, -2).apply {
-                marginStart = dp(8); topMargin = if (first) 0 else dp(22); bottomMargin = dp(12)
+                marginStart = dp(16); topMargin = if (first) dp(2) else dp(18); bottomMargin = dp(6)
             })
     }
 
@@ -824,7 +946,7 @@ class SettingsActivity : Activity() {
     /** One focus target per row; explicit switch/checkbox semantics and bounded value width. */
     private fun row(label: String, desc: String?, value: () -> String, chevron: Boolean = false,
                     checked: (() -> Boolean)? = null, checkbox: Boolean = false,
-                    appIcon: Drawable? = null, onClick: (TextView) -> Unit) {
+                    appIcon: Drawable? = null, onClick: (TextView) -> Unit): TextView {
         val r = object : LinearLayout(this) {
             override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
                 super.onInitializeAccessibilityNodeInfo(info)
@@ -838,57 +960,59 @@ class SettingsActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
             isFocusable = true; isClickable = true
             clipChildren = false; clipToPadding = false
-            setPadding(dp(20), dp(14), dp(20), dp(14))
-            minimumHeight = dp(56)
+            // tvOS row: ~70 px at 1080p (35 dp), transparent until focused.
+            setPadding(dp(16), dp(6), dp(16), dp(6))
+            minimumHeight = dp(35)
         }
-        val material = glass.control(r, 20)
         appIcon?.let { drawable ->
             r.addView(ImageView(this).apply {
                 setImageDrawable(drawable); scaleType = ImageView.ScaleType.FIT_CENTER
                 importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-            }, LinearLayout.LayoutParams(dp(34), dp(34)).apply { marginEnd = dp(14) })
+            }, LinearLayout.LayoutParams(dp(24), dp(24)).apply { marginEnd = dp(12) })
         }
-        val l = text(17f, IDLE_TEXT, weight = 500).apply {
+        val l = text(14f, IDLE_TEXT, weight = 500).apply {
             text = label; maxLines = 2; ellipsize = TextUtils.TruncateAt.END
-            setLineSpacing(dp(2).toFloat(), 1f)
+            setLineSpacing(dp(1).toFloat(), 1f)
         }
-        val v = text(14f, IDLE_VALUE).apply {
-            text = value(); maxLines = 2; ellipsize = TextUtils.TruncateAt.END
+        val v = text(13f, IDLE_VALUE).apply {
+            text = value(); maxLines = 1; ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.END
-            maxWidth = dp(155)
+            maxWidth = dp(190)
         }
         r.addView(l, LinearLayout.LayoutParams(0, -2, 1f))
-        r.addView(v, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(14) })
-        val toggle = if (checked != null && !checkbox) UpdateSwitch(this) else null
-        toggle?.let { r.addView(it, LinearLayout.LayoutParams(dp(42), dp(26)).apply { marginStart = dp(14) }) }
-        val check = if (checkbox) text(20f, weight = 500).apply {
+        r.addView(v, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(12) })
+        // tvOS shows On/Off as the value instead of a switch; checkmarks stay for multi-select lists.
+        val check = if (checkbox) text(15f, weight = 600).apply {
             gravity = Gravity.CENTER; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         } else null
-        check?.let { r.addView(it, LinearLayout.LayoutParams(dp(28), dp(28)).apply { marginStart = dp(12) }) }
-        if (chevron) r.addView(text(23f, IDLE_VALUE, weight = 300).apply {
+        check?.let { r.addView(it, LinearLayout.LayoutParams(dp(20), dp(20)).apply { marginStart = dp(10) }) }
+        val arrow = if (chevron) text(17f, IDLE_VALUE, weight = 400).apply {
             text = "›"; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-        }, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(12) })
+        } else null
+        arrow?.let { r.addView(it, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(10) }) }
         fun sync() {
             val on = checked?.invoke()
             if (on != null) {
-                toggle?.checked = on
                 check?.text = if (on) "✓" else ""
-                // Asynchronous status stays visible until the operation reports its real result.
-                v.visibility = if (checkbox || v.text.toString() == onOff(on)) View.GONE else View.VISIBLE
+                v.visibility = if (checkbox) View.GONE else View.VISIBLE
             }
             r.contentDescription = I18n.text(R.string.settings_row_value, label,
                 if (on != null) onOff(on) else v.text.toString())
-            glass.refresh()
         }
         v.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { sync() }
             override fun afterTextChanged(s: Editable?) {}
         })
+        val corner = dp(9).toFloat()
         r.setOnFocusChangeListener { _, on ->
-            material.focus(on)
-            r.tweenScale(if (on) 1.035f else 1f, if (on) 260 else 200,
-                if (on) Motion.spring else Motion.ease)
+            // Focus = a solid white plate with dark ink and a short decelerating lift, as on tvOS.
+            r.background = if (on) rounded(Color.WHITE, corner) else null
+            l.setTextColor(if (on) FOCUS_TEXT else IDLE_TEXT)
+            v.setTextColor(if (on) FOCUS_VALUE else IDLE_VALUE)
+            arrow?.setTextColor(if (on) FOCUS_VALUE else IDLE_VALUE)
+            check?.setTextColor(if (on) FOCUS_TEXT else Color.WHITE)
+            r.tweenScale(if (on) 1.04f else 1f, if (on) 180 else 150, Motion.ease)
             if (on) {
                 focusedTitle.text = label
                 if (desc != null) about.text = desc
@@ -902,15 +1026,16 @@ class SettingsActivity : Activity() {
                 !v.text.startsWith(I18n.text(R.string.i18n_settingsactivity_151))) v.text = value()
             sync()
         }
-        list.addView(r, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(10) })
+        list.addView(r, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(2) })
         sync()
+        return v
     }
 
     private fun information(title: String, message: String) {
-        list.addView(text(19f, weight = 500).apply { text = title },
-            LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(16), dp(30), dp(16), dp(12)) })
-        list.addView(text(14f, IDLE_VALUE).apply {
-            text = message; setLineSpacing(dp(4).toFloat(), 1f)
+        list.addView(text(15f, weight = 600).apply { text = title },
+            LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(16), dp(24), dp(16), dp(8)) })
+        list.addView(text(13f, IDLE_VALUE).apply {
+            text = message; setLineSpacing(dp(3).toFloat(), 1f)
         }, LinearLayout.LayoutParams(-1, -2).apply { marginStart = dp(16); marginEnd = dp(16) })
         focusedTitle.text = title
     }
@@ -940,7 +1065,7 @@ class SettingsActivity : Activity() {
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK && page != Page.MAIN) {
-            show(Page.MAIN, opener)
+            if (page == entry) finish() else show(Page.MAIN, opener)
             return true
         }
         return super.onKeyUp(keyCode, event)
