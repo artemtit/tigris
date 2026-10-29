@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="optional_hgtv_name">Короткие сериалы HGTV</string>
+    <string name="optional_apps_help">Необязательные приложения для ТВ · MiracastReceiver (трансляция) и HGTV (короткие сериалы) — отдельные сторонние приложения. Ничего не скачивается и не устанавливается, пока вы не выберете «Установить». Установленные приложения появляются в списке приложений и могут быть добавлены в Док. Автообновление применяется только к уже установленным приложениям.</string>
+    <string name="optional_app_open">Открыть «%1$s»</string>
+    <string name="optional_app_not_installed">Это приложение ещё не установлено</string>
+    <string name="optional_missing_digest">У стороннего APK нет проверенной контрольной суммы SHA-256 выпуска. Установка остановлена.</string>
+</resources>

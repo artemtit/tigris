@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tigris</string>
+    <string name="settings_name">Настройки главного экрана</string>
+    <string name="wallpaper_name">Обои</string>
+    <string name="guard_name">Страж главного экрана</string>
+    <string name="guard_description">Возвращает главный экран, когда его перехватывает встроенный лаунчер. Проверяет только, какое приложение на переднем плане; содержимое экрана не читает.</string>
+    <string name="home_filter_title">Продолжать фильтровать кнопку «Домой»</string>
+    <string name="home_filter_on">Вкл.</string>
+    <string name="home_filter_off">Выкл.</string>
+    <string name="home_filter_warning">Android 12 и новее, по умолчанию выключено, требуется страж главного экрана. Тогда все нажатия проходят через стража, поэтому при одном нажатии некоторые приложения могут переключаться дважды. На Xiaomi не включается. Выключите, чтобы вернуться к обычному фильтру.</string>
+    <string name="dock_columns_title">Значков в ряду Дока</string>
+    <string name="dock_columns_description">Выберите 5 или 6 значков в Доке. Сетка приложений использует то же число столбцов. Применяется при возврате на главный экран.</string>
+    <string name="install_home_next_native">Android сообщает, что Tigris — главный экран. Откройте другое приложение, нажмите физическую кнопку «Домой», затем проверьте перезагрузку и режим ожидания. Эти проверки не выполняются автоматически.</string>
+    <string name="install_home_next_guard">Страж главного экрана, судя по всему, подключён, но это не встроенный HOME. Проверьте физическую кнопку «Домой», перезагрузку, пробуждение и очистку памяти. Если не работает, воспользуйтесь инструкцией для вашей модели.</string>
+    <string name="install_home_next_xiaomi">Xiaomi / Redmi: MIUI или HyperOS могут принудительно запускать PatchWall и останавливать Tigris в режиме ожидания. Не отключайте PatchWall и «Настройки». Следуйте диагностике HOME для вашей прошивки и настройке стража с разрешением.</string>
+    <string name="install_home_next_tcl">TCL / FFalcon: некоторые прошивки отклоняют стандартный APK или блокируют автозапуск стража. Проверьте результат проверки и разрешение ADB. Установка стража через T-Cast может потребовать подтверждения на телевизоре.</string>
+    <string name="install_home_next_permission">Tigris не определён как HOME, а необходимого разрешения для стража нет. Следуйте инструкции по ADB с разрешением или ручной настройке для вашей модели телевизора.</string>
+    <string name="install_home_next_generic">Эта прошивка пока не сообщает, что Tigris — встроенный HOME или что страж подключён. Сначала воспользуйтесь официальной инструкцией по установке и диагностикой устройства только для чтения.</string>
+    <string name="install_home_guide_open">Инструкция по установке</string>
+    <string name="app_name_guard">Tigris · режим стража</string>
+</resources>

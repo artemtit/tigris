@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="optional_apps_subtitle">Устанавливайте только то, что выберете. Ваши приложения, ваш Док.</string>
+    <string name="optional_category_home">Главный экран · Tigris</string>
+    <string name="optional_category_cast">Трансляция экрана · необязательно</string>
+    <string name="optional_category_drama">Короткие сериалы · необязательно</string>
+    <string name="optional_status_not_installed">Не установлено · получите, когда понадобится</string>
+    <string name="optional_action_get">Получить</string>
+    <string name="optional_action_open">Открыть</string>
+    <string name="optional_action_update">Обновить</string>
+    <string name="optional_action_current">Актуальная версия</string>
+    <string name="optional_action_downloading">Загрузка</string>
+    <string name="optional_action_verifying">Установка…</string>
+    <string name="optional_action_waiting">Установка…</string>
+    <string name="optional_action_confirm">Продолжить</string>
+    <string name="optional_action_retry">Повторить</string>
+    <string name="optional_auto_update">Автообновление установленных приложений</string>
+</resources>

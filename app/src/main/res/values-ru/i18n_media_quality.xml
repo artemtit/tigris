@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="media_quality_wall_title">Качество обоев</string>
+    <string name="media_quality_wall_desc">Авто: UHD на подходящих 4K-телевизорах при достаточном объёме свободной памяти. 1080p: режим совместимости. Предпочитать 4K: пробовать UHD и переключаться при недоступности.</string>
+    <string name="media_quality_aerial_title">Качество видеозаставок Aerial</string>
+    <string name="media_quality_aerial_desc">Авто: 4K HEVC на поддерживаемых 4K-телевизорах. Предпочитать 4K: пробовать при наличии аппаратного декодирования. Совместимость: 2K. При сбоях воспроизведение переключается автоматически.</string>
+    <string name="media_quality_4k">Предпочитать 4K</string>
+    <string name="media_quality_1080">1080p</string>
+    <string name="media_quality_auto">Авто</string>
+    <string name="media_quality_compat">Совместимость</string>
+</resources>

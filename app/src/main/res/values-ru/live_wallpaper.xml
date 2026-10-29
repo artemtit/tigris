@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="live_wallpaper_local">Моё видео · 4K</string>
+    <string name="live_wallpaper_aerial">Заставки Apple Aerial · 4K</string>
+    <string name="live_wallpaper_stream">Потоковое 4K при поддержке; при необходимости — запасной вариант</string>
+    <string name="live_wallpaper_upload">Сначала отсканируйте QR-код, чтобы загрузить видео</string>
+    <string name="live_wallpaper_failed">Видео недоступно. Показан статичный фон; проверьте формат или сеть.</string>
+    <string name="download_default_backdrop">Фон настроек по умолчанию</string>
+    <string name="download_default_intro">Приветственное видео по умолчанию</string>
+    <string name="optional_asset_help">Необязательная загрузка. Ваши файлы имеют приоритет. Удалите, чтобы освободить место; без медиафайлов используется простой фон или логотип Tigris.</string>
+    <string name="asset_downloading">Выполняется…</string>
+    <string name="asset_download">Скачать</string>
+    <string name="asset_remove">Скачано · удалить</string>
+    <string name="asset_done">Обновлено</string>
+    <string name="asset_failed">Не удалось скачать. Проверьте сеть и повторите; существующие файлы не изменены.</string>
+</resources>

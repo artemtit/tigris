@@ -32,12 +32,12 @@ class Prefs(ctx: Context) {
         set(v) = sp.edit().putBoolean("show_avatar", v).apply()
 
     var order: List<String>
-        get() = sp.getString("order", "")!!.split(',').filter { it.isNotEmpty() }
+        get() = sp.getString("order", "ru.kinopoisk.tv,ru.more.play,tv.lfstrm.smotreshka,com.google.android.youtube.tv,com.v2raytun.android,com.vk.tv")!!.split(',').filter { it.isNotEmpty() }
         set(v) = sp.edit().putString("order", v.joinToString(",")).apply()
 
     /** tvOS first-row Dock count (5 by default, 6 only after an explicit choice). */
     var dockColumns: Int
-        get() = DockLayout.normalized(sp.getInt("dock_columns", DockLayout.DEFAULT_COLUMNS))
+        get() = DockLayout.normalized(sp.getInt("dock_columns", DockLayout.SIX_COLUMNS))
         set(value) = sp.edit().putInt("dock_columns", DockLayout.normalized(value)).apply()
 
     /** New installs and upgrades start in fixed manual order; the user can opt in. */
@@ -78,7 +78,7 @@ class Prefs(ctx: Context) {
 
     /** One of [Backgrounds.THEMES] keys, or a rotating photo source: "daily" (Bing) or "anime" (Wallhaven). */
     var background: String
-        get() = sp.getString("background", "daily")!!
+        get() = sp.getString("background", "wallhaven")!!
         set(v) = sp.edit().putString("background", v).apply()
 
     var wallhavenQuery: String
@@ -88,15 +88,15 @@ class Prefs(ctx: Context) {
         get() = sp.getString("wallhaven_categories", "100")!!
         set(v) = sp.edit().putString("wallhaven_categories", v).apply()
     var wallhavenSorting: String
-        get() = sp.getString("wallhaven_sorting", "toplist")!!
+        get() = sp.getString("wallhaven_sorting", "random")!!
         set(v) = sp.edit().putString("wallhaven_sorting", v).apply()
     var wallhavenResolution: String
-        get() = sp.getString("wallhaven_resolution", "3840x2160")!!
+        get() = sp.getString("wallhaven_resolution", "1920x1080")!!
         set(v) = sp.edit().putString("wallhaven_resolution", v).apply()
 
     /** Minutes between background photo changes. */
     var wallMinutes: Int
-        get() = sp.getInt("wall_minutes", 30)
+        get() = sp.getInt("wall_minutes", 5)
         set(v) = sp.edit().putInt("wall_minutes", v).apply()
 
     /** Image processing resolution: auto (safe), 1080p, or force UHD on capable TVs. */
@@ -192,7 +192,7 @@ class Prefs(ctx: Context) {
 
     /** Explicit opt-in. Never request weather or geolocation while false. */
     var weatherEnabled: Boolean
-        get() = sp.getBoolean("weather_enabled", com.leslie.tvhome.features.Features.weather.defaultEnabled)
+        get() = sp.getBoolean("weather_enabled", true)
         set(v) = sp.edit().putBoolean("weather_enabled", v).apply()
 
     var weatherFahrenheit: Boolean
@@ -201,25 +201,25 @@ class Prefs(ctx: Context) {
 
     /** Chosen by the user via Open-Meteo geocoding, never inferred from IP. */
     var weatherCity: String
-        get() = sp.getString("weather_city", "")!!
+        get() = sp.getString("weather_city", "Люберцы")!!
         set(v) = sp.edit().putString("weather_city", v).apply()
 
     var weatherLatitude: Double
-        get() = sp.getString("weather_latitude", "0")!!.toDoubleOrNull() ?: 0.0
+        get() = sp.getString("weather_latitude", "55.6783")!!.toDoubleOrNull() ?: 0.0
         set(v) = sp.edit().putString("weather_latitude", v.toString()).apply()
 
     var weatherLongitude: Double
-        get() = sp.getString("weather_longitude", "0")!!.toDoubleOrNull() ?: 0.0
+        get() = sp.getString("weather_longitude", "37.8935")!!.toDoubleOrNull() ?: 0.0
         set(v) = sp.edit().putString("weather_longitude", v.toString()).apply()
 
     /** 24-hour clock ("14:05") instead of "2:05 PM". */
     var clock24: Boolean
-        get() = sp.getBoolean("clock_24", false)
+        get() = sp.getBoolean("clock_24", true)
         set(v) = sp.edit().putBoolean("clock_24", v).apply()
 
     /** [CLOCK_CORNER] (small, top right), [CLOCK_LARGE] (date and a large clock top left, as before v1.9) or [CLOCK_OFF]. */
     var clockStyle: String
-        get() = sp.getString("clock_style", CLOCK_CORNER)!!
+        get() = sp.getString("clock_style", CLOCK_LARGE)!!
         set(v) = sp.edit().putString("clock_style", v).apply()
 
     /** [AUTO], [CC_GLASS] or [CC_PANEL]; see [ccGlass]. */
@@ -278,6 +278,11 @@ class Prefs(ctx: Context) {
     var welcomeCompleted: Boolean
         get() = sp.getBoolean("welcome_completed", false)
         set(v) = sp.edit().putBoolean("welcome_completed", v).apply()
+
+    /** Apps opened from the home screen, newest first, as "package@epochMillis" ([RecentOrder.recordLaunch]). */
+    var recentLaunches: List<String>
+        get() = sp.getString("recent_launches", "")!!.split(',').filter { it.isNotEmpty() }
+        set(v) = sp.edit().putString("recent_launches", v.joinToString(",")).apply()
 
     companion object {
         const val SAVER_PHOTOS = "photos"

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_wallpaperactivity_001" formatted="false">Обои</string>
+    <string name="i18n_wallpaperactivity_002" formatted="false">Выберите обои для главного экрана. Заставка использует тот же источник фото.</string>
+    <string name="i18n_wallpaperactivity_003" formatted="false">Настройка с телефона</string>
+    <string name="i18n_wallpaperactivity_004" formatted="false">Подключите телефон к той же сети Wi-Fi и отсканируйте код камерой или в WeChat: загрузите фото или введите ссылку на изображение (одно изображение, адрес случайного изображения, страницу со списком изображений или JSON). Телевизор получает их ежедневно.</string>
+    <string name="i18n_wallpaperactivity_005" formatted="false">Запуск…</string>
+    <string name="i18n_wallpaperactivity_006" formatted="false">Телевизор не в сети. Подключите его и откройте этот экран снова.</string>
+    <string name="i18n_wallpaperactivity_007" formatted="false">Отсканируйте, чтобы загрузить фото</string>
+    <string name="i18n_wallpaperactivity_008" formatted="false">Отсканируйте, чтобы ввести ссылку на изображение</string>
+    <string name="i18n_wallpaperactivity_009" formatted="false">Загрузка начнётся после выбора</string>
+    <string name="i18n_wallpaperactivity_010" formatted="false">Фото пока нет — отсканируйте QR-код справа телефоном, чтобы загрузить</string>
+    <string name="i18n_wallpaperactivity_011" formatted="false">Ссылки пока нет — отсканируйте QR-код справа телефоном</string>
+</resources>

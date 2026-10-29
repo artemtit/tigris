@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_page_description">Поддерживайте телевизор в актуальном состоянии.\nДобавляйте приложения, когда они нужны.</string>
+    <string name="update_auto_description">Обновляются только установленные приложения. Необязательные приложения автоматически не устанавливаются.</string>
+    <string name="update_section_home">Tigris</string>
+    <string name="update_section_optional">Необязательные приложения</string>
+    <string name="update_version_status">%1$s · %2$s</string>
+    <string name="update_working">Выполняется…</string>
+    <string name="update_app_version">Tigris %1$s</string>
+    <string name="update_available_version">Обновить до %1$s</string>
+</resources>

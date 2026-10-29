@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_coocaaadapter_001">Вход Coocaa</string>
+    <string name="i18n_coocaaadapter_002">Выбор входа Coocaa</string>
+</resources>

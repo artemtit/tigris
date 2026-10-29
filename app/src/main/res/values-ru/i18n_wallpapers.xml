@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_wallpapers_001" formatted="false">Обои 360</string>
+    <string name="i18n_wallpapers_002" formatted="false">Liziyuan</string>
+    <string name="i18n_wallpapers_003" formatted="false">Музей искусств Кливленда · Общественное достояние</string>
+    <string name="i18n_wallpapers_004" formatted="false">Аниме-обои</string>
+    <string name="i18n_wallpapers_005" formatted="false">Пейзажи</string>
+    <string name="i18n_wallpapers_006" formatted="false">Милые питомцы</string>
+    <string name="i18n_wallpapers_007" formatted="false">Изобразительное искусство</string>
+    <string name="i18n_wallpapers_008" formatted="false">Мои фото</string>
+    <string name="i18n_wallpapers_009" formatted="false">Своя ссылка</string>
+    <string name="i18n_wallpapers_010" formatted="false">Пейзажные фото</string>
+    <string name="i18n_wallpapers_011" formatted="false">Зелёный</string>
+    <string name="i18n_wallpapers_012" formatted="false">Синий</string>
+    <string name="i18n_wallpapers_013" formatted="false">Фиолетовый</string>
+    <string name="i18n_wallpapers_014" formatted="false">Оранжевый</string>
+    <string name="i18n_wallpapers_015" formatted="false">Тёмно-серый</string>
+</resources>

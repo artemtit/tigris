@@ -458,7 +458,7 @@ class SettingsActivity : Activity() {
             }.start()
         }
         row(I18n.text(R.string.i18n_settingsactivity_065), I18n.text(R.string.i18n_settingsactivity_066), { minutesLabel(prefs.wallMinutes) }) {
-            val opts = listOf(15, 30, 60, 180, 1440)
+            val opts = listOf(5, 15, 30, 60, 180, 1440)
             prefs.wallMinutes = opts[(opts.indexOf(prefs.wallMinutes) + 1) % opts.size]
         }
         row(I18n.text(R.string.i18n_settingsactivity_067), I18n.text(R.string.i18n_settingsactivity_068),

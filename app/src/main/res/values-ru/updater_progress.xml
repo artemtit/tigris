@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_transfer_busy">Идёт загрузка или проверка. Подождите.</string>
+    <string name="update_cancelled">Ожидающая задача отменена. Проверьте обновления, чтобы повторить.</string>
+    <string name="update_pending_recovery">Ожидается подтверждение на телевизоре. Выберите «Продолжить установку»; если процесс завис, выберите «Отменить задачу» и повторите.</string>
+    <string name="update_download_percent">Загрузка · %1$d%%</string>
+    <string name="update_verifying">Проверка целостности, версии и подписи пакета…</string>
+    <string name="update_staging">Подготовка к установке в системе…</string>
+    <string name="update_continue_product">Продолжить подтверждение установки · %1$s</string>
+    <string name="update_retry_product">Отменить ожидающую задачу и повторить · %1$s</string>
+    <string name="update_no_confirmation">Экран подтверждения недоступен. Если установка зависла, отмените ожидающую задачу и повторите.</string>
+    <string name="update_download_failed">Загрузка не завершена или файл больше ожидаемого пакета. Повторите попытку.</string>
+</resources>

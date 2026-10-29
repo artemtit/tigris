@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_homeactivity_001" formatted="false">Настройки сети</string>
+    <string name="i18n_homeactivity_002" formatted="false">Пункт управления</string>
+    <string name="i18n_homeactivity_003" formatted="false">Настройки главного экрана</string>
+    <string name="i18n_homeactivity_004" formatted="false">EEEE, d MMM</string>
+    <string name="i18n_homeactivity_005">Не удаётся открыть «%1$s»</string>
+    <string name="i18n_homeactivity_006" formatted="false">Изменить главный экран</string>
+    <string name="i18n_homeactivity_007" formatted="false">Убрать с главного экрана</string>
+    <string name="i18n_homeactivity_008" formatted="false">Отмена</string>
+    <string name="i18n_homeactivity_009" formatted="false">Изменить главный экран</string>
+    <string name="i18n_homeactivity_010" formatted="false">Переместить в папку</string>
+    <string name="i18n_homeactivity_011" formatted="false">Скрыть</string>
+    <string name="i18n_homeactivity_012" formatted="false">Отмена</string>
+    <string name="i18n_homeactivity_013" formatted="false">О приложении</string>
+    <string name="i18n_homeactivity_014" formatted="false">Удалить приложение</string>
+    <string name="i18n_homeactivity_015" formatted="false">Отмена</string>
+    <string name="i18n_homeactivity_016" formatted="false">Название папки</string>
+    <string name="i18n_homeactivity_017" formatted="false">Сохранить</string>
+    <string name="i18n_homeactivity_018" formatted="false">Отмена</string>
+    <string name="i18n_homeactivity_019" formatted="false">Введите название</string>
+    <string name="i18n_homeactivity_020" formatted="false">Переместить в папку</string>
+    <string name="i18n_homeactivity_021" formatted="false">Новая папка…</string>
+    <string name="i18n_homeactivity_022" formatted="false">Новая папка</string>
+    <string name="i18n_homeactivity_023" formatted="false">Отмена</string>
+    <string name="i18n_homeactivity_024">Не удаётся открыть «%1$s»</string>
+    <string name="i18n_homeactivity_025" formatted="false">Управление</string>
+    <string name="i18n_homeactivity_026" formatted="false">Назад</string>
+    <string name="i18n_homeactivity_027" formatted="false">Папка пуста. Удерживайте приложение на главном экране, чтобы переместить его сюда.</string>
+    <string name="i18n_homeactivity_028" formatted="false">Переименовать</string>
+    <string name="i18n_homeactivity_029" formatted="false">Вынести приложение</string>
+    <string name="i18n_homeactivity_030" formatted="false">Изменить главный экран</string>
+    <string name="i18n_homeactivity_031" formatted="false">Удалить папку</string>
+    <string name="i18n_homeactivity_032" formatted="false">Вернуть на главный экран</string>
+    <string name="i18n_homeactivity_033" formatted="false">Отмена</string>
+    <string name="i18n_homeactivity_034">Удалить «%1$s»?</string>
+    <string name="i18n_homeactivity_035" formatted="false">Значки приложений вернутся на главный экран. Сами приложения удалены не будут.</string>
+    <string name="i18n_homeactivity_036" formatted="false">Удалить</string>
+    <string name="i18n_homeactivity_037" formatted="false">Отмена</string>
+    <string name="i18n_homeactivity_038" formatted="false">Отмена</string>
+    <string name="i18n_homeactivity_039" formatted="false">Сначала нужно разрешить локальную отладку</string>
+    <string name="i18n_homeactivity_040" formatted="false">Выберите «Начать», затем «Всегда разрешать», когда телевизор запросит разрешение на отладку.</string>
+    <string name="i18n_homeactivity_041" formatted="false">Начать</string>
+    <string name="i18n_homeactivity_042" formatted="false">Отмена</string>
+    <string name="i18n_homeactivity_043" formatted="false">Это предустановленное приложение. После удаления оно не будет отображаться на главном экране и работать в фоне. Его можно вернуть в разделе «Настройки главного экрана» → «Удалённые предустановленные приложения».</string>
+    <string name="i18n_homeactivity_044" formatted="false">Это приложение главного экрана, которое может заменить текущее при сбое. Если удалить его и этот лаунчер перестанет работать, у телевизора не останется запасного главного экрана. Приложение и его данные будут удалены.</string>
+    <string name="i18n_homeactivity_045" formatted="false">Приложение и его данные будут удалены.</string>
+    <string name="i18n_homeactivity_046">Удалить «%1$s»?</string>
+    <string name="i18n_homeactivity_047" formatted="false">Удалить</string>
+    <string name="i18n_homeactivity_048" formatted="false">Отмена</string>
+    <string name="i18n_homeactivity_049" formatted="false">Перемещайте стрелками, по окончании нажмите OK</string>
+    <string name="i18n_homeactivity_050" formatted="false">Включить выключение и очистку памяти</string>
+    <string name="i18n_homeactivity_051" formatted="false">Выберите «Начать», затем «Всегда разрешать», когда телевизор запросит разрешение на отладку.</string>
+    <string name="i18n_homeactivity_052" formatted="false">Начать</string>
+    <string name="i18n_homeactivity_053" formatted="false">Не сейчас</string>
+    <string name="i18n_homeactivity_054" formatted="false">В диалоге отметьте «Всегда разрешать» и нажмите «Разрешить»</string>
+    <string name="i18n_homeactivity_055" formatted="false">Включено. Выключение и очистка памяти готовы к работе.</string>
+    <string name="i18n_homeactivity_056" formatted="false">Не удалось получить разрешение. Повторить можно в настройках главного экрана.</string>
+    <string name="i18n_homeactivity_057">Не удалось удалить: %1$s</string>
+    <string name="i18n_homeactivity_058" formatted="false">Локальная отладка недоступна</string>
+</resources>

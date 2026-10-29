@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_keeperservice_001" formatted="false">Фон главного экрана</string>
+    <string name="i18n_keeperservice_002" formatted="false">Главный экран</string>
+    <string name="i18n_keeperservice_003" formatted="false">Автоматически очищать память в режиме ожидания</string>
+</resources>

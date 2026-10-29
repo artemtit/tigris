@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_controlcenter_001" formatted="false">Выключить</string>
+    <string name="i18n_controlcenter_002" formatted="false">Выключить</string>
+    <string name="i18n_controlcenter_003" formatted="false">Телевизор выключится полностью. Чтобы включить его, нажмите кнопку питания на пульте.</string>
+    <string name="i18n_controlcenter_004" formatted="false">Сеть</string>
+    <string name="i18n_controlcenter_005" formatted="false">Ожидание</string>
+    <string name="i18n_controlcenter_006" formatted="false">Очистить память</string>
+    <string name="i18n_controlcenter_007" formatted="false">Заставка</string>
+    <string name="i18n_controlcenter_008" formatted="false">Перезагрузить</string>
+    <string name="i18n_controlcenter_009" formatted="false">Перезагрузить</string>
+    <string name="i18n_controlcenter_010" formatted="false">Телевизор перезагрузится. Это займёт около минуты.</string>
+    <string name="i18n_controlcenter_011" formatted="false">Настройки</string>
+    <string name="i18n_controlcenter_012" formatted="false">Яркость</string>
+    <string name="i18n_controlcenter_013" formatted="false">Громкость</string>
+    <string name="i18n_controlcenter_014" formatted="false">Источник сигнала</string>
+    <string name="i18n_controlcenter_015" formatted="false">Яркость</string>
+    <string name="i18n_controlcenter_016" formatted="false">Громкость</string>
+    <string name="i18n_controlcenter_017" formatted="false">Локальная отладка не разрешена: выключение, режим ожидания и глубокая очистка недоступны</string>
+    <string name="i18n_controlcenter_018" formatted="false">Проводная сеть</string>
+    <string name="i18n_controlcenter_019" formatted="false">Не подключено</string>
+    <string name="i18n_controlcenter_020" formatted="false">Подключено</string>
+    <string name="i18n_controlcenter_021" formatted="false">Источник сигнала</string>
+    <string name="i18n_controlcenter_022" formatted="false">Показать на главном экране…</string>
+    <string name="i18n_controlcenter_023" formatted="false">Отмена</string>
+    <string name="i18n_controlcenter_024" formatted="false">Показать на главном экране</string>
+    <string name="i18n_controlcenter_025" formatted="false">Выбранный источник станет значком на главном экране. Нажмите его, чтобы переключиться.</string>
+    <string name="i18n_controlcenter_026" formatted="false">Готово</string>
+    <string name="i18n_controlcenter_027" formatted="false">Очистка памяти…</string>
+    <string name="i18n_controlcenter_028" formatted="false">Сначала нужно разрешить локальную отладку</string>
+    <string name="i18n_controlcenter_029" formatted="false">Выберите «Начать», затем «Всегда разрешать», когда телевизор запросит разрешение на отладку.</string>
+    <string name="i18n_controlcenter_030" formatted="false">Начать</string>
+    <string name="i18n_controlcenter_031" formatted="false">Отмена</string>
+    <string name="i18n_controlcenter_032" formatted="false">Отмена</string>
+</resources>

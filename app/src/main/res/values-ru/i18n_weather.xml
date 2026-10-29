@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="weather_settings">Карточка погоды</string>
+  <string name="weather_settings_help">Необязательная погода Open-Meteo на главном экране; по умолчанию выключена.</string>
+  <string name="weather_city_settings">Город для погоды</string>
+  <string name="weather_city_help">Поиск города. Автоматическое определение местоположения не используется.</string>
+  <string name="weather_choose_city">Выберите город</string>
+  <string name="weather_search_city">Поиск города по названию</string>
+  <string name="weather_city_unknown">Не выбрано</string>
+  <string name="weather_city_none">Подходящих городов не найдено</string>
+  <string name="weather_city_error">Не удалось выполнить поиск. Проверьте сеть.</string>
+  <string name="weather_weather_pending">Выберите город в настройках</string>
+  <string name="weather_weather_unavailable">Погода недоступна</string>
+  <string name="weather_card_text">%1$s  %2$s · %3$s°%7$s · %6$s\nМакс. %4$s°%7$s · мин. %5$s°%7$s</string>
+  <string name="weather_clear">Ясно</string><string name="weather_partly">Переменная облачность</string>
+  <string name="weather_cloud">Облачно</string><string name="weather_fog">Туман</string>
+  <string name="weather_rain">Дождь</string><string name="weather_snow">Снег</string>
+  <string name="weather_storm">Гроза</string>
+  <string name="weather_unit_settings">Единицы температуры</string>
+  <string name="weather_unit_help">Градусы Цельсия или Фаренгейта.</string>
+</resources>

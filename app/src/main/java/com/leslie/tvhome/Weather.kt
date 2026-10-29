@@ -10,7 +10,8 @@ import kotlin.math.roundToInt
 /**
  * Optional weather data engine. No access to location permission or network until the
  * user enables the card or explicitly searches for a city. No timer/service of its own.
- * Open-Meteo is the only provider; preserve its attribution and license conditions.
+ * Open-Meteo first; MET Norway (api.met.no) when Open-Meteo is unreachable, as from some
+ * Russian ISPs. Preserve both providers' attribution and license conditions.
  */
 object Weather {
     const val FRESH_MS = 30L * 60_000
@@ -23,11 +24,14 @@ object Weather {
 
     private fun request(url: String): JSONObject {
         require(url.startsWith("https://api.open-meteo.com/") ||
-                url.startsWith("https://geocoding-api.open-meteo.com/"))
+                url.startsWith("https://geocoding-api.open-meteo.com/") ||
+                url.startsWith("https://api.met.no/"))
         val connection = URL(url).openConnection() as HttpURLConnection
         connection.connectTimeout = 8_000
         connection.readTimeout = 10_000
         connection.setRequestProperty("Accept", "application/json")
+        // MET Norway refuses requests without an identifying User-Agent.
+        connection.setRequestProperty("User-Agent", "Tigris-TV-launcher github.com/lesnolie/Tigris")
         return try {
             if (connection.responseCode !in 200..299) error("Weather HTTP ${connection.responseCode}")
             JSONObject(connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
@@ -76,19 +80,7 @@ object Weather {
         if (!city.latitude.isFinite() || !city.longitude.isFinite() ||
             city.latitude !in -90.0..90.0 || city.longitude !in -180.0..180.0) return null
         return try {
-            val query = "https://api.open-meteo.com/v1/forecast?latitude=${city.latitude}" +
-                "&longitude=${city.longitude}&current=temperature_2m,weather_code" +
-                "&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=auto"
-            val json = request(query)
-            val current = json.getJSONObject("current")
-            val temp = current.getDouble("temperature_2m")
-            val code = current.getInt("weather_code")
-            if (!temp.isFinite()) error("Missing temperature")
-            val daily = json.optJSONObject("daily")
-            val high = daily?.optJSONArray("temperature_2m_max")?.optDouble(0, Double.NaN)
-                ?.takeIf { it.isFinite() }?.let { it.roundToInt() }
-            val low = daily?.optJSONArray("temperature_2m_min")?.optDouble(0, Double.NaN)
-                ?.takeIf { it.isFinite() }?.let { it.roundToInt() }
+            val (temp, code, high, low) = runCatching { openMeteo(city) }.getOrElse { metNo(city) }
             val at = System.currentTimeMillis()
             val data = Reading(city.name, city.latitude, city.longitude,
                 temp.roundToInt(), high, low, code, at)
@@ -100,6 +92,50 @@ object Weather {
                 .edit().putString("forecast", serialized).apply()
             data
         } catch (_: Exception) { cached(ctx, city) }
+    }
+
+    private data class Observed(val temp: Double, val code: Int, val high: Int?, val low: Int?)
+
+    private fun openMeteo(city: City): Observed {
+        val json = request("https://api.open-meteo.com/v1/forecast?latitude=${city.latitude}" +
+            "&longitude=${city.longitude}&current=temperature_2m,weather_code" +
+            "&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=auto")
+        val current = json.getJSONObject("current")
+        val temp = current.getDouble("temperature_2m")
+        if (!temp.isFinite()) error("Missing temperature")
+        val daily = json.optJSONObject("daily")
+        val high = daily?.optJSONArray("temperature_2m_max")?.optDouble(0, Double.NaN)
+            ?.takeIf { it.isFinite() }?.roundToInt()
+        val low = daily?.optJSONArray("temperature_2m_min")?.optDouble(0, Double.NaN)
+            ?.takeIf { it.isFinite() }?.roundToInt()
+        return Observed(temp, current.getInt("weather_code"), high, low)
+    }
+
+    /** MET Norway locationforecast; high/low over the next 24 hours, symbol mapped onto WMO codes. */
+    private fun metNo(city: City): Observed {
+        val series = request("https://api.met.no/weatherapi/locationforecast/2.0/compact?" +
+            "lat=%.4f&lon=%.4f".format(java.util.Locale.US, city.latitude, city.longitude))
+            .getJSONObject("properties").getJSONArray("timeseries")
+        val now = series.getJSONObject(0).getJSONObject("data")
+        val temp = now.getJSONObject("instant").getJSONObject("details").getDouble("air_temperature")
+        if (!temp.isFinite()) error("Missing temperature")
+        val day = (0 until minOf(24, series.length())).map {
+            series.getJSONObject(it).getJSONObject("data").getJSONObject("instant")
+                .getJSONObject("details").getDouble("air_temperature")
+        }
+        val symbol = now.optJSONObject("next_1_hours")?.optJSONObject("summary")?.optString("symbol_code") ?: ""
+        return Observed(temp, metNoCode(symbol), day.max().roundToInt(), day.min().roundToInt())
+    }
+
+    internal fun metNoCode(symbol: String) = when {
+        "thunder" in symbol -> 95
+        "snow" in symbol || "sleet" in symbol -> 71
+        "rain" in symbol -> 61
+        "fog" in symbol -> 45
+        symbol.startsWith("cloudy") -> 3
+        symbol.startsWith("partlycloudy") || symbol.startsWith("fair") -> 2
+        symbol.startsWith("clearsky") -> 0
+        else -> 3
     }
 
     fun glyph(code: Int) = when {

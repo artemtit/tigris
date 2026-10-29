@@ -415,11 +415,11 @@ class Wallpapers(private val ctx: Context, private val source: String = BING) {
     }
 
     companion object {
-        const val MAX_FILES = 16
+        const val MAX_FILES = 24   // ponytail: ~60 MB cache, the TV has ~350 MB free
         private const val MIN_FILES = 4
         private const val KEEP_DAYS = 3
         /** New pictures a day from a source with a list; random-picture links give [PER_LINK] each. */
-        private const val PER_DAY = 12
+        private const val PER_DAY = 24
         const val BING = "daily"
         const val ANIME = "anime"
         const val MINE = "mine"

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_apps_group">Приложения</string>
+    <string name="settings_row_value">%1$s · %2$s</string>
+    <string name="settings_removed_empty">Нет приложений для восстановления. Удалённые предустановленные приложения появятся здесь.</string>
+    <string name="settings_search">Поиск</string>
+    <string name="settings_city_short">Введите название города</string>
+    <string name="settings_city_minimum">Введите не менее двух символов.</string>
+    <string name="settings_about">Tigris %1$s\n\nДом для вашего телевизора. Приложения, обои и управление в стиле Liquid Glass.</string>
+</resources>

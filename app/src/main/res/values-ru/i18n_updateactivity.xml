@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="i18n_updateactivity_001">Установлено: %1$s</string>
+    <string name="i18n_updateactivity_002" formatted="false">Не установлено</string>
+    <string name="i18n_updateactivity_003" formatted="false">Приложения и обновления</string>
+    <string name="i18n_updateactivity_004" formatted="false">Приложения по требованию</string>
+    <string name="i18n_updateactivity_005" formatted="false">Обновления Tigris, а также необязательные приложения для трансляции и коротких сериалов HGTV.</string>
+    <string name="i18n_updateactivity_006" formatted="false">Обновления проверяются автоматически. Автоматически обновляются только установленные приложения. Новые необязательные приложения устанавливаются только по вашему действию.</string>
+    <string name="i18n_updateactivity_007" formatted="false">Проверить обновления</string>
+    <string name="i18n_updateactivity_008" formatted="false">Автообновление</string>
+    <string name="i18n_updateactivity_009" formatted="false">Вкл.</string>
+    <string name="i18n_updateactivity_010" formatted="false">Выкл.</string>
+    <string name="i18n_updateactivity_011" formatted="false">Разрешить Tigris устанавливать обновления</string>
+    <string name="i18n_updateactivity_012" formatted="false">На этом телевизоре нет страницы разрешения установки</string>
+    <string name="i18n_updateactivity_013">Установить или обновить: %1$s</string>
+    <string name="i18n_updateactivity_014" formatted="false">Открыть трансляцию MiracastReceiver</string>
+    <string name="i18n_updateactivity_015" formatted="false">Сначала проверьте обновления и установите компонент трансляции</string>
+    <string name="i18n_updateactivity_016" formatted="false">Назад</string>
+    <string name="i18n_updateactivity_017" formatted="false">Выполняется, подождите…</string>
+</resources>
