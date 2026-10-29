@@ -654,18 +654,15 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         val source = prefs.background
         io.execute {
             val result = runCatching {
-                // Match the bake to the captured frame's resolution. Rendering a
-                // larger bitmap only stretched pixels that the snapshot did not have.
-                val scale = minOf(0.5f, frame.width / sw.toFloat())
-                val rect = Rect((dockRect.left * scale).toInt(), (dockRect.top * scale).toInt(),
-                    (dockRect.right * scale).toInt(), (dockRect.bottom * scale).toInt())
-                val renderW = (sw * scale).toInt().coerceAtLeast(1)
-                val renderH = (sh * scale).toInt().coerceAtLeast(1)
+                // Bake at screen resolution: only the dock region is allocated, and a
+                // frame-sized bake left the rounded rim ~6x upscaled and jagged.
                 // Live video already provides motion and color; a lighter frost
-                // and partial opacity keep more of that detail visible while the
-                // asynchronous glass texture catches up with the video.
-                val glass = LiquidGlass.bake(frame, renderW, renderH, rect, dockRadius * scale,
-                    frostStrength = 0.3f, glassOpacity = 0.5f)
+                // and partial opacity keep more of that detail visible. The bake is
+                // one frozen frame per film (and some vendor PixelCopy paths swap
+                // chroma), so it is kept colourless: the live video under the 50%
+                // glass supplies the colour, instead of a stale orange fish.
+                val glass = LiquidGlass.bake(frame, sw, sh, dockRect, dockRadius,
+                    frostStrength = 0.3f, glassOpacity = 0.5f, saturation = 0f)
                     .also { it.prepareToDraw() }
                 glass to Wallpapers.blurred(frame, darken = 0.22f)
             }
