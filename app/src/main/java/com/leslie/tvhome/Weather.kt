@@ -158,6 +158,12 @@ object Weather {
         else -> R.string.weather_cloud
     })
 
+    /** One short line for the home date row, e.g. "⛅ 8°". */
+    fun compact(data: Reading, fahrenheit: Boolean): String {
+        val n = data.temperature ?: return glyph(data.code)
+        return "${glyph(data.code)} ${if (fahrenheit) (n * 9.0 / 5.0 + 32.0).roundToInt() else n}°"
+    }
+
     fun format(data: Reading, fahrenheit: Boolean): String {
         fun value(celsius: Int?): String {
             val n = celsius ?: return "—"

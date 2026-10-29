@@ -35,6 +35,10 @@ fun View.clipRounded(radiusPx: Float) {
 object Motion {
     val ease = DecelerateInterpolator(2f)
     val spring = OvershootInterpolator(1.6f)
+    /** Page glides (dock ↔ grid): moves at once, then a long soft settle like a critically damped spring. */
+    val glide = android.view.animation.PathInterpolator(0.2f, 0.8f, 0.2f, 1f)
+    /** Longer moves take a little longer, as a spring would: one row ≈ 430 ms, dock → grid ≈ 640 ms. */
+    fun glideMs(dy: Int) = (300 + kotlin.math.abs(dy) / 2).coerceAtMost(650)
 
     /** tvOS "bump" when focus cannot move any further in that direction. */
     fun bump(v: View, dx: Int, dy: Int) {

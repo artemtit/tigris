@@ -117,6 +117,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
 
     /** Liquid Glass slab behind the first row, the "dock". */
     private lateinit var dock: ImageView
+    /** The live-sampled frost glass over the dock, cross-faded in as the page glides up. */
+    private lateinit var dockFrost: ImageView
     private lateinit var frost: ImageView
     private lateinit var scrollGlass: FrostGlass
     private val dockRect = Rect()
@@ -387,8 +389,17 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         frost = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; alpha = 0f }
         scene.addView(frost, match())
         dock = ImageView(this).apply { scaleType = ImageView.ScaleType.FIT_XY }
-        scrollGlass = FrostGlass(dock, dockRadius)
         scene.addView(dock, FrameLayout.LayoutParams(dockRect.width(), dockRect.height()).apply {
+            leftMargin = dockRect.left; topMargin = dockRect.top
+        })
+        // The baked glass only lines up at rest; this frost takes over by opacity, never by a hard swap.
+        dockFrost = ImageView(this).apply {
+            scaleType = ImageView.ScaleType.FIT_XY; alpha = 0f
+            forceHasOverlappingRendering(false) // fade without an offscreen layer every frame
+        }
+        scrollGlass = FrostGlass(dockFrost, dockRadius)
+        dockFrost.setImageDrawable(scrollGlass)
+        scene.addView(dockFrost, FrameLayout.LayoutParams(dockRect.width(), dockRect.height()).apply {
             leftMargin = dockRect.left; topMargin = dockRect.top
         })
         dockGap = gap
@@ -406,9 +417,21 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             letterSpacing = -0.02f
             setShadowLayer(dp(12).toFloat(), 0f, 0f, Color.argb(50, 0, 0, 0))
         }
+        // Weather is opt-in: plain text after the date, same type and shadow, no card, never focusable.
+        weatherCard = text(20f, bold = true).apply {
+            setShadowLayer(dp(8).toFloat(), 0f, 0f, Color.argb(60, 0, 0, 0))
+            maxLines = 1
+            isFocusable = false
+            visibility = if (prefs.weatherEnabled) View.VISIBLE else View.GONE
+        }
+        val dateRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(bigDate, LinearLayout.LayoutParams(-2, -2))
+            addView(weatherCard, LinearLayout.LayoutParams(-2, -2))
+        }
         bigClock = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            addView(bigDate, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(4) })
+            addView(dateRow, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(4) })
             addView(bigTime, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(10) })
         }
         header.addView(bigClock, FrameLayout.LayoutParams(-2, -2).apply {
@@ -445,23 +468,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         header.addView(icons, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.TOP).apply {
             rightMargin = dp(32); topMargin = dp(26)
         })
-        // Weather is opt-in. The compact translucent card sits below the status icons,
-        // does not steal D-pad focus, and leaves the normal Dock layout unchanged.
-        weatherCard = text(15f, Color.WHITE, weight = 500).apply {
-            maxLines = 2
-            setPadding(dp(17), dp(10), dp(17), dp(10))
-            background = android.graphics.drawable.GradientDrawable().apply {
-                setColor(Color.argb(45, 255, 255, 255))
-                cornerRadius = dp(17).toFloat()
-                setStroke(dp(1), Color.argb(62, 255, 255, 255))
-            }
-            isFocusable = false
-            visibility = if (prefs.weatherEnabled) View.VISIBLE else View.GONE
-        }
-        header.addView(weatherCard, FrameLayout.LayoutParams(dp(310), dp(69),
-            Gravity.TOP or Gravity.END).apply {
-            rightMargin = dp(31); topMargin = dp(79)
-        })
         listOf(netButton, ccButton, avatar).forEach { b ->
             b.setOnKeyListener { _, code, e ->
                 if (e.action != KeyEvent.ACTION_DOWN) false else when {
@@ -497,7 +503,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 val row = getPosition(child) / cols
                 val wantedOffset = if (row == 0) 0 else firstRowY + row * rowPitch - expandedRowY
                 val dy = wantedOffset - scrollY
-                if (dy != 0) parent.smoothScrollBy(0, dy, Motion.ease, 360)
+                // Restarts from the live offset when pressed again mid-glide, so it never jumps.
+                if (dy != 0) parent.smoothScrollBy(0, dy, Motion.glide, Motion.glideMs(dy))
                 return true
             }
         }
@@ -519,17 +526,20 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 scrollY = gridOffset() ?: (scrollY + dy)
                 val off = scrollY.toFloat()
                 // Keep the glass with the first row and sample the wallpaper at its current position.
-                val expansion = (off / (rowPitch * 0.7f)).coerceIn(0f, 1f)
+                // Spread over most of the dock → second-row glide, so blur, glass and header
+                // follow the scroll's own curve instead of finishing in its first few frames.
+                val expansion = (off / ((firstRowY + rowPitch - expandedRowY) * 0.8f)).coerceIn(0f, 1f)
                 dock.translationY = -off
+                dockFrost.translationY = -off
                 icons.translationY = -off
-                weatherCard.alpha = 1f - expansion
                 // Off-screen controls must also leave remote-control focus navigation.
                 icons.visibility = if (off > 0f && off >= icons.bottom) View.INVISIBLE else View.VISIBLE
-                dock.alpha = 1f
+                dock.alpha = 1f - expansion
+                dockFrost.alpha = expansion
                 frost.alpha = expansion
-                if (off > 0f) { dock.setImageDrawable(scrollGlass); scrollGlass.invalidateSelf() }
-                else dock.setImageDrawable(dockShown)
-                // The large clock gives way to the rows coming up under it.
+                if (off > 0f) scrollGlass.invalidateSelf()
+                // The date, weather and large clock drift up and give way to the rows coming up under them.
+                bigClock.translationY = -expansion * dp(28)
                 if (!shelfShown) bigClock.alpha = 1f - expansion
                 updateRecent()
             }
@@ -538,6 +548,9 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         header.bringToFront()
         setContentView(root)
     }
+
+    /** The weather follows the date on its line: "четверг, 29 окт.  ·  ⛅ 8°". */
+    private fun showWeather(s: String) { weatherCard.text = "  ·  $s" }
 
     /** Called by the home-screen minute ticker only; never does network work while off. */
     private fun refreshWeather() {
@@ -549,12 +562,12 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         weatherCard.visibility = View.VISIBLE
         val name = prefs.weatherCity
         if (name.isBlank()) {
-            weatherCard.text = I18n.text(R.string.weather_weather_pending)
+            showWeather(I18n.text(R.string.weather_weather_pending))
             return
         }
         val city = Weather.City(name, prefs.weatherLatitude, prefs.weatherLongitude)
-        Weather.cached(this, city)?.let { weatherCard.text = Weather.format(it, prefs.weatherFahrenheit) }
-            ?: run { weatherCard.text = I18n.text(R.string.weather_weather_unavailable) }
+        Weather.cached(this, city)?.let { showWeather(Weather.compact(it, prefs.weatherFahrenheit)) }
+            ?: run { showWeather(I18n.text(R.string.weather_weather_unavailable)) }
         val now = System.currentTimeMillis()
         if (weatherLoading || now - lastWeatherAttempt < 2 * 60_000L) return
         weatherLoading = true
@@ -564,8 +577,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             main.post {
                 weatherLoading = false
                 if (!isDestroyed && prefs.weatherEnabled && prefs.weatherCity == city.name) {
-                    weatherCard.text = observed?.let { Weather.format(it, prefs.weatherFahrenheit) }
-                        ?: I18n.text(R.string.weather_weather_unavailable)
+                    showWeather(observed?.let { Weather.compact(it, prefs.weatherFahrenheit) }
+                        ?: I18n.text(R.string.weather_weather_unavailable))
                 }
             }
         }
@@ -697,7 +710,6 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             fade.startTransition(fadeMs)
         }
         dockShown = next
-        if (scrollY > 0) dock.setImageDrawable(scrollGlass)
     }
 
     // ------------------------------------------------------------------ recent
@@ -1370,7 +1382,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         if (intent.getBooleanExtra(EXTRA_GUARD, false)) return
         focusedPos = 0
         // Scroll by our own offset: smoothScrollToPosition aligns to the padding and leaves the grid off its resting place.
-        grid.smoothScrollBy(0, -scrollY, Motion.ease, 360)
+        grid.smoothScrollBy(0, -scrollY, Motion.glide, Motion.glideMs(scrollY))
         grid.postDelayed({ focusAt(0) }, 400)
     }
 
