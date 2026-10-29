@@ -23,6 +23,11 @@ class AerialQueueTest {
         played.zipWithNext().forEach { (a, b) -> assertNotEquals(a, b) }
     }
 
+    @Test fun permanentHttpRefusalsSkipTheFilm() {
+        listOf(301, 403, 404, 410).forEach { assertTrue(it.toString(), AerialQueue.skip(it)) }
+        listOf(200, 206, 408, 416, 429, 500, 503).forEach { assertFalse(it.toString(), AerialQueue.skip(it)) }
+    }
+
     @Test fun savedOrderSurvivesARestartUnlessTheCatalogueChanged() {
         val order = AerialQueue.order(ids, "", Random(1))
         val saved = order.joinToString(",")

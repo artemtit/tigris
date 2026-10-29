@@ -63,6 +63,9 @@ internal object AerialQueue {
     const val CAP_BYTES = 400L shl 20
     const val MIN_FREE_BYTES = 150L shl 20
 
+    /** Permanent HTTP refusal (3xx, 4xx except timeout/range/rate-limit): skip this film instead of retrying it. */
+    fun skip(code: Int) = code in 300..499 && code != 408 && code != 416 && code != 429
+
     /** The saved shuffle if it still holds exactly these films, else a new one. */
     fun order(ids: List<String>, saved: String, random: Random): List<String> {
         val old = saved.split(',').filter { it.isNotEmpty() }

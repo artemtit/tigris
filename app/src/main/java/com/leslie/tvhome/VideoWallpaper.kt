@@ -69,6 +69,7 @@ internal class VideoWallpaper(
     private var key: String? = null
     private var aerial = false
     private var failures = 0
+    private var failedKey: String? = null // survives stop(): don't restart a source that just failed
     private val dlThread = HandlerThread("TigrisAerialDownload").apply { start() }
     private val dl = Handler(dlThread.looper)
     @Volatile private var dlGeneration = 0L
@@ -167,7 +168,8 @@ internal class VideoWallpaper(
     fun start(source: String) {
         val file = MediaFiles.wallpaper(ctx)
         val nextKey = if (source == LOCAL) "$source:${file?.lastModified()}:${file?.length()}" else source
-        if (key == nextKey) return
+        if (key == nextKey || failedKey == nextKey) return
+        failedKey = null
         stop()
         key = nextKey
         if (source == LOCAL && file == null) { fail(); return }
@@ -197,7 +199,7 @@ internal class VideoWallpaper(
                 crop()
             }
             override fun onPlayerError(error: PlaybackException) {
-                if (player === p) nextAfterError()
+                if (player === p) nextAfterError(error.errorCode)
             }
             override fun onPlaybackStateChanged(state: Int) {
                 if (player !== p) return
@@ -214,7 +216,7 @@ internal class VideoWallpaper(
         // The newest finished film was downloaded ahead and not shown yet; older ones have played.
         val done = aerialDir(ctx).listFiles { f -> f.name.endsWith(".mov") }.orEmpty()
             .sortedByDescending { it.lastModified() }
-        done.drop(1).forEach { it.delete() }
+        done.drop(1).let { old -> dl.post { old.forEach { it.delete() } } }
         // First run: the static background stays until the first film is fully downloaded.
         ready = done.firstOrNull()
         if (ready != null) showNext() else fetchNext()
@@ -226,7 +228,7 @@ internal class VideoWallpaper(
         val old = current
         current = next
         play(android.net.Uri.fromFile(next).toString())
-        if (old != null && old != next) old.delete()
+        if (old != null && old != next) dl.post { old.delete() }
         fetchNext()
     }
 
@@ -298,7 +300,7 @@ internal class VideoWallpaper(
         if (have > 0) c.setRequestProperty("Range", "bytes=$have-")
         try {
             val code = c.responseCode
-            if (code == 404) return false
+            if (AerialQueue.skip(code)) return false
             if (code == 416) { part.delete(); throw IOException("HTTP 416") }
             if (code != 200 && code != 206) throw IOException("HTTP $code")
             if (code == 206 && c.getHeaderField("Content-Range")?.startsWith("bytes $have-") != true) throw IOException("bad range")
@@ -352,13 +354,14 @@ internal class VideoWallpaper(
         p.play()
     }
 
-    /** A broken download is deleted; the next finished film (or the next download) takes over. */
-    private fun nextAfterError() {
+    /** A film that can't be read (IO/parsing) is deleted; the next finished film (or the next download) takes over. */
+    private fun nextAfterError(errorCode: Int = 0) {
         val p = player ?: return
         if (!aerial || ++failures >= 3) { fail(); return }
         main.removeCallbacks(timeout)
         p.stop()
-        current?.delete()
+        // Decoder errors and the timeout say nothing about the file: keep it.
+        if (errorCode in 2000..3999) current?.let { f -> dl.post { f.delete() } }
         current = null
         texture.alpha = 0f
         clearFrame()
@@ -366,7 +369,9 @@ internal class VideoWallpaper(
     }
 
     private fun fail() {
+        val k = key
         stop()
+        failedKey = k
         Toast.makeText(ctx, I18n.text(R.string.live_wallpaper_failed), Toast.LENGTH_LONG).show()
     }
 
