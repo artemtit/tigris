@@ -135,8 +135,8 @@
     <string name="i18n_settingsactivity_133" formatted="false">防止系统自动关掉 ADB 调试。</string>
     <string name="i18n_settingsactivity_134" formatted="false">正在设置…</string>
     <string name="i18n_settingsactivity_135" formatted="false">需要先授权本机调试</string>
-    <string name="i18n_settingsactivity_136" formatted="false">系统设置</string>
-    <string name="i18n_settingsactivity_137" formatted="false">打开电视自带的设置。</string>
+    <string name="i18n_settingsactivity_136" formatted="false">Android 系统设置</string>
+    <string name="i18n_settingsactivity_137" formatted="false">蓝牙、画面、声音、日期时间和网络：没有系统权限时 Tigris 无法更改。</string>
     <string name="i18n_settingsactivity_138" formatted="false">关于</string>
     <string name="i18n_settingsactivity_139" formatted="false">Tigris 主屏幕，仿 tvOS 的 Android TV 桌面。</string>
     <string name="i18n_settingsactivity_140" formatted="false">版本 </string>
@@ -158,4 +158,31 @@
     <string name="i18n_settingsactivity_156" formatted="false">每天</string>
     <string name="i18n_settingsactivity_157">%1$s 小时</string>
     <string name="i18n_settingsactivity_158">%1$s 分钟</string>
+    <string name="settings_android_section">Android</string>
+    <string name="settings_network">网络</string>
+    <string name="settings_network_help">连接状态由 Tigris 读取。更换网络请在 Android 设置中进行。</string>
+    <string name="settings_network_status">状态</string>
+    <string name="settings_network_type">连接</string>
+    <string name="settings_network_ethernet">有线网络</string>
+    <string name="settings_network_none">未连接</string>
+    <string name="settings_network_name">网络名称</string>
+    <string name="settings_network_name_help">允许本机调试后显示；否则 Android 不向应用提供网络名称。</string>
+    <string name="settings_network_internet">互联网</string>
+    <string name="settings_network_online">可用</string>
+    <string name="settings_network_offline">不可用</string>
+    <string name="settings_network_ip">IP 地址</string>
+    <string name="settings_unavailable">不可用</string>
+    <string name="settings_network_change">选择 Wi‑Fi 网络</string>
+    <string name="settings_network_change_help">将打开 Android 设置：连接网络需要系统权限。</string>
+    <string name="settings_device">本机信息</string>
+    <string name="settings_device_help">本机信息，仅供查看。</string>
+    <string name="settings_device_model">型号</string>
+    <string name="settings_device_android">Android 版本</string>
+    <string name="settings_device_screen">分辨率</string>
+    <string name="settings_device_memory">内存</string>
+    <string name="settings_device_storage">存储空间</string>
+    <string name="settings_free_of">可用 %1$s，共 %2$s</string>
+    <string name="settings_device_time">日期和时间</string>
+    <string name="settings_device_timezone">时区</string>
+    <string name="settings_device_tigris">Tigris 版本</string>
 </resources>

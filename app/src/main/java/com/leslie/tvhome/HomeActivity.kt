@@ -451,7 +451,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             setPadding(dp(8), dp(8), dp(8), dp(8))
         }
         netButton = IconButton(this, R.drawable.ic_wifi) {
-            runCatching { startActivity(tv.wifiIntent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            startActivity(Intent(this, SettingsActivity::class.java).putExtra(SettingsActivity.EXTRA_PAGE, SettingsActivity.PAGE_NETWORK))
         }
         ccButton = IconButton(this, R.drawable.ic_toggles) { control.open() }
         netButton.contentDescription = I18n.text(R.string.i18n_homeactivity_001)
