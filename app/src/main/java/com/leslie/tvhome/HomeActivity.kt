@@ -51,6 +51,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         const val SHELF_SECONDS = 8
         private const val EXTRA_GUARD = "com.leslie.tvhome.GUARD"
         private const val EXTRA_WAKE = "com.leslie.tvhome.WAKE"
+        const val EXTRA_INPUTS = "com.leslie.tvhome.INPUTS"
 
         /**
          * How the home guard and the boot receiver bring the home screen back: the same task, with
@@ -1369,6 +1370,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             return
         }
         if (welcome != null) return
+        if (intent.getBooleanExtra(EXTRA_INPUTS, false)) { intent.removeExtra(EXTRA_INPUTS); control.open(); return } // remapped evo button
         if (intent.getBooleanExtra(Intro.EXTRA_PREVIEW, false)) { playIntro(preview = true); return }
         if (intent.getBooleanExtra(EXTRA_WAKE, false)) return // consume only the pending wake, never re-arm
         // Home pressed while already home: close everything and go back to the top.

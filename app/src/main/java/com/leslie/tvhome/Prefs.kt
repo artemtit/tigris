@@ -143,6 +143,9 @@ class Prefs(ctx: Context) {
         set(v) = sp.edit().putString("saver_mode", v).apply()
 
     /** Keep the home screen in front on firmwares that pin Home to their own launcher (Guard.kt). */
+    /** Remote buttons the firmware maps to apps that are not there: a package, "inputs" or "" ([RemoteRemap]). */
+    fun remap(key: String): String = sp.getString(key, RemoteRemap.default(key)) ?: ""
+
     var guard: Boolean
         get() = sp.getBoolean("guard", false)
         set(v) = sp.edit().putBoolean("guard", v).apply()

@@ -243,6 +243,10 @@ class HomeGuardService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        RemoteRemap.prefKey(event.keyCode)?.let { key ->
+            if (event.action == KeyEvent.ACTION_UP && !event.isCanceled) runRemap(key)
+            return true
+        }
         if (!Guard.guardOn(this)) return false
         if (!HomeKeyCodes.isHome(event.keyCode, Guard.isXiaomi())) return false
         if (event.action == KeyEvent.ACTION_UP && !event.isCanceled) {
@@ -250,6 +254,26 @@ class HomeGuardService : AccessibilityService() {
             takeUserHome("Home key")
         }
         return true
+    }
+
+    private fun runRemap(key: String) {
+        val target = Prefs(this).remap(key)
+        Log.i(TAG, "remote button $key -> '$target'")
+        if (target.isEmpty()) return
+        runCatching {
+            val intent = if (target == RemoteRemap.INPUTS) {
+                Intent(this, HomeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .putExtra(HomeActivity.EXTRA_INPUTS, true)
+            } else {
+                (packageManager.getLeanbackLaunchIntentForPackage(target) ?: packageManager.getLaunchIntentForPackage(target))
+                    ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            } ?: run { Log.w(TAG, "remap target $target is not installed"); return }
+            startActivity(intent)
+            if (target != RemoteRemap.INPUTS) {
+                val p = Prefs(this)
+                p.recentLaunches = RecentOrder.recordLaunch(target, p.recentLaunches, System.currentTimeMillis())
+            }
+        }.onFailure { Log.w(TAG, "remap $key failed", it) }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
