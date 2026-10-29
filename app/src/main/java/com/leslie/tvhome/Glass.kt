@@ -38,6 +38,7 @@ object LiquidGlass {
         overlay: Drawable? = null,
         frostStrength: Float = 1f,
         glassOpacity: Float = 1f,
+        saturation: Float = 1.2f,
     ): Bitmap {
         val w = rect.width()
         val h = rect.height()
@@ -105,9 +106,9 @@ object LiquidGlass {
                 var r = Color.red(c).toFloat()
                 var g = Color.green(c).toFloat()
                 var b = Color.blue(c).toFloat()
-                // A little milky and a little more saturated than what is behind.
+                // A little milky and (by default) a little more saturated than what is behind.
                 val luma = r * 0.3f + g * 0.59f + b * 0.11f
-                r = luma + (r - luma) * 1.2f; g = luma + (g - luma) * 1.2f; b = luma + (b - luma) * 1.2f
+                r = luma + (r - luma) * saturation; g = luma + (g - luma) * saturation; b = luma + (b - luma) * saturation
                 r = r * transmission + lift; g = g * transmission + lift; b = b * transmission + lift
 
                 // Specular rim: strongest where it faces the light (top left), a softer

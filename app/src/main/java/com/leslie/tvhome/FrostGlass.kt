@@ -10,7 +10,6 @@ class FrostGlass(private val owner: View, private val radius: Float) : Drawable(
     private val rect = RectF()
     private val matrix = Matrix()
     private val location = IntArray(2)
-    private val path = Path()
     private var bitmap: Bitmap? = null
     private var texture: BitmapShader? = null
     var focused = false
@@ -21,8 +20,7 @@ class FrostGlass(private val owner: View, private val radius: Float) : Drawable(
     override fun draw(canvas: Canvas) {
         rect.set(bounds)
         val r = radius.coerceAtMost(minOf(rect.width(), rect.height()) / 2)
-        path.reset(); path.addRoundRect(rect, r, r, Path.Direction.CW)
-        val save = canvas.save(); canvas.clipPath(path)
+        // Anti-aliased round rects, not clipPath: a hardware canvas clips paths without AA (jagged rim).
         bitmap?.let { b ->
             owner.getLocationInWindow(location)
             val screen = owner.rootView
@@ -30,12 +28,11 @@ class FrostGlass(private val owner: View, private val radius: Float) : Drawable(
             matrix.setScale(scale, scale)
             matrix.postTranslate((screen.width - b.width * scale) / 2 - location[0], (screen.height - b.height * scale) / 2 - location[1])
             texture?.setLocalMatrix(matrix); paint.shader = texture; paint.alpha = 255
-            canvas.drawRect(rect, paint)
+            canvas.drawRoundRect(rect, r, r, paint)
         }
         paint.shader = LinearGradient(0f, rect.top, rect.right, rect.bottom,
             intArrayOf(Color.argb(if (focused) 100 else 48, 255, 255, 255), Color.argb(26, 210, 224, 255), Color.argb(55, 12, 18, 34)), null, Shader.TileMode.CLAMP)
-        canvas.drawRect(rect, paint); paint.shader = null
-        canvas.restoreToCount(save)
+        canvas.drawRoundRect(rect, r, r, paint); paint.shader = null
         paint.style = Paint.Style.STROKE; paint.strokeWidth = if (focused) 3f else 1.5f
         paint.color = Color.argb(if (focused) 240 else 100, 255, 255, 255)
         rect.inset(paint.strokeWidth / 2, paint.strokeWidth / 2)
