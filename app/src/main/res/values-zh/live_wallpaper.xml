@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="live_wallpaper_local">我的视频 · 4K</string>
-    <string name="live_wallpaper_aerial">Apple 航拍 · 4K</string>
-    <string name="live_wallpaper_stream">在线播放，优先 4K；不支持时降级</string>
+    <string name="live_wallpaper_aerial">Apple 航拍</string>
+    <string name="live_wallpaper_stream">提前下载下一部影片，1080p，不重复</string>
     <string name="live_wallpaper_upload">先扫码，用手机上传桌面视频</string>
     <string name="live_wallpaper_failed">视频暂时无法播放，已显示静态背景；请检查视频格式或网络</string>
     <string name="download_default_backdrop">默认设置背景图</string>

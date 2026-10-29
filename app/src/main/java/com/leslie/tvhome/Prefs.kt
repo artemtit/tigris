@@ -109,6 +109,14 @@ class Prefs(ctx: Context) {
         get() = sp.getString("aerial_quality", MediaQuality.AUTO)!!
         set(v) = sp.edit().putString("aerial_quality", v).apply()
 
+    /** Live-wallpaper aerials: the shuffled film order and the next one to download. */
+    var aerialQueue: String
+        get() = sp.getString("aerial_queue", "")!!
+        set(v) = sp.edit().putString("aerial_queue", v).apply()
+    var aerialQueuePos: Int
+        get() = sp.getInt("aerial_queue_pos", 0)
+        set(v) = sp.edit().putInt("aerial_queue_pos", v).apply()
+
     /** Seconds each photo stays up in the photo frame. */
     var frameSeconds: Int
         get() = sp.getInt("frame_seconds", 30)

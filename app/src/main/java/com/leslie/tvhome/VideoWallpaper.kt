@@ -20,12 +20,15 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlin.random.Random
 
 /**
  * Shared tvOS aerial/local video wallpaper. Video decoding stays in the hardware
@@ -35,6 +38,9 @@ import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
  * The extra source Surface is only borrowed for a single PixelCopy and released.
  * PixelCopy can fail on vendor codecs: video keeps playing and the static glass
  * remains in place until a good frame arrives.
+ *
+ * Aerials never stream: each film plays from a finished download while the next one in the
+ * shuffled [AerialQueue] downloads; the current film loops until the next is on disk.
  */
 @androidx.annotation.OptIn(UnstableApi::class)
 internal class VideoWallpaper(
@@ -61,10 +67,15 @@ internal class VideoWallpaper(
     private val copyHandler = Handler(copyThread.looper)
     private var player: ExoPlayer? = null
     private var key: String? = null
-    private var films: List<List<String>> = emptyList()
-    private var filmIndex = 0
-    private var variant = 0
+    private var aerial = false
     private var failures = 0
+    private val dlThread = HandlerThread("TigrisAerialDownload").apply { start() }
+    private val dl = Handler(dlThread.looper)
+    @Volatile private var dlGeneration = 0L
+    private var fetching = false
+    private var current: File? = null
+    private var ready: File? = null
+    private val hevc by lazy { MediaQuality.hevcDecoderPresent() }
     private var aspect = 16f / 9f
     private var captureGeneration = 0L
     private var pendingCapture = false
@@ -160,28 +171,23 @@ internal class VideoWallpaper(
         stop()
         key = nextKey
         if (source == LOCAL && file == null) { fail(); return }
-        films = if (source == LOCAL) listOf(listOf(android.net.Uri.fromFile(file!!).toString())) else {
-            val hevc = MediaQuality.hevcDecoderPresent()
-            val uhd = MediaQuality.uhdAerial(ctx)
-            Aerials.all(ctx).shuffled().map { MediaQuality.aerialCandidates(it.url, it.hevc, uhd, hevc) }
-        }
-        if (films.isEmpty()) { fail(); return }
-        val http = DefaultHttpDataSource.Factory().setConnectTimeoutMs(5000).setReadTimeoutMs(8000)
-        val sources = DefaultMediaSourceFactory(DefaultDataSource.Factory(ctx, http))
-            .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(1))
+        aerial = source == AERIAL
+        // Both sources play local files only, so small buffers never starve.
         val buffers = DefaultLoadControl.Builder()
             .setBufferDurationsMs(5000, 15000, 500, 1000)
             .setTargetBufferBytes(24 * 1024 * 1024)
             .setPrioritizeTimeOverSizeThresholds(false).build()
-        val p = ExoPlayer.Builder(ctx).setLoadControl(buffers).setMediaSourceFactory(sources).build()
+        val p = ExoPlayer.Builder(ctx).setLoadControl(buffers).build()
         player = p
         p.volume = 0f
-        p.repeatMode = if (source == LOCAL) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+        // Aerials loop too: the film repeats until the next download is ready.
+        p.repeatMode = Player.REPEAT_MODE_ONE
         p.setVideoTextureView(texture)
         p.addListener(object : Player.Listener {
             override fun onRenderedFirstFrame() {
                 if (player !== p) return
                 main.removeCallbacks(timeout)
+                failures = 0
                 texture.alpha = 1f
                 main.removeCallbacks(sample)
                 sample.run()
@@ -197,15 +203,128 @@ internal class VideoWallpaper(
                 if (player !== p) return
                 if (state == Player.STATE_BUFFERING) armTimeout()
                 if (state == Player.STATE_READY) main.removeCallbacks(timeout)
-                if (state == Player.STATE_ENDED) {
-                    failures = 0
-                    filmIndex = (filmIndex + 1) % films.size
-                    variant = 0
-                    playCurrent()
-                }
+            }
+            override fun onMediaItemTransition(item: MediaItem?, reason: Int) {
+                // End of a loop: switch films here if the next one has finished downloading.
+                if (player === p && aerial && reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT)
+                    main.post { if (player === p && ready != null) showNext() }
             }
         })
-        playCurrent()
+        if (!aerial) { play(android.net.Uri.fromFile(file!!).toString()); return }
+        // The newest finished film was downloaded ahead and not shown yet; older ones have played.
+        val done = aerialDir(ctx).listFiles { f -> f.name.endsWith(".mov") }.orEmpty()
+            .sortedByDescending { it.lastModified() }
+        done.drop(1).forEach { it.delete() }
+        // First run: the static background stays until the first film is fully downloaded.
+        ready = done.firstOrNull()
+        if (ready != null) showNext() else fetchNext()
+    }
+
+    private fun showNext() {
+        val next = ready ?: return
+        ready = null
+        val old = current
+        current = next
+        play(android.net.Uri.fromFile(next).toString())
+        if (old != null && old != next) old.delete()
+        fetchNext()
+    }
+
+    /** Downloads the next queued film on [dl]; the result comes back to [onDownloaded]. */
+    private fun fetchNext() {
+        if (fetching || player == null || !aerial || ready != null) return
+        fetching = true
+        val gen = dlGeneration
+        val keep = current?.name
+        dl.post { download(gen, keep, 0) }
+    }
+
+    private fun onDownloaded(gen: Long, file: File) {
+        if (gen != dlGeneration || player == null) return
+        fetching = false
+        ready = file
+        if (current == null) showNext()
+    }
+
+    /** No network or Apple unreachable: keep looping the current film and retry with backoff. */
+    private fun download(gen: Long, keep: String?, attempt: Int) {
+        if (gen != dlGeneration) return
+        val file = runCatching { fetchOne(gen, keep) }.getOrNull()
+        if (gen != dlGeneration) return
+        if (file != null) main.post { onDownloaded(gen, file) }
+        else dl.postDelayed({ download(gen, keep, attempt + 1) }, minOf(600_000L, 15_000L shl minOf(attempt, 6)))
+    }
+
+    /** Next film of the persisted shuffle that fits the disk budget, or null to retry later. */
+    private fun fetchOne(gen: Long, keep: String?): File? {
+        val prefs = Prefs(ctx)
+        val films = Aerials.all(ctx).associateBy { it.id }
+        var order = AerialQueue.order(films.keys.toList(), prefs.aerialQueue, Random)
+        var pos = prefs.aerialQueuePos
+        val dir = aerialDir(ctx)
+        // ponytail: at most 10 films per attempt, so an all-too-big catalogue backs off instead of spinning.
+        repeat(minOf(10, order.size)) {
+            AerialQueue.at(order, pos, Random).let { order = it.first; pos = it.second }
+            val film = films.getValue(order[pos])
+            val file = File(dir, film.id + ".mov")
+            if (file.name != keep) {
+                // 4K films (500 MB+) never fit the budget: 2K HEVC first, AVC if HEVC isn't decodable.
+                for (url in MediaQuality.aerialCandidates(film.url, film.hevc, false, hevc)) {
+                    val part = File(dir, url.substringAfterLast('/') + ".part")
+                    if (gen != dlGeneration) throw InterruptedIOException("stopped")
+                    dir.listFiles().orEmpty().filter { it.name != keep && it != part }.forEach { it.delete() }
+                    if (fetch(gen, url, part, dir)) {
+                        if (!part.renameTo(file)) throw IOException("rename")
+                        prefs.aerialQueue = order.joinToString(",")
+                        prefs.aerialQueuePos = pos + 1
+                        return file
+                    }
+                }
+            }
+            pos++
+            prefs.aerialQueue = order.joinToString(",")
+            prefs.aerialQueuePos = pos
+        }
+        return null
+    }
+
+    /** True once [part] holds the whole film; false if it is missing or doesn't fit; throws on network errors. */
+    private fun fetch(gen: Long, url: String, part: File, dir: File): Boolean {
+        val have = part.length()
+        val c = URL(url).openConnection() as HttpURLConnection
+        c.connectTimeout = 10_000
+        c.readTimeout = 15_000
+        if (have > 0) c.setRequestProperty("Range", "bytes=$have-")
+        try {
+            val code = c.responseCode
+            if (code == 404) return false
+            if (code == 416) { part.delete(); throw IOException("HTTP 416") }
+            if (code != 200 && code != 206) throw IOException("HTTP $code")
+            val resumed = if (code == 206) have else 0L
+            val length = c.contentLengthLong
+            if (length <= 0) return false
+            val total = resumed + length
+            val others = dir.listFiles().orEmpty().filter { it != part }.sumOf { it.length() }
+            if (!AerialQueue.fits(total, resumed, others, android.os.StatFs(dir.path).availableBytes)) {
+                part.delete()
+                return false
+            }
+            c.inputStream.use { input ->
+                FileOutputStream(part, code == 206).use { out ->
+                    val buf = ByteArray(64 * 1024)
+                    while (true) {
+                        if (gen != dlGeneration) throw InterruptedIOException("stopped")
+                        val n = input.read(buf)
+                        if (n < 0) break
+                        out.write(buf, 0, n)
+                    }
+                }
+            }
+            if (part.length() != total) throw IOException("short download")
+            return true
+        } finally {
+            c.disconnect()
+        }
     }
 
     private fun crop() {
@@ -221,23 +340,27 @@ internal class VideoWallpaper(
         main.postDelayed(timeout, 20_000L)
     }
 
-    private fun playCurrent() {
+    private fun play(uri: String) {
         val p = player ?: return
         texture.alpha = 0f
         clearFrame()
-        p.setMediaItem(MediaItem.fromUri(films[filmIndex][variant]))
+        p.setMediaItem(MediaItem.fromUri(uri))
         armTimeout()
         p.prepare()
         p.play()
     }
 
+    /** A broken download is deleted; the next finished film (or the next download) takes over. */
     private fun nextAfterError() {
-        if (player == null) return
-        if (++variant < films[filmIndex].size) { playCurrent(); return }
-        if (++failures >= 3 || films.size == 1) { fail(); return }
-        filmIndex = (filmIndex + 1) % films.size
-        variant = 0
-        playCurrent()
+        val p = player ?: return
+        if (!aerial || ++failures >= 3) { fail(); return }
+        main.removeCallbacks(timeout)
+        p.stop()
+        current?.delete()
+        current = null
+        texture.alpha = 0f
+        clearFrame()
+        if (ready != null) showNext() else fetchNext()
     }
 
     private fun fail() {
@@ -262,15 +385,19 @@ internal class VideoWallpaper(
         texture.alpha = 0f
         clearFrame()
         key = null
-        filmIndex = 0
-        variant = 0
         failures = 0
-        films = emptyList()
+        // Cancels the download in flight (its .part resumes next time) and any pending retry.
+        dlGeneration++
+        dl.removeCallbacksAndMessages(null)
+        fetching = false
+        current = null
+        ready = null
     }
 
     fun destroy() {
         stop()
         copyThread.quitSafely()
+        dlThread.quitSafely()
     }
 
     companion object {
@@ -278,5 +405,7 @@ internal class VideoWallpaper(
         const val AERIAL = "video_aerial"
         val SOURCES = listOf(LOCAL, AERIAL)
         fun label(source: String) = I18n.text(if (source == LOCAL) R.string.live_wallpaper_local else R.string.live_wallpaper_aerial)
+        /** Holds at most the film on screen and the one downloaded ahead. */
+        fun aerialDir(ctx: Context) = File(ctx.cacheDir, "aerials").apply { mkdirs() }
     }
 }

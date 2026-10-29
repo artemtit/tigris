@@ -25,6 +25,7 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.random.Random
 
 /**
  * Apple TV's aerial films. Only the catalogue ships (assets/aerials.json, from Aerial's repo,
@@ -55,6 +56,30 @@ object Aerials {
             }, o.optString("hevc").takeIf { it.startsWith("https://") })
         }
     }
+}
+
+/** The live wallpaper's film order: every film once per shuffle, kept across restarts. */
+internal object AerialQueue {
+    const val CAP_BYTES = 400L shl 20
+    const val MIN_FREE_BYTES = 150L shl 20
+
+    /** The saved shuffle if it still holds exactly these films, else a new one. */
+    fun order(ids: List<String>, saved: String, random: Random): List<String> {
+        val old = saved.split(',').filter { it.isNotEmpty() }
+        return if (old.size == ids.size && old.toSet() == ids.toSet()) old else ids.shuffled(random)
+    }
+
+    /** Order and position to use; after the last film, a new shuffle that doesn't start with it. */
+    fun at(order: List<String>, pos: Int, random: Random): Pair<List<String>, Int> {
+        if (pos in order.indices) return order to pos
+        val next = order.shuffled(random)
+        if (next.size > 1 && next.first() == order.last()) return (next.drop(1) + next.first()) to 0
+        return next to 0
+    }
+
+    /** A [total]-byte film ([partBytes] already on disk) fits beside [otherBytes] of films and [freeBytes] free. */
+    fun fits(total: Long, partBytes: Long, otherBytes: Long, freeBytes: Long): Boolean =
+        otherBytes + total <= CAP_BYTES && freeBytes - (total - partBytes) >= MIN_FREE_BYTES
 }
 
 /** What the photo frame activity and the system screensaver show. */

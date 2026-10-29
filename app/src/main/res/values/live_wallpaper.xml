@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="live_wallpaper_local">My video · 4K</string>
-    <string name="live_wallpaper_aerial">Apple aerials · 4K</string>
-    <string name="live_wallpaper_stream">Stream in 4K when supported; fall back if needed</string>
+    <string name="live_wallpaper_aerial">Apple aerials</string>
+    <string name="live_wallpaper_stream">Downloads the next film ahead in 1080p; no repeats</string>
     <string name="live_wallpaper_upload">Scan the QR code to upload a video first</string>
     <string name="live_wallpaper_failed">Video unavailable. Showing a static background; check format or network.</string>
     <string name="download_default_backdrop">Default Settings background</string>
