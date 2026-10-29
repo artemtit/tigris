@@ -49,6 +49,7 @@ import java.util.concurrent.Executors
 class HomeActivity : Activity(), TileAdapter.Listener {
     companion object {
         const val SHELF_SECONDS = 8
+        const val SHOW_RECENT = false
         private const val EXTRA_GUARD = "com.leslie.tvhome.GUARD"
         private const val EXTRA_WAKE = "com.leslie.tvhome.WAKE"
         const val EXTRA_INPUTS = "com.leslie.tvhome.INPUTS"
@@ -746,6 +747,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     }
 
     private fun refreshRecent() {
+        // ponytail: the strip is switched off (the owner disliked it); delete buildRecent & co. if it stays off.
+        if (!SHOW_RECENT) return
         io.execute {
             val all = repo.allApps().associateBy { it.pkg }
             val list = RecentOrder.recentPackages(prefs.recentLaunches).filterNot { repo.isOwn(it) }.mapNotNull { all[it] }
@@ -1370,7 +1373,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             return
         }
         if (welcome != null) return
-        if (intent.getBooleanExtra(EXTRA_INPUTS, false)) { intent.removeExtra(EXTRA_INPUTS); control.open(); return } // remapped evo button
+        if (intent.getBooleanExtra(EXTRA_INPUTS, false)) { intent.removeExtra(EXTRA_INPUTS); control.pickInput(); return } // remapped evo button
         if (intent.getBooleanExtra(Intro.EXTRA_PREVIEW, false)) { playIntro(preview = true); return }
         if (intent.getBooleanExtra(EXTRA_WAKE, false)) return // consume only the pending wake, never re-arm
         // Home pressed while already home: close everything and go back to the top.

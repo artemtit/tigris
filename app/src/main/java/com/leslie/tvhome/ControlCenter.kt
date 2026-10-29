@@ -810,7 +810,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         }
     }
 
-    private fun pickInput() {
+    fun pickInput() {
         if (inputs.isEmpty()) return
         // The list replaces the panel instead of stacking on top of it.
         close()
