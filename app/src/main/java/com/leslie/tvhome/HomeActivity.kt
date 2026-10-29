@@ -1403,6 +1403,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         control.applyStyle()
         if (getSystemService(android.os.PowerManager::class.java).isInteractive) consumeWakeIntro()
         resumed = true
+        main.removeCallbacks(stopVideo)
         welcome?.resume()
         prefs.homeInFront = true
         HomeGuardService.onHomeResumed()
@@ -1416,11 +1417,14 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         if (shelfShown && !control.isOpen) resumeShelfRotation()
     }
 
+    private val stopVideo = Runnable { videoWallpaper.stop() }
+
     override fun onPause() {
         HomeGuardService.onHomePaused()
         resumed = false
         prefs.unobserve(wallpaperChanges)
-        videoWallpaper.stop()
+        // Home pressed on Home pauses and resumes at once; stopping here restarted the film.
+        main.postDelayed(stopVideo, 1_000)
         // Leaving for another app (or standby) ends the intro rather than leaving it half played.
         intro?.finish()
         welcome?.pause()
