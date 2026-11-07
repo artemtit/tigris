@@ -1280,8 +1280,9 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             swallowKey = code
             return true
         }
-        if (code == swallowKey) {
-            if (event.action == KeyEvent.ACTION_UP) swallowKey = -1
+        // Swallow only the closing press's repeats and release; a fresh press is never eaten.
+        if (code == swallowKey && (event.action == KeyEvent.ACTION_UP || event.repeatCount > 0)) {
+            if (event.action == KeyEvent.ACTION_UP) { swallowKey = -1; checkMusic() }
             return true
         }
         swallowKey = -1
@@ -1377,6 +1378,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
 
     override fun onPause() {
         HomeGuardService.onHomePaused()
+        swallowKey = -1
         resumed = false
         prefs.unobserve(wallpaperChanges)
         // Leaving for another app (or standby) ends the intro rather than leaving it half played.
