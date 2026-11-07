@@ -7,6 +7,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ImageDecoder
 import android.graphics.Paint
+import android.graphics.PorterDuff
 import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
@@ -20,13 +21,16 @@ import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import java.util.concurrent.Executor
 
 /** Which media session the home screen shows: one playing, else the last paused; never our own. */
@@ -62,6 +66,15 @@ object NowPlaying {
     /** Remote keys that go on to the session and leave the music mode open; any other key closes it. */
     fun passesThrough(code: Int) = code == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE || code == KeyEvent.KEYCODE_MEDIA_PLAY ||
         code == KeyEvent.KEYCODE_MEDIA_PAUSE || code == KeyEvent.KEYCODE_MEDIA_NEXT || code == KeyEvent.KEYCODE_MEDIA_PREVIOUS
+
+    /** Playback position at [now] (elapsedRealtime): [pos] advanced at [speed] since [updated] while playing, kept within 0..[duration] when known. */
+    fun position(pos: Long, updated: Long, speed: Float, playing: Boolean, now: Long, duration: Long): Long {
+        val p = if (playing && updated > 0) pos + ((now - updated) * speed).toLong() else pos
+        return if (duration > 0) p.coerceIn(0, duration) else p.coerceAtLeast(0)
+    }
+
+    /** m:ss, the way music players show a time. */
+    fun clock(ms: Long): String = (ms / 1000).let { "${it / 60}:${(it % 60).toString().padStart(2, '0')}" }
 
     /** The card's dark glass as opaque RGB (the card adds its alpha); also the accent of colourless artwork. */
     const val BASE = 0xFF1E1E22.toInt()
@@ -137,6 +150,8 @@ class NowPlayingCard(
     val track get() = artKey
     val titleText: CharSequence get() = title.text
     val artistText: CharSequence get() = artist.text
+    val state: PlaybackState? get() = current?.playbackState
+    val metadata: MediaMetadata? get() = current?.metadata
     /** The artwork's accent colour, [NowPlaying.BASE] without artwork. */
     var accent = NowPlaying.BASE
         private set
@@ -332,13 +347,25 @@ class NowPlayingCard(
         }
     }
 
-    /** A [size]-square copy of the current artwork, scaled off the main thread; null without artwork. */
-    fun cover(size: Int, done: (Bitmap?) -> Unit) {
+    /**
+     * A [size]-square copy of the current artwork and a 16-px one of it (drawn scaled up with
+     * bilinear filtering it is a free blur), both made off the main thread; nulls without artwork.
+     */
+    fun cover(size: Int, done: (Bitmap?, Bitmap?) -> Unit) {
         val meta = current?.metadata
         val key = artKey
         io.execute {
             val b = runCatching { cover(meta, size) }.getOrNull()
-            main.post { if (artKey == key) done(b) }
+            // Halving step by step averages every pixel; one big bilinear step would just pick a few.
+            var t = b
+            while (t != null && t.width > 32) {
+                val half = Bitmap.createScaledBitmap(t, t.width / 2, t.height / 2, true)
+                if (t !== b) t.recycle()
+                t = half
+            }
+            val tiny = t?.let { Bitmap.createScaledBitmap(it, 16, 16, true) }
+            if (t !== b && t !== tiny) t?.recycle()
+            main.post { if (artKey == key) done(b, tiny) }
         }
     }
 
@@ -390,30 +417,33 @@ class NowPlayingCard(
     }
 }
 
+
 /**
- * "Music mode": while music plays and nobody touches the remote, the cover, title and artist
- * over the dimmed wallpaper, lit by the artwork's colour. One static full-screen fill (the scrim
- * is the glow); nothing animates while it is open. Keys are handled by [HomeActivity].
+ * "Music mode": while music plays and nobody touches the remote, a full-screen Now Playing in the
+ * manner of Apple Music on tvOS. Opaque: the cover blurred for free (a 16-px copy drawn scaled up)
+ * and darkened, so nothing of the home screen shows and [onCover] can stop drawing it. Cover, title,
+ * artist and progress on the left, the song's lyrics (LRCLIB) on the right; without lyrics the left
+ * group sits in the middle. Keys are handled by [HomeActivity].
  */
-class MusicMode(private val host: FrameLayout, private val card: NowPlayingCard) {
+class MusicMode(
+    private val host: FrameLayout,
+    private val card: NowPlayingCard,
+    /** True once the overlay covers the screen, false as soon as it starts to go. */
+    private val onCover: (Boolean) -> Unit,
+) {
     private val ctx = host.context
-    private val size = (ctx.resources.displayMetrics.heightPixels * 0.4f).toInt()
-    private val radius = size * 0.06f
-    /** Dim scrim and radial glow in one drawable. */
-    private val glow = GradientDrawable().apply {
-        gradientType = GradientDrawable.RADIAL_GRADIENT
-        gradientRadius = ctx.resources.displayMetrics.widthPixels * 0.6f
-        setGradientCenter(0.5f, 0.42f)
-    }
-    private val glowTween = Tween()
-    private var lit = card.accent
-    private val root = FrameLayout(ctx).apply {
-        background = glow
-        alpha = 0f
-        clipChildren = false
-        // Above focused tiles, which lift themselves with translationZ; no shadow of its own.
-        translationZ = ctx.dp(200).toFloat()
-        outlineProvider = null
+    private val main = Handler(Looper.getMainLooper())
+    private val sw = ctx.resources.displayMetrics.widthPixels
+    private val sh = ctx.resources.displayMetrics.heightPixels
+    private val size = (sh * 0.44f).toInt()
+    private val radius = size * 0.05f
+    /** Column offset that centres the left group when there are no lyrics. */
+    private val centred = (sw - size) / 2f - sw * 0.08f
+
+    /** The blurred cover with ~55 % black on top, in one fill: the filter darkens as it draws. */
+    private val backdrop = ImageView(ctx).apply {
+        scaleType = ImageView.ScaleType.CENTER_CROP
+        setColorFilter(Color.argb(140, 0, 0, 0), PorterDuff.Mode.SRC_ATOP)
     }
     private val cover = ImageView(ctx).apply {
         scaleType = ImageView.ScaleType.CENTER_CROP
@@ -422,23 +452,82 @@ class MusicMode(private val host: FrameLayout, private val card: NowPlayingCard)
         clipRounded(radius)
         elevation = ctx.dp(18).toFloat()
     }
-    private val title = ctx.text(34f, weight = 700).apply { letterSpacing = -0.02f; oneLine() }
-    private val artist = ctx.text(20f, Color.argb(190, 255, 255, 255)).apply { oneLine() }
-    private var key: String? = null
+    private val title = ctx.text(30f, weight = 700).apply { letterSpacing = -0.01f; oneLine() }
+    private val artist = ctx.text(20f, Color.argb(179, 255, 255, 255)).apply { oneLine() }
+    private val fill = View(ctx).apply { background = rounded(Color.argb(220, 255, 255, 255), ctx.dp(2).toFloat()); pivotX = 0f; scaleX = 0f }
+    private val bar = FrameLayout(ctx).apply {
+        background = rounded(Color.argb(60, 255, 255, 255), ctx.dp(2).toFloat())
+        addView(fill, FrameLayout.LayoutParams(-1, -1))
+    }
+    private val elapsed = time(Gravity.START)
+    private val total = time(Gravity.END)
+    private val times = LinearLayout(ctx).apply {
+        addView(elapsed, LinearLayout.LayoutParams(0, -2, 1f))
+        addView(total, LinearLayout.LayoutParams(0, -2, 1f))
+    }
+    private val column = LinearLayout(ctx).apply {
+        orientation = LinearLayout.VERTICAL
+        gravity = Gravity.CENTER_HORIZONTAL
+        clipChildren = false
+        addView(cover, LinearLayout.LayoutParams(size, size))
+        addView(title, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ctx.dp(28) })
+        addView(artist, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ctx.dp(6) })
+        addView(bar, LinearLayout.LayoutParams(-1, ctx.dp(4)).apply { topMargin = ctx.dp(22) })
+        addView(times, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ctx.dp(8) })
+        translationX = centred
+    }
+    /** Room above and below, so the first and the last line can both reach 40 % of the height. */
+    private val list = LinearLayout(ctx).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(0, (sh * 0.4f).toInt(), 0, (sh * 0.6f).toInt())
+        // A new set of lines settles where the song is, without a scroll.
+        addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> if (at != Int.MIN_VALUE) place(at, false) }
+    }
+    private val lyrics = ScrollView(ctx).apply {
+        isFocusable = false
+        descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        isVerticalScrollBarEnabled = false
+        isVerticalFadingEdgeEnabled = false
+        overScrollMode = View.OVER_SCROLL_NEVER
+        alpha = 0f
+        addView(list, FrameLayout.LayoutParams(-1, -2))
+    }
+    private val root = FrameLayout(ctx).apply {
+        alpha = 0f
+        clipChildren = false
+        // Above focused tiles, which lift themselves with translationZ; no shadow of its own.
+        translationZ = ctx.dp(200).toFloat()
+        outlineProvider = null
+        addView(backdrop, FrameLayout.LayoutParams(-1, -1))
+        addView(lyrics, FrameLayout.LayoutParams((sw * 0.5f).toInt(), -1).apply { leftMargin = (sw * 0.44f).toInt() })
+        // Lyrics fade out towards the top and bottom edges: two static gradients, no mask layer.
+        val edge = (sh * 0.17f).toInt()
+        addView(fade(GradientDrawable.Orientation.TOP_BOTTOM), FrameLayout.LayoutParams(-1, edge, Gravity.TOP))
+        addView(fade(GradientDrawable.Orientation.BOTTOM_TOP), FrameLayout.LayoutParams(-1, edge, Gravity.BOTTOM))
+        addView(column, FrameLayout.LayoutParams(size, -2, Gravity.START or Gravity.CENTER_VERTICAL).apply { leftMargin = (sw * 0.08f).toInt() })
+    }
+    private val slide = Tween()
+    private val scroll = Tween()
+    private var artKey: String? = null
+    private var song: String? = null
+    private var words: Lyrics.Text? = null
+    private var lines: List<android.widget.TextView> = emptyList()
+    /** The highlighted line; [Int.MIN_VALUE]: none placed yet. */
+    private var at = Int.MIN_VALUE
+    private var second = -1L
+    private var split = false
+    private var covered = false
     var isShowing = false
         private set
 
-    init {
-        val w = (ctx.resources.displayMetrics.widthPixels * 0.6f).toInt()
-        root.addView(LinearLayout(ctx).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-            clipChildren = false
-            addView(cover, LinearLayout.LayoutParams(size, size))
-            addView(title, LinearLayout.LayoutParams(w, -2).apply { topMargin = ctx.dp(36) })
-            addView(artist, LinearLayout.LayoutParams(w, -2).apply { topMargin = ctx.dp(8) })
-        }, FrameLayout.LayoutParams(-2, -2, Gravity.CENTER))
-        paint(lit)
+    /** About four times a second while playing: progress once a second, lyrics when the line changes. */
+    private val tick = object : Runnable {
+        override fun run() {
+            main.removeCallbacks(this)
+            if (!isShowing) return
+            update()
+            if (card.playing) main.postDelayed(this, 250)
+        }
     }
 
     private fun android.widget.TextView.oneLine() {
@@ -447,52 +536,168 @@ class MusicMode(private val host: FrameLayout, private val card: NowPlayingCard)
         ellipsize = TextUtils.TruncateAt.END
     }
 
+    private fun time(g: Int) = ctx.text(14f, Color.argb(153, 255, 255, 255)).apply { gravity = g; fontFeatureSettings = "tnum" }
+
+    private fun fade(o: GradientDrawable.Orientation) = View(ctx).apply {
+        background = GradientDrawable(o, intArrayOf(Color.argb(235, 0, 0, 0), Color.TRANSPARENT))
+    }
+
     fun show() {
         if (isShowing) return
         isShowing = true
         if (root.parent == null) host.addView(root, FrameLayout.LayoutParams(-1, -1))
         bind()
         root.animate().cancel()
-        root.animate().alpha(1f).setDuration(Motion.glideMs(size).toLong()).setInterpolator(Motion.glide).start()
+        root.animate().alpha(1f).setDuration(Motion.glideMs(size).toLong()).setInterpolator(Motion.glide)
+            .withEndAction { if (isShowing) covers(true) }.start()
     }
 
     fun hide() {
         if (!isShowing) return
         isShowing = false
+        main.removeCallbacks(tick)
+        covers(false)
         root.animate().cancel()
         root.animate().alpha(0f).setDuration(250).setInterpolator(Motion.ease).withEndAction { if (!isShowing) release() }.start()
     }
 
-    /** At once, letting the cover's bitmap go (onStop, low memory). */
+    /** At once, letting the bitmaps and lyrics go (onStop, low memory). */
     fun release() {
         isShowing = false
+        main.removeCallbacks(tick)
+        covers(false)
         root.animate().cancel()
-        glowTween.cancel()
+        slide.cancel()
+        scroll.cancel()
         root.alpha = 0f
         host.removeView(root)
         cover.setImageDrawable(null)
-        key = null
+        backdrop.setImageDrawable(null)
+        artKey = null
+        song = null
+        setLyrics(null)
+        column.translationX = centred
     }
 
-    /** Follows the card: a new track cross-fades its cover in, its colour glides in once. */
+    private fun covers(on: Boolean) {
+        if (covered == on) return
+        covered = on
+        onCover(on)
+    }
+
+    /** Follows the card: a new track cross-fades its cover and backdrop in and looks up its lyrics. */
     fun bind() {
         if (!isShowing) return
         title.text = card.titleText
         artist.text = card.artistText
-        if (card.accent != lit) {
-            val from = lit
-            val to = card.accent
-            lit = to
-            glowTween.start(Motion.glideMs(size).toLong(), Motion.glide) { f -> paint(NowPlaying.mix(from, to, f, 255)) }
+        val meta = card.metadata
+        if (backdrop.drawable == null) backdrop.setImageDrawable(ColorDrawable(Color.BLACK))
+        val track = card.track
+        if (track != null && track != artKey) {
+            artKey = track
+            card.cover(size) { b, tiny ->
+                if (!isShowing || artKey != track) return@cover
+                val ms = Motion.glideMs(size)
+                cover.crossfade(b?.let { BitmapDrawable(ctx.resources, it) }, ms)
+                backdrop.crossfade(tiny?.let { BitmapDrawable(ctx.resources, it) } ?: ColorDrawable(card.accent), ms)
+            }
         }
-        val track = card.track ?: return
-        if (track == key) return
-        key = track
-        card.cover(size) { b -> if (isShowing && key == track) cover.crossfade(b?.let { BitmapDrawable(ctx.resources, it) }, Motion.glideMs(size)) }
+        val name = meta?.getString(MediaMetadata.METADATA_KEY_TITLE).orEmpty()
+        val by = meta?.getString(MediaMetadata.METADATA_KEY_ARTIST)?.takeIf { it.isNotBlank() }
+            ?: meta?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST).orEmpty()
+        val key = "$by|$name"
+        if (key != song) {
+            song = key
+            second = -1
+            setLyrics(null)
+            if (name.isNotBlank() && by.isNotBlank()) {
+                val (known, text) = Lyrics.cached(key)
+                if (known) setLyrics(text)
+                else Lyrics.fetch(key, by, name, meta?.getString(MediaMetadata.METADATA_KEY_ALBUM),
+                    (meta?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L) / 1000) { t -> if (isShowing && song == key) setLyrics(t) }
+            }
+        }
+        tick.run()
     }
 
-    /** Dark all over, with a dim breath of [accent] behind the cover. */
-    private fun paint(accent: Int) {
-        glow.colors = intArrayOf(NowPlaying.mix(0, accent, 0.55f, 200), NowPlaying.mix(0, accent, 0.12f, 215), Color.argb(225, 0, 0, 0))
+    private fun setLyrics(t: Lyrics.Text?) {
+        words = t
+        at = Int.MIN_VALUE
+        scroll.cancel()
+        list.removeAllViews()
+        lyrics.animate().cancel()
+        lyrics.alpha = 0f
+        val synced = t?.synced != null
+        lines = (t?.synced?.map { it.text } ?: t?.plain.orEmpty()).map { s ->
+            ctx.text(34f, Color.argb(if (synced) DIM else PLAIN, 255, 255, 255), weight = 700).apply {
+                text = s
+                // About 1.5 lines from one lyric to the next.
+                setPadding(0, 0, 0, (textSize * 0.35f).toInt())
+            }
+        }
+        lines.forEach { list.addView(it, LinearLayout.LayoutParams(-1, -2)) }
+        if (t != null) {
+            lyrics.animate().alpha(1f).setStartDelay(150).setDuration(400).setInterpolator(Motion.ease).start()
+            update()
+        }
+        layout(t != null)
+    }
+
+    /** Cover group to the left beside the lyrics, or in the middle without them. */
+    private fun layout(withLyrics: Boolean) {
+        if (withLyrics == split) return
+        split = withLyrics
+        val to = if (withLyrics) 0f else centred
+        if (root.alpha == 0f) { slide.cancel(); column.translationX = to; return }
+        val from = column.translationX
+        slide.start(Motion.glideMs((to - from).toInt()).toLong(), Motion.glide) { f -> column.translationX = lerp(from, to, f) }
+    }
+
+    private fun update() {
+        val st = card.state ?: return
+        val dur = card.metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
+        val pos = NowPlaying.position(st.position, st.lastPositionUpdateTime, st.playbackSpeed, card.playing, SystemClock.elapsedRealtime(), dur)
+        if (pos / 1000 != second) {
+            second = pos / 1000
+            bar.visibility = if (dur > 0) View.VISIBLE else View.INVISIBLE
+            times.visibility = bar.visibility
+            fill.scaleX = if (dur > 0) pos.toFloat() / dur else 0f
+            elapsed.text = NowPlaying.clock(pos)
+            total.text = NowPlaying.clock(dur)
+        }
+        val t = words ?: return
+        if (lines.isEmpty()) return
+        // Plain lyrics carry no times: they move through the song in proportion.
+        val i = t.synced?.let { Lyrics.index(it, pos) }
+            ?: if (dur > 0) (pos * lines.size / dur).toInt().coerceAtMost(lines.size - 1) else 0
+        if (i != at) place(i, at != Int.MIN_VALUE && list.isLaidOut && !list.isLayoutRequested)
+    }
+
+    /** Puts line [i] at 40 % of the height and lights it; glides there when [animate]. */
+    private fun place(i: Int, animate: Boolean) {
+        val v = lines.getOrNull(i.coerceAtLeast(0)) ?: return
+        val synced = words?.synced != null
+        val lit = if (synced) 255 else PLAIN
+        val dim = if (synced) DIM else PLAIN
+        val prev = at
+        at = i
+        val to = v.top + v.height / 2 - (sh * 0.4f).toInt()
+        scroll.cancel()
+        lines.forEachIndexed { n, l -> if (!animate || (n != prev && n != i)) l.setTextColor(Color.argb(if (n == i) lit else dim, 255, 255, 255)) }
+        if (!animate) { lyrics.scrollTo(0, to); return }
+        val from = lyrics.scrollY
+        val old = lines.getOrNull(prev)
+        scroll.start(Motion.glideMs(to - from).toLong(), Motion.glide) { f ->
+            lyrics.scrollTo(0, lerp(from.toFloat(), to.toFloat(), f).toInt())
+            old?.setTextColor(Color.argb(lerp(lit.toFloat(), dim.toFloat(), f).toInt(), 255, 255, 255))
+            v.setTextColor(Color.argb(lerp(dim.toFloat(), lit.toFloat(), f).toInt(), 255, 255, 255))
+        }
+    }
+
+    private companion object {
+        /** Lines not being sung: about 35 % white. */
+        const val DIM = 89
+        /** Plain (untimed) lyrics: all lines alike, nothing claims to be the current one. */
+        const val PLAIN = 179
     }
 }

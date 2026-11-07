@@ -474,7 +474,11 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         })
         // A column in the corner: buttons, Now Playing, then the dock below; UP and DOWN walk it.
         nowPlaying = NowPlayingCard(this, io, onUp = { ccButton.requestFocus() }, onDown = { focusAt(focusedPos) })
-        music = MusicMode(root, nowPlaying)
+        // The opaque music mode hides the home screen: stop drawing it and let the film's decoder go.
+        music = MusicMode(root, nowPlaying) { covered ->
+            scene.alpha = if (covered) 0f else 1f
+            if (covered) videoWallpaper.freeze() else if (resumed) applyBackground()
+        }
         nowPlaying.onChange = ::checkMusic
         val nowSlot = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
         nowSlot.addView(nowPlaying, FrameLayout.LayoutParams(-2, -2))
@@ -624,7 +628,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             // Just after boot the static picture stays a little longer; the decoder and download wait.
             val wait = Device.settling()
             if (wait > 0) { main.removeCallbacks(settled); main.postDelayed(settled, wait); return }
-            if (resumed && intro == null && welcome == null && getSystemService(android.os.PowerManager::class.java).isInteractive)
+            if (resumed && !music.isShowing && intro == null && welcome == null && getSystemService(android.os.PowerManager::class.java).isInteractive)
                 videoWallpaper.start(theme)
             return
         }
