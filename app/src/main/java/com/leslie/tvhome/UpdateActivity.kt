@@ -303,7 +303,8 @@ class UpdateActivity : Activity() {
         val body = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             clipChildren = false; clipToPadding = false
-            setPadding(dp(44), dp(38), dp(40), dp(30))
+            // The list's glass panel floats 48 dp in from the top, right and bottom, as in Settings.
+            setPadding(dp(44), dp(48), dp(48), dp(48))
         }
         root.addView(body, FrameLayout.LayoutParams(-1, -1))
 
@@ -391,7 +392,9 @@ class UpdateActivity : Activity() {
             addView(column)
             setOnScrollChangeListener { _, _, _, _, _ -> glass.refresh() }
         }
-        body.addView(options, LinearLayout.LayoutParams(0, -1, 0.63f))
+        val sheet = FrameLayout(this).apply { this.background = GlassPanel(this); clipChildren = false }
+        sheet.addView(options, FrameLayout.LayoutParams(-1, -1))
+        body.addView(sheet, LinearLayout.LayoutParams(0, -1, 0.63f))
         section(R.string.update_section_home)
         Updates.products.filter { !it.optional }.forEach { card(it) }
         // Optional third-party apps (Miracast, HGTV) appear only once installed: clutter on a TV without them.
@@ -422,7 +425,8 @@ class UpdateActivity : Activity() {
 
     private fun loadBackdrop(view: ImageView) {
         artwork.execute {
-            val backdrop = SettingsBackdrop.load(this)
+            val backdrop = SettingsBackdrop.compose(SettingsBackdrop.load(this),
+                resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels)
             runOnUiThread {
                 if (!isFinishing && !isDestroyed) {
                     view.setImageBitmap(backdrop)

@@ -14,7 +14,10 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 
-/** App-owned dialogs share the page's glass, while the TV keeps its native keyboard. */
+/**
+ * App-owned dialogs: the page's glass panel over its blurred wallpaper, white focus plates, as in
+ * tvOS Settings. The TV keeps its native keyboard.
+ */
 internal class SettingsDialog(
     private val activity: Activity,
     scene: Bitmap,
@@ -28,21 +31,21 @@ internal class SettingsDialog(
     private val secondaryAction: (() -> Unit)? = null,
 ) : Dialog(activity) {
     private val root = FrameLayout(activity)
-    private val glass = UpdateGlass(root)
     private val opener = activity.currentFocus
     private val firstButton: TextView
 
     init {
         requestWindowFeature(Window.FEATURE_NO_TITLE)
-        root.setBackgroundColor(Color.argb(150, 0, 0, 0))
+        // Dim to focus: the page recedes a little, the panel brings its own share of the blur.
+        root.setBackgroundColor(Color.argb(96, 0, 0, 0))
         root.clipChildren = false
         val width = minOf(activity.dp(650), activity.resources.displayMetrics.widthPixels - activity.dp(80))
         val height = minOf(activity.dp(if (compact) 242 else 410),
             activity.resources.displayMetrics.heightPixels - activity.dp(76))
         val frame = FrameLayout(activity).apply {
-            background = rounded(Color.argb(240, 28, 28, 30), activity.dp(28).toFloat())
             clipChildren = false
         }
+        frame.background = GlassPanel(frame, scene)
         root.addView(frame, FrameLayout.LayoutParams(width, height, Gravity.CENTER))
         val panel = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
@@ -50,7 +53,6 @@ internal class SettingsDialog(
             clipChildren = false; clipToPadding = false
         }
         frame.addView(panel, FrameLayout.LayoutParams(-1, -1))
-        glass.control(panel, 28, content = true)
         panel.addView(activity.text(24f, weight = 600).apply { text = title },
             LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = activity.dp(18) })
         val content = LinearLayout(activity).apply {
@@ -65,9 +67,9 @@ internal class SettingsDialog(
         if (body is LinearLayout) for (i in 0 until body.childCount) {
             val choice = body.getChildAt(i)
             if (choice.isFocusable) {
-                val material = glass.control(choice, 14)
+                plate(choice, false, 14)
                 choice.setOnFocusChangeListener { _, on ->
-                    material.focus(on)
+                    plate(choice, on, 14)
                     choice.tweenScale(if (on) 1.025f else 1f, 200)
                 }
             }
@@ -95,9 +97,9 @@ internal class SettingsDialog(
                 setPadding(dp(12), 0, dp(12), 0)
                 setOnClickListener { click() }
             }
-            val material = glass.control(button, 22)
+            plate(button, false, 22)
             button.setOnFocusChangeListener { _, on ->
-                material.focus(on)
+                plate(button, on, 22)
                 button.tweenScale(if (on) 1.045f else 1f, 220)
             }
             actions.addView(button, LinearLayout.LayoutParams(0, activity.dp(46), 1f).apply {
@@ -113,11 +115,15 @@ internal class SettingsDialog(
             setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
             clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         }
-        glass.texture(scene)
         setOnDismissListener {
-            glass.close()
             if (!activity.isFinishing && !activity.isDestroyed && opener?.isAttachedToWindow == true) opener.requestFocus()
         }
+    }
+
+    /** On glass, controls get fills, not more glass: a faint white idle fill, a near-opaque white plate with dark ink on focus. */
+    private fun plate(view: View, on: Boolean, radius: Int) {
+        view.background = rounded(Color.argb(if (on) 242 else 26, 255, 255, 255), activity.dp(radius).toFloat())
+        (view as? TextView)?.setTextColor(if (on) Color.BLACK else Color.WHITE)
     }
 
     override fun show() {

@@ -656,6 +656,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             val blurred = Wallpapers.blurred(bmp, darken = 0.22f)
             main.post {
                 if (isDestroyed || shownBackground != key) return@post
+                // Settings sits over this same frost; only a real photo, never the green stand-in.
+                if (photo != null) SettingsBackdrop.home = theme to blurred
                 // A video bake may have overtaken this initial static fallback.
                 val live = prefs.background in VideoWallpaper.SOURCES && videoWallpaper.frame != null
                 if (!live) homeDock = glass
@@ -720,6 +722,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 val current = videoGlassFrames.finish(ticket)
                 if (!current || isDestroyed || !resumed || prefs.background != source) return@post
                 result.getOrNull()?.let { (glass, blurred) ->
+                    SettingsBackdrop.home = source to blurred
                     homeDock = glass
                     if (!shelfShown) {
                         videoGlassReady = true
