@@ -59,6 +59,8 @@ dependencies {
     testImplementation("org.json:json:20240303")
     implementation("androidx.recyclerview:recyclerview:1.4.0")
     implementation("androidx.palette:palette:1.0.0")
+    // Installs the baseline profile (AOT on install) for PackageInstaller/sideloaded updates.
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
     implementation("dev.mobile:dadb:2.0.0")
     // Apple TV aerial screensaver.
     implementation("androidx.media3:media3-exoplayer:1.5.1")
