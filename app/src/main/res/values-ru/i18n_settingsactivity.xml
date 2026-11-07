@@ -2,21 +2,21 @@
 <resources>
     <string name="i18n_settingsactivity_001" formatted="false">Не закрывать при очистке памяти</string>
     <string name="i18n_settingsactivity_002" formatted="false">Скрытые приложения</string>
-    <string name="i18n_settingsactivity_003" formatted="false">Настройки главного экрана</string>
+    <string name="i18n_settingsactivity_003" formatted="false">Настройки</string>
     <string name="i18n_settingsactivity_004" formatted="false">Программы</string>
-    <string name="i18n_settingsactivity_005" formatted="false">Приложения, трансляция и обновления</string>
-    <string name="i18n_settingsactivity_006" formatted="false">Обновляйте Tigris или устанавливайте по запросу MiracastReceiver для трансляции и HGTV с короткими сериалами. Установочные файлы в комплект не входят.</string>
+    <string name="i18n_settingsactivity_005" formatted="false">Обновления</string>
+    <string name="i18n_settingsactivity_006" formatted="false">Проверить и установить новую версию Tigris.</string>
     <string name="i18n_settingsactivity_007" formatted="false">Открыть</string>
     <string name="i18n_settingsactivity_008" formatted="false">Оформление</string>
     <string name="i18n_settingsactivity_009" formatted="false">Формат времени</string>
-    <string name="i18n_settingsactivity_010" formatted="false">12-часовой (11:49 AM) или 24-часовой (23:49) формат часов на главном экране и в Пункте управления.</string>
+    <string name="i18n_settingsactivity_010" formatted="false">12- или 24-часовой формат на главном экране и в Пункте управления.</string>
     <string name="i18n_settingsactivity_011" formatted="false">24-часовой</string>
     <string name="i18n_settingsactivity_012" formatted="false">12-часовой</string>
     <string name="i18n_settingsactivity_013" formatted="false">Положение часов</string>
-    <string name="i18n_settingsactivity_014" formatted="false">Маленькие часы в правом верхнем углу, большие часы с датой в левом верхнем углу (прежний стиль) или без часов.</string>
-    <string name="i18n_settingsactivity_015" formatted="false">Большие, слева вверху</string>
+    <string name="i18n_settingsactivity_014" formatted="false">Маленькие справа, большие с датой слева или без часов.</string>
+    <string name="i18n_settingsactivity_015" formatted="false">Большие, слева</string>
     <string name="i18n_settingsactivity_016" formatted="false">Не показывать</string>
-    <string name="i18n_settingsactivity_017" formatted="false">Справа вверху</string>
+    <string name="i18n_settingsactivity_017" formatted="false">Справа</string>
     <string name="i18n_settingsactivity_018" formatted="false">Фон настроек</string>
     <string name="i18n_settingsactivity_019" formatted="false">Загруженное вами изображение или простой тёмный фон.</string>
     <string name="i18n_settingsactivity_020" formatted="false">Изображение</string>
@@ -26,103 +26,103 @@
     <string name="i18n_settingsactivity_024" formatted="false">Загруженное изображение</string>
     <string name="i18n_settingsactivity_025" formatted="false">Шестерёнка</string>
     <string name="i18n_settingsactivity_026" formatted="false">Загрузить аватар</string>
-    <string name="i18n_settingsactivity_027" formatted="false">Отсканируйте QR-код телефоном, загрузите фото в разделе «Аватар» на веб-странице и вернитесь на главный экран.</string>
+    <string name="i18n_settingsactivity_027" formatted="false">Отсканируйте QR-код телефоном и загрузите фото в разделе «Аватар».</string>
     <string name="i18n_settingsactivity_028" formatted="false">Загрузить с телефона</string>
-    <string name="i18n_settingsactivity_029" formatted="false">Показывать аватар в правом верхнем углу</string>
-    <string name="i18n_settingsactivity_030" formatted="false">Нажмите на аватар в правом верхнем углу, чтобы открыть настройки главного экрана.</string>
+    <string name="i18n_settingsactivity_029" formatted="false">Аватар в углу экрана</string>
+    <string name="i18n_settingsactivity_030" formatted="false">Нажатие на аватар открывает настройки.</string>
     <string name="i18n_settingsactivity_031" formatted="false">Анимация фокуса</string>
-    <string name="i18n_settingsactivity_032" formatted="false">tvOS: выбранное приложение увеличивается, наклоняется в сторону движения и получает блик. Простая: только увеличение.</string>
-    <string name="i18n_settingsactivity_033" formatted="false">\nВ режиме «Авто» на слабых телевизорах используется простая.</string>
+    <string name="i18n_settingsactivity_032" formatted="false">tvOS: значок увеличивается, наклоняется и бликует. Простая: только увеличение.</string>
+    <string name="i18n_settingsactivity_033" formatted="false">\nАвто: на слабых телевизорах — простая.</string>
     <string name="i18n_settingsactivity_034" formatted="false">Простая</string>
     <string name="i18n_settingsactivity_035" formatted="false">Стиль Пункта управления</string>
-    <string name="i18n_settingsactivity_036" formatted="false">Стекло: матовое стекло, сквозь которое видно изображение, выбранная кнопка подсвечивает соседние. Панель: прежняя тёмная панель, менее требовательная к ресурсам.</string>
-    <string name="i18n_settingsactivity_037" formatted="false">\nВ режиме «Авто» на слабых телевизорах используется панель.</string>
+    <string name="i18n_settingsactivity_036" formatted="false">Стекло: полупрозрачные кнопки поверх экрана. Панель: тёмная подложка, легче для телевизора.</string>
+    <string name="i18n_settingsactivity_037" formatted="false">\nАвто: на слабых телевизорах — панель.</string>
     <string name="i18n_settingsactivity_038" formatted="false">Стекло</string>
     <string name="i18n_settingsactivity_039" formatted="false">Панель</string>
     <string name="i18n_settingsactivity_040" formatted="false">Анимация загрузки</string>
-    <string name="i18n_settingsactivity_041" formatted="false">Анимация загрузки</string>
-    <string name="i18n_settingsactivity_042" formatted="false">Воспроизводится при первом появлении главного экрана после загрузки; в конце логотип приближается к рабочему столу. Нажмите любую кнопку, чтобы пропустить.</string>
-    <string name="i18n_settingsactivity_043" formatted="false">\nСкачайте видео по умолчанию или загрузите своё, иначе будет показан логотип Tigris.</string>
-    <string name="i18n_settingsactivity_044" formatted="false">При загрузке</string>
-    <string name="i18n_settingsactivity_045" formatted="false">При загрузке и пробуждении</string>
+    <string name="i18n_settingsactivity_041" formatted="false">Когда показывать</string>
+    <string name="i18n_settingsactivity_042" formatted="false">Анимация при включении телевизора. Любая кнопка — пропустить.</string>
+    <string name="i18n_settingsactivity_043" formatted="false">\nБез видео показывается логотип Tigris.</string>
+    <string name="i18n_settingsactivity_044" formatted="false">При включении</string>
+    <string name="i18n_settingsactivity_045" formatted="false">При включении и пробуждении</string>
     <string name="i18n_settingsactivity_046" formatted="false">Выкл.</string>
-    <string name="i18n_settingsactivity_047" formatted="false">Содержимое анимации</string>
-    <string name="i18n_settingsactivity_048" formatted="false">Загруженное видео: например, анимация загрузки Apple TV, в конце которой логотип приближается. Логотип Tigris: надпись плавно появляется, затем приближается.</string>
-    <string name="i18n_settingsactivity_049" formatted="false">\nЕсли видео не скачано и не загружено, используется логотип Tigris.</string>
+    <string name="i18n_settingsactivity_047" formatted="false">Что показывать</string>
+    <string name="i18n_settingsactivity_048" formatted="false">Ваше видео или логотип Tigris.</string>
+    <string name="i18n_settingsactivity_049" formatted="false">\nБез видео показывается логотип Tigris.</string>
     <string name="i18n_settingsactivity_050" formatted="false">Логотип Tigris</string>
-    <string name="i18n_settingsactivity_051" formatted="false">Скачанное или загруженное видео</string>
-    <string name="i18n_settingsactivity_052" formatted="false">Нет видео · логотип Tigris</string>
+    <string name="i18n_settingsactivity_051" formatted="false">Видео</string>
+    <string name="i18n_settingsactivity_052" formatted="false">Логотип Tigris (нет видео)</string>
     <string name="i18n_settingsactivity_053" formatted="false">Задержка после пробуждения</string>
-    <string name="i18n_settingsactivity_054" formatted="false">При выходе из режима ожидания экран остаётся чёрным на это время, затем запускается анимация. Многим телевизорам (особенно OLED) нужно несколько секунд, чтобы загореться: увеличьте задержку, если пропускаете начало анимации, и уменьшите, если чёрный экран держится слишком долго.</string>
+    <string name="i18n_settingsactivity_054" formatted="false">Сколько ждать, пока загорится экран после пробуждения. Увеличьте, если начало анимации пропадает.</string>
     <string name="i18n_settingsactivity_055" formatted="false">Без задержки</string>
     <string name="i18n_settingsactivity_056">%1$s с</string>
-    <string name="i18n_settingsactivity_057" formatted="false">Звук анимации загрузки</string>
-    <string name="i18n_settingsactivity_058" formatted="false">Воспроизводить звук из видео анимации.</string>
-    <string name="i18n_settingsactivity_059" formatted="false">Просмотр анимации загрузки</string>
-    <string name="i18n_settingsactivity_060" formatted="false">Воспроизвести один раз сейчас, на главном экране.</string>
+    <string name="i18n_settingsactivity_057" formatted="false">Звук анимации</string>
+    <string name="i18n_settingsactivity_058" formatted="false">Звук из видео.</string>
+    <string name="i18n_settingsactivity_059" formatted="false">Показать анимацию</string>
+    <string name="i18n_settingsactivity_060" formatted="false">Проиграть один раз на главном экране.</string>
     <string name="i18n_settingsactivity_061" formatted="false">Обои и заставка</string>
     <string name="i18n_settingsactivity_062" formatted="false">Фон</string>
-    <string name="i18n_settingsactivity_063" formatted="false">Фон главного экрана: тема, источник обоев или ваши фото.</string>
+    <string name="i18n_settingsactivity_063" formatted="false">Тема, источник обоев или ваши фото.</string>
     <string name="i18n_settingsactivity_064">%1$s · Авто</string>
-    <string name="i18n_settingsactivity_065" formatted="false">Менять обои каждые</string>
+    <string name="i18n_settingsactivity_065" formatted="false">Менять обои</string>
     <string name="i18n_settingsactivity_066" formatted="false">Как часто меняется фон.</string>
     <string name="i18n_settingsactivity_067" formatted="false">Сменить сейчас</string>
-    <string name="i18n_settingsactivity_068" formatted="false">Получить новое фото из источника обоев сейчас. Фото загружаются при показе, старые удаляются через несколько дней.</string>
+    <string name="i18n_settingsactivity_068" formatted="false">Загрузить новое фото из источника.</string>
     <string name="i18n_settingsactivity_069">Фото: %1$s</string>
     <string name="i18n_settingsactivity_070" formatted="false">Загрузка…</string>
     <string name="i18n_settingsactivity_071">Фото: %1$s</string>
-    <string name="i18n_settingsactivity_072" formatted="false">Запускать заставку при простое</string>
-    <string name="i18n_settingsactivity_073" formatted="false">Показывать фото или видео Aerial, когда телевизор простаивает.</string>
+    <string name="i18n_settingsactivity_072" formatted="false">Заставка при простое</string>
+    <string name="i18n_settingsactivity_073" formatted="false">Фото или видео Aerial, когда телевизор не используется.</string>
     <string name="i18n_settingsactivity_074" formatted="false">Настройка…</string>
     <string name="i18n_settingsactivity_075" formatted="false">Сначала нужно разрешить локальную отладку</string>
-    <string name="i18n_settingsactivity_076" formatted="false">Содержимое заставки</string>
-    <string name="i18n_settingsactivity_077" formatted="false">Выберите фото или видео Aerial для заставки.</string>
+    <string name="i18n_settingsactivity_076" formatted="false">Что показывать</string>
+    <string name="i18n_settingsactivity_077" formatted="false">Фото или видео Aerial.</string>
     <string name="i18n_settingsactivity_078" formatted="false">Aerial</string>
     <string name="i18n_settingsactivity_079" formatted="false">Фото</string>
-    <string name="i18n_settingsactivity_080" formatted="false">Запускать через</string>
+    <string name="i18n_settingsactivity_080" formatted="false">Включать через</string>
     <string name="i18n_settingsactivity_081" formatted="false">Время без действий до появления заставки.</string>
     <string name="i18n_settingsactivity_082" formatted="false">Настройка…</string>
     <string name="i18n_settingsactivity_083" formatted="false">Сначала нужно разрешить локальную отладку</string>
     <string name="i18n_settingsactivity_084" formatted="false">Время показа фото</string>
     <string name="i18n_settingsactivity_085" formatted="false">Как долго показывается каждое фото в заставке.</string>
     <string name="i18n_settingsactivity_086">%1$s с</string>
-    <string name="i18n_settingsactivity_087" formatted="false">Память и питание</string>
-    <string name="i18n_settingsactivity_088" formatted="false">Автоматически очищать память в режиме ожидания</string>
-    <string name="i18n_settingsactivity_089" formatted="false">В режиме ожидания очищаются только кешированные процессы; приложения не останавливаются принудительно. Пропускается, если не удалось определить активное приложение.</string>
-    <string name="i18n_settingsactivity_090" formatted="false">Очистка памяти по расписанию</string>
-    <string name="i18n_settingsactivity_091" formatted="false">Периодически очищать кешированные процессы без принудительной остановки приложений. На новых установках выключено.</string>
+    <string name="i18n_settingsactivity_087" formatted="false">Память</string>
+    <string name="i18n_settingsactivity_088" formatted="false">Очищать в режиме ожидания</string>
+    <string name="i18n_settingsactivity_089" formatted="false">Закрывает только фоновые процессы, открытое приложение не трогает.</string>
+    <string name="i18n_settingsactivity_090" formatted="false">Очищать по расписанию</string>
+    <string name="i18n_settingsactivity_091" formatted="false">Периодически закрывать фоновые процессы.</string>
     <string name="i18n_settingsactivity_092" formatted="false">Выкл.</string>
     <string name="i18n_settingsactivity_093">Каждые %1$s ч</string>
     <string name="i18n_settingsactivity_094" formatted="false">Очистить память сейчас</string>
-    <string name="i18n_settingsactivity_095" formatted="false">Закрыть фоновые приложения сейчас.</string>
+    <string name="i18n_settingsactivity_095" formatted="false">Закрыть фоновые приложения.</string>
     <string name="i18n_settingsactivity_096">Доступно: %1$s МБ</string>
     <string name="i18n_settingsactivity_097" formatted="false">Очистка…</string>
-    <string name="i18n_settingsactivity_098" formatted="false">Приложения, не закрываемые при очистке</string>
-    <string name="i18n_settingsactivity_099" formatted="false">Приложения, которые не будут закрыты при очистке памяти, например трансляция и музыка.</string>
+    <string name="i18n_settingsactivity_098" formatted="false">Не закрывать при очистке</string>
+    <string name="i18n_settingsactivity_099" formatted="false">Например, трансляция и музыка.</string>
     <string name="i18n_settingsactivity_100">%1$s</string>
-    <string name="i18n_settingsactivity_101" formatted="false">При нажатии кнопки питания на пульте</string>
-    <string name="i18n_settingsactivity_102" formatted="false">Ожидание: как обычно. Полное выключение: экономит энергию, но загрузка занимает больше времени.</string>
-    <string name="i18n_settingsactivity_103" formatted="false">Полное выключение</string>
+    <string name="i18n_settingsactivity_101" formatted="false">Кнопка питания</string>
+    <string name="i18n_settingsactivity_102" formatted="false">Ожидание — как обычно. Выключение экономит энергию, но включение дольше.</string>
+    <string name="i18n_settingsactivity_103" formatted="false">Выключение</string>
     <string name="i18n_settingsactivity_104" formatted="false">Ожидание</string>
     <string name="i18n_settingsactivity_105" formatted="false">Для работы требуется разрешение локальной отладки</string>
-    <string name="i18n_settingsactivity_106" formatted="false">Перемещать недавно открытые приложения вперёд</string>
-    <string name="i18n_settingsactivity_107" formatted="false">Если включено, успешно открытое приложение или папка перемещается в начало. Если выключено, порядок сохраняется и меняется только через долгое нажатие «Изменить главный экран»; запуск приложений порядок не меняет.</string>
+    <string name="i18n_settingsactivity_106" formatted="false">Недавние — в начало</string>
+    <string name="i18n_settingsactivity_107" formatted="false">Открытое приложение встаёт первым. Если выключено, порядок меняется только вручную.</string>
     <string name="i18n_settingsactivity_108" formatted="false">Скрытые приложения</string>
-    <string name="i18n_settingsactivity_109" formatted="false">Приложения, которые не отображаются на главном экране.</string>
+    <string name="i18n_settingsactivity_109" formatted="false">Не показываются на главном экране.</string>
     <string name="i18n_settingsactivity_110">%1$s</string>
-    <string name="i18n_settingsactivity_111" formatted="false">Удалённые предустановленные приложения</string>
-    <string name="i18n_settingsactivity_112" formatted="false">Предустановленные приложения, удалённые через меню долгого нажатия, можно вернуть здесь.</string>
+    <string name="i18n_settingsactivity_111" formatted="false">Удалённые системные приложения</string>
+    <string name="i18n_settingsactivity_112" formatted="false">Верните приложения, удалённые долгим нажатием.</string>
     <string name="i18n_settingsactivity_113">%1$s</string>
     <string name="i18n_settingsactivity_114" formatted="false">Система</string>
-    <string name="i18n_settingsactivity_115" formatted="false">Разрешение локальной отладки</string>
-    <string name="i18n_settingsactivity_116" formatted="false">Позволяет главному экрану использовать локальную отладку для таких действий, как выключение и очистка памяти. В диалоге выберите «Всегда разрешать».</string>
+    <string name="i18n_settingsactivity_115" formatted="false">Локальная отладка</string>
+    <string name="i18n_settingsactivity_116" formatted="false">Нужна для выключения, сна и очистки памяти. В запросе выберите «Всегда разрешать».</string>
     <string name="i18n_settingsactivity_117" formatted="false">Разрешено</string>
-    <string name="i18n_settingsactivity_118" formatted="false">Не разрешено — нажмите OK, чтобы разрешить</string>
+    <string name="i18n_settingsactivity_118" formatted="false">Нажмите, чтобы разрешить</string>
     <string name="i18n_settingsactivity_119" formatted="false">В диалоге выберите «Всегда разрешать»</string>
     <string name="i18n_settingsactivity_120" formatted="false">Разрешено</string>
-    <string name="i18n_settingsactivity_121" formatted="false">Не разрешено — нажмите OK, чтобы повторить</string>
+    <string name="i18n_settingsactivity_121" formatted="false">Не разрешено, нажмите ещё раз</string>
     <string name="i18n_settingsactivity_122" formatted="false">Страж главного экрана</string>
-    <string name="i18n_settingsactivity_123" formatted="false">Если кнопка «Домой» открывает стандартный лаунчер, автоматически возвращаться сюда.</string>
+    <string name="i18n_settingsactivity_123" formatted="false">Кнопка «Домой» всегда возвращает сюда, а не на заводской главный экран.</string>
     <string name="i18n_settingsactivity_124" formatted="false">Выкл.</string>
     <string name="i18n_settingsactivity_125" formatted="false">Вкл.</string>
     <string name="i18n_settingsactivity_126" formatted="false">Вкл. (не запущен)</string>
@@ -136,13 +136,13 @@
     <string name="i18n_settingsactivity_134" formatted="false">Настройка…</string>
     <string name="i18n_settingsactivity_135" formatted="false">Сначала нужно разрешить локальную отладку</string>
     <string name="i18n_settingsactivity_136" formatted="false">Системные настройки Android</string>
-    <string name="i18n_settingsactivity_137" formatted="false">Bluetooth, изображение, звук, дата и время, сети: Tigris не может менять их без системных прав.</string>
+    <string name="i18n_settingsactivity_137" formatted="false">Bluetooth, изображение, звук, дата и время.</string>
     <string name="i18n_settingsactivity_138" formatted="false">О Tigris</string>
-    <string name="i18n_settingsactivity_139" formatted="false">Главный экран для Android TV в стиле tvOS.</string>
+    <string name="i18n_settingsactivity_139" formatted="false">Версия и сведения о главном экране.</string>
     <string name="i18n_settingsactivity_140" formatted="false">Версия</string>
     <string name="i18n_settingsactivity_141" formatted="false">Выбранные приложения не будут закрыты при очистке памяти.</string>
     <string name="i18n_settingsactivity_142" formatted="false">Выбранные приложения не будут отображаться на главном экране.</string>
-    <string name="i18n_settingsactivity_143" formatted="false">Удалённые предустановленные приложения</string>
+    <string name="i18n_settingsactivity_143" formatted="false">Удалённые системные приложения</string>
     <string name="i18n_settingsactivity_144" formatted="false">Выберите приложение, чтобы переустановить его из системного раздела.</string>
     <string name="i18n_settingsactivity_145" formatted="false">Нет удалённых приложений</string>
     <string name="i18n_settingsactivity_146" formatted="false">Восстановить</string>

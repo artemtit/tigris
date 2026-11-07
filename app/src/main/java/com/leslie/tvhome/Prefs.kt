@@ -159,6 +159,15 @@ class Prefs(ctx: Context) {
     /** Keep the home screen in front on firmwares that pin Home to their own launcher (Guard.kt). */
     /** Remote buttons the firmware maps to apps that are not there: a package, "inputs" or "" ([RemoteRemap]). */
     fun remap(key: String): String = sp.getString(key, RemoteRemap.default(key)) ?: ""
+    fun setRemap(key: String, target: String) = sp.edit().putString(key, target).apply()
+
+    /** Sleep timer ([SleepTimer]): the chosen step in minutes (0 = off) and when it fires (epoch ms). */
+    var sleepTimerMinutes: Int
+        get() = sp.getInt("sleep_timer_minutes", 0)
+        set(v) = sp.edit().putInt("sleep_timer_minutes", v).apply()
+    var sleepTimerAt: Long
+        get() = sp.getLong("sleep_timer_at", 0L)
+        set(v) = sp.edit().putLong("sleep_timer_at", v).apply()
 
     var guard: Boolean
         get() = sp.getBoolean("guard", false)

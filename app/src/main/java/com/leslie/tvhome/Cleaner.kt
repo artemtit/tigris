@@ -129,5 +129,6 @@ object Cleaner {
 
     fun shutdown(ctx: Context) = LocalAdb.shellAsync(ctx, "svc power shutdown")
     fun reboot(ctx: Context) = LocalAdb.shellAsync(ctx, "svc power reboot")
-    fun sleep(ctx: Context) = LocalAdb.shellAsync(ctx, "input keyevent KEYCODE_SLEEP")
+    const val SLEEP = "input keyevent KEYCODE_SLEEP"
+    fun sleep(ctx: Context) = LocalAdb.shellAsync(ctx, SLEEP)
 }

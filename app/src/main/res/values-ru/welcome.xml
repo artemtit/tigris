@@ -2,6 +2,6 @@
 <resources>
     <string name="welcome_continue">Нажмите OK, чтобы продолжить  ›</string>
     <string name="welcome_writing">Tigris. Нажмите OK, чтобы завершить анимацию логотипа.</string>
-    <string name="welcome_preview">Просмотр приветствия первого запуска</string>
-    <string name="welcome_preview_help">Логотип Tigris выписывается на фоне синего неба. Просмотр не сбрасывает настройку первого запуска.</string>
+    <string name="welcome_preview">Показать приветствие</string>
+    <string name="welcome_preview_help">Приветствие первого запуска, настройки не сбрасываются.</string>
 </resources>

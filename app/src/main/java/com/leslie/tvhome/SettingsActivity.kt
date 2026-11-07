@@ -100,13 +100,29 @@ class SettingsActivity : Activity() {
     private var backdropRevision = 0
     private var activeDialog: SettingsDialog? = null
     private var page = Page.MAIN
-    /** The main-page row that opened the current sub-page, focused again on the way back. */
-    private var opener = 0
+    /** Per page, the row that opened a deeper page: focused again on the way back. */
+    private val openers = HashMap<Page, Int>()
     private var entry = Page.MAIN
     /** onCreate has just shown the page; showing it again started a second Wi-Fi probe. */
     private var firstResume = true
 
-    private enum class Page { MAIN, KEEP, HIDDEN, REMOVED, SHELF_APP, NETWORK, DEVICE }
+    private enum class Page { MAIN, LOOK, HOMESCREEN, SAVER, REMOTE, APPS, MEMORY, NETWORK, DEVICE, KEEP, HIDDEN, REMOVED, SHELF_APP, REMAP }
+
+    /** Where Back goes: pickers return to their category, categories to the main list. */
+    private fun parent(p: Page) = when (p) {
+        Page.KEEP -> Page.MEMORY
+        Page.HIDDEN, Page.REMOVED -> Page.APPS
+        Page.SHELF_APP -> Page.HOMESCREEN
+        Page.REMAP -> Page.REMOTE
+        else -> Page.MAIN
+    }
+
+    private fun up() {
+        if (page == Page.MAIN || page == entry) finish()
+        else parent(page).let { show(it, openers[it] ?: 0) }
+    }
+
+    private fun focusedRow() = list.indexOfChild(list.focusedChild).coerceAtLeast(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,7 +156,7 @@ class SettingsActivity : Activity() {
         val safeTop = dp(30)
         val listWidth = (resources.displayMetrics.widthPixels * 0.52f).toInt()
         val leftWidth = resources.displayMetrics.widthPixels - listWidth - sideMargin * 2 - dp(24)
-        heading = text(22f, weight = 600).apply { maxLines = 2; letterSpacing = -0.01f }
+        heading = text(30f, weight = 600).apply { maxLines = 2; letterSpacing = -0.02f }
         root.addView(heading, FrameLayout.LayoutParams(leftWidth, -2).apply {
             leftMargin = sideMargin; topMargin = safeTop
         })
@@ -154,28 +170,29 @@ class SettingsActivity : Activity() {
             topMargin = dp(28)
         })
         val description = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        focusedTitle = text(15f, weight = 600).apply {
+        focusedTitle = text(18f, weight = 600).apply {
+            letterSpacing = -0.01f
             maxLines = 2; ellipsize = TextUtils.TruncateAt.END
         }
         description.addView(focusedTitle, LinearLayout.LayoutParams(-1, -2))
-        about = text(12.5f, Color.argb(200, 255, 255, 255)).apply {
-            maxLines = 4; ellipsize = TextUtils.TruncateAt.END
-            setLineSpacing(dp(2).toFloat(), 1f)
+        about = text(14f, Color.argb(200, 255, 255, 255)).apply {
+            maxLines = 5; ellipsize = TextUtils.TruncateAt.END
+            setLineSpacing(dp(3).toFloat(), 1f)
         }
-        description.addView(about, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6) })
+        description.addView(about, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
         left.addView(description, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { bottomMargin = dp(52) })
-        back = text(13f, weight = 500).apply {
+        back = text(14f, weight = 500).apply {
             text = I18n.text(R.string.i18n_updateactivity_016); gravity = Gravity.CENTER
             isFocusable = true; isClickable = true
-            setOnClickListener { if (page == Page.MAIN || page == entry) finish() else show(Page.MAIN, opener) }
+            setOnClickListener { up() }
         }
-        back.background = rounded(Color.argb(40, 255, 255, 255), dp(16).toFloat())
+        back.background = rounded(Color.argb(40, 255, 255, 255), dp(20).toFloat())
         back.setOnFocusChangeListener { _, on ->
-            back.background = rounded(if (on) Color.WHITE else Color.argb(40, 255, 255, 255), dp(16).toFloat())
+            back.background = rounded(if (on) Color.WHITE else Color.argb(40, 255, 255, 255), dp(20).toFloat())
             back.setTextColor(if (on) FOCUS_TEXT else Color.WHITE)
             back.tweenScale(if (on) 1.04f else 1f, if (on) 180 else 150)
         }
-        left.addView(back, FrameLayout.LayoutParams(dp(96), dp(32), Gravity.BOTTOM))
+        left.addView(back, FrameLayout.LayoutParams(dp(112), dp(40), Gravity.BOTTOM))
         root.addView(left, FrameLayout.LayoutParams(leftWidth, -1).apply {
             leftMargin = sideMargin; topMargin = dp(84); bottomMargin = safeTop
         })
@@ -224,6 +241,13 @@ class SettingsActivity : Activity() {
         scroll.scrollTo(0, 0)
         when (p) {
             Page.MAIN -> main()
+            Page.LOOK -> look()
+            Page.HOMESCREEN -> homeScreen()
+            Page.SAVER -> saver()
+            Page.REMOTE -> remote()
+            Page.APPS -> apps()
+            Page.MEMORY -> memory()
+            Page.REMAP -> remapPicker()
             Page.KEEP -> appPicker(I18n.text(R.string.i18n_settingsactivity_001), prefs.keep) { pkg, on ->
                 prefs.keep = if (on) prefs.keep + pkg else prefs.keep - pkg
             }
@@ -252,8 +276,8 @@ class SettingsActivity : Activity() {
         backdropKey = null
         showBackdrop()
         if (firstResume) firstResume = false
-        else if (page == Page.MAIN) show(Page.MAIN, opener)
-        else if (page == Page.NETWORK || page == Page.DEVICE) show(page)
+        // Values may have changed in another activity (wallpaper, updates); pickers keep their state.
+        else if (page == Page.MAIN || parent(page) == Page.MAIN) show(page, focusedRow())
     }
 
     private fun optionalAssetRow(asset: OptionalAssets.Asset, title: Int) {
@@ -275,7 +299,7 @@ class SettingsActivity : Activity() {
                         if (!isDestroyed && !isFinishing) {
                             Toast.makeText(this, I18n.text(if (result.isSuccess) R.string.asset_done else R.string.asset_failed), Toast.LENGTH_LONG).show()
                             showBackdrop()
-                            show(Page.MAIN)
+                            if (page == Page.SAVER) show(Page.SAVER, focusedRow())
                         }
                     }
                 }.start()
@@ -354,127 +378,64 @@ class SettingsActivity : Activity() {
         }
     }
 
+    /** This build runs on one HEC TV: install guides for other brands' firmware stay hidden here. */
+    private val hec = android.os.Build.MANUFACTURER.equals("HEC", true) || android.os.Build.BRAND.equals("HEC", true)
+
+    /** 4K wallpaper / Aerial quality choices only matter on a panel that can show 4K. */
+    private val uhdPanel by lazy {
+        @Suppress("DEPRECATION") windowManager.defaultDisplay.supportedModes.any { it.physicalHeight >= 2160 }
+    }
+
+    /** tvOS: a short list of categories; each opens its own page. */
     private fun main() {
         heading.text = I18n.text(R.string.i18n_settingsactivity_003)
         about.text = ""
+        row(I18n.text(R.string.cat_look), I18n.text(R.string.cat_look_help), { backgroundLabel() }, chevron = true) { show(Page.LOOK) }
+        row(I18n.text(R.string.cat_home), I18n.text(R.string.cat_home_help), { "" }, chevron = true) { show(Page.HOMESCREEN) }
+        row(I18n.text(R.string.cat_saver), I18n.text(R.string.cat_saver_help), { onOff(prefs.frameScreensaver) }, chevron = true) { show(Page.SAVER) }
+        row(I18n.text(R.string.cat_remote), I18n.text(R.string.cat_remote_help), { "" }, chevron = true) { show(Page.REMOTE) }
+        spacer()
+        row(I18n.text(R.string.cat_apps), I18n.text(R.string.cat_apps_help), { "" }, chevron = true) { show(Page.APPS) }
+        row(I18n.text(R.string.cat_memory), I18n.text(R.string.cat_memory_help),
+            { I18n.text(R.string.i18n_settingsactivity_096, Cleaner.availMb(this)) }, chevron = true) { show(Page.MEMORY) }
+        row(I18n.text(R.string.settings_network), I18n.text(R.string.settings_network_help), { networkLabel() }, chevron = true) {
+            show(Page.NETWORK)
+        }
+        row(I18n.text(R.string.settings_device), I18n.text(R.string.settings_device_help),
+            { android.os.Build.MODEL }, chevron = true) { show(Page.DEVICE) }
+        spacer()
+        // Everything that needs system permissions (Bluetooth, picture, sound, joining networks):
+        // one clearly labelled way out instead of grey jumps scattered through the list.
+        row(I18n.text(R.string.i18n_settingsactivity_136), I18n.text(R.string.cat_system_help), { "" }, chevron = true) {
+            runCatching { startActivity(TvControls(this).settingsIntent()) }
+        }
+    }
 
-        section(I18n.text(R.string.i18n_settingsactivity_004))
-        row(I18n.text(R.string.i18n_settingsactivity_005), I18n.text(R.string.i18n_settingsactivity_006), { "" }, chevron = true) {
-            startActivity(Intent(this, UpdateActivity::class.java))
-        }
-        section(I18n.text(R.string.i18n_settingsactivity_008))
-        row(I18n.text(R.string.dock_columns_title), I18n.text(R.string.dock_columns_description),
-            { prefs.dockColumns.toString() }) { prefs.dockColumns = DockLayout.next(prefs.dockColumns) }
-        row(I18n.text(R.string.i18n_settingsactivity_009), I18n.text(R.string.i18n_settingsactivity_010),
-            { if (prefs.clock24) I18n.text(R.string.i18n_settingsactivity_011) else I18n.text(R.string.i18n_settingsactivity_012) }) { prefs.clock24 = !prefs.clock24 }
-        row(I18n.text(R.string.i18n_settingsactivity_013), I18n.text(R.string.i18n_settingsactivity_014), {
-            when (prefs.clockStyle) { Prefs.CLOCK_LARGE -> I18n.text(R.string.i18n_settingsactivity_015); Prefs.CLOCK_OFF -> I18n.text(R.string.i18n_settingsactivity_016); else -> I18n.text(R.string.i18n_settingsactivity_017) }
-        }) {
-            val opts = listOf(Prefs.CLOCK_CORNER, Prefs.CLOCK_LARGE, Prefs.CLOCK_OFF)
-            prefs.clockStyle = opts[(opts.indexOf(prefs.clockStyle) + 1) % opts.size]
-        }
-        if (backdropFile(this) != null) row(I18n.text(R.string.i18n_settingsactivity_018), I18n.text(R.string.i18n_settingsactivity_019), {
-            if (prefs.settingsBg) I18n.text(R.string.i18n_settingsactivity_020) else I18n.text(R.string.i18n_settingsactivity_021)
-        }) {
-            prefs.settingsBg = !prefs.settingsBg
-            showBackdrop()
-        }
-        if (iconFile(this) != null) row(I18n.text(R.string.i18n_settingsactivity_022), I18n.text(R.string.i18n_settingsactivity_023), {
-            if (prefs.ownIcon) I18n.text(R.string.i18n_settingsactivity_024) else I18n.text(R.string.i18n_settingsactivity_025)
-        }) {
-            prefs.ownIcon = !prefs.ownIcon
-            showIcon(icon)
-        }
-        row(I18n.text(R.string.i18n_settingsactivity_026), I18n.text(R.string.i18n_settingsactivity_027), { "" }, chevron = true) {
-            startActivity(Intent(this, WallpaperActivity::class.java).putExtra("upload_avatar", true))
-        }
-        row(I18n.text(R.string.i18n_settingsactivity_029), I18n.text(R.string.i18n_settingsactivity_030), { onOff(prefs.showAvatar) }, checked = { prefs.showAvatar }) { prefs.showAvatar = !prefs.showAvatar }
-        row(I18n.text(R.string.i18n_settingsactivity_031), I18n.text(R.string.i18n_settingsactivity_032) +
-            I18n.text(R.string.i18n_settingsactivity_033), {
-            auto(prefs.focusStyle, prefs.focusTvos(this), "tvOS", I18n.text(R.string.i18n_settingsactivity_034))
-        }) {
-            prefs.focusStyle = next(prefs.focusStyle, Prefs.FOCUS_TVOS, Prefs.FOCUS_SIMPLE)
-        }
-        row(I18n.text(R.string.i18n_settingsactivity_035), I18n.text(R.string.i18n_settingsactivity_036) +
-            I18n.text(R.string.i18n_settingsactivity_037), {
-            auto(prefs.ccStyle, prefs.ccGlass(this), I18n.text(R.string.i18n_settingsactivity_038), I18n.text(R.string.i18n_settingsactivity_039))
-        }) {
-            prefs.ccStyle = next(prefs.ccStyle, Prefs.CC_GLASS, Prefs.CC_PANEL)
-        }
+    private fun backgroundLabel() = Backgrounds.THEMES[prefs.background]?.first ?: Wallpapers.label(Wallpapers.sourceFor(prefs.background)).let {
+        if (prefs.background == Wallpapers.MINE) it else I18n.text(R.string.i18n_settingsactivity_064, it)
+    }
 
-        section(I18n.text(R.string.shelf_custom_section))
-        row(I18n.text(R.string.shelf_custom_url), I18n.text(R.string.shelf_custom_url_help),
-            { shelfUrlLabel() }, chevron = true) { value ->
-            editShelfUrl { value.text = shelfUrlLabel() }
+    private fun look() {
+        heading.text = I18n.text(R.string.cat_look)
+        about.text = I18n.text(R.string.cat_look_help)
+        section(I18n.text(R.string.section_wallpaper))
+        row(I18n.text(R.string.i18n_settingsactivity_062), I18n.text(R.string.i18n_settingsactivity_063), { backgroundLabel() },
+            chevron = true) { startActivity(Intent(this, WallpaperActivity::class.java)) }
+        row(I18n.text(R.string.i18n_settingsactivity_065), I18n.text(R.string.i18n_settingsactivity_066), { minutesLabel(prefs.wallMinutes) }) {
+            val opts = listOf(5, 15, 30, 60, 180, 1440)
+            prefs.wallMinutes = opts[(opts.indexOf(prefs.wallMinutes) + 1) % opts.size]
         }
-        row(I18n.text(R.string.shelf_custom_app), I18n.text(R.string.shelf_custom_app_help),
-            { shelfAppLabel() }, chevron = true) { show(Page.SHELF_APP) }
-        row(I18n.text(R.string.shelf_custom_clear), I18n.text(R.string.shelf_custom_clear_help), { "" }) {
-            prefs.shelfCustomUrl = ""
-            prefs.shelfCustomPkg = ""
-            show(Page.MAIN, opener)
+        row(I18n.text(R.string.i18n_settingsactivity_067), I18n.text(R.string.i18n_settingsactivity_068),
+            { I18n.text(R.string.i18n_settingsactivity_069, Wallpapers(this, Wallpapers.sourceFor(prefs.background)).files().size) }) { v ->
+            v.text = I18n.text(R.string.i18n_settingsactivity_070)
+            Thread {
+                val w = Wallpapers(applicationContext, Wallpapers.sourceFor(prefs.background))
+                w.refresh()
+                w.advance(prefs.wallMinutes, force = true)
+                runOnUiThread { v.text = I18n.text(R.string.i18n_settingsactivity_071, w.files().size) }
+            }.start()
         }
-
-        // Weather is a self-contained optional card. No network traffic until opt-in.
-        section(I18n.text(R.string.weather_settings))
-        row(I18n.text(R.string.weather_settings), I18n.text(R.string.weather_settings_help),
-            { onOff(prefs.weatherEnabled) }, checked = { prefs.weatherEnabled }) { prefs.weatherEnabled = !prefs.weatherEnabled }
-        row(I18n.text(R.string.weather_unit_settings), I18n.text(R.string.weather_unit_help),
-            { if (prefs.weatherFahrenheit) "°F" else "°C" }) {
-            prefs.weatherFahrenheit = !prefs.weatherFahrenheit
-        }
-        row(I18n.text(R.string.weather_city_settings), I18n.text(R.string.weather_city_help),
-            { prefs.weatherCity.ifBlank { I18n.text(R.string.weather_city_unknown) } }, chevron = true) { value ->
-            selectWeatherCity { city ->
-                prefs.weatherCity = city.name
-                prefs.weatherLatitude = city.latitude
-                prefs.weatherLongitude = city.longitude
-                value.text = city.name
-            }
-        }
-
-        section(I18n.text(R.string.i18n_settingsactivity_040))
-        optionalAssetRow(OptionalAssets.intro, R.string.download_default_intro)
-        val video = Intro.videoFile(this) != null || OptionalAssets.file(this, OptionalAssets.intro) != null
-        row(I18n.text(R.string.i18n_settingsactivity_041), I18n.text(R.string.i18n_settingsactivity_042) +
-            if (video) "" else I18n.text(R.string.i18n_settingsactivity_043), {
-            when (prefs.intro) { Prefs.INTRO_BOOT -> I18n.text(R.string.i18n_settingsactivity_044); Prefs.INTRO_WAKE -> I18n.text(R.string.i18n_settingsactivity_045); else -> I18n.text(R.string.i18n_settingsactivity_046) }
-        }) {
-            val opts = listOf(Prefs.INTRO_OFF, Prefs.INTRO_BOOT, Prefs.INTRO_WAKE)
-            prefs.intro = opts[(opts.indexOf(prefs.intro) + 1) % opts.size]
-            // This boot counts as played: turning it on doesn't start it on the next return home.
-            prefs.introBoot = Intro.bootStamp(this)
-        }
-        row(I18n.text(R.string.i18n_settingsactivity_047), I18n.text(R.string.i18n_settingsactivity_048) +
-            if (video) "" else I18n.text(R.string.i18n_settingsactivity_049), {
-            if (prefs.introSource == Prefs.INTRO_WORDMARK) I18n.text(R.string.i18n_settingsactivity_050) else if (video) I18n.text(R.string.i18n_settingsactivity_051) else I18n.text(R.string.i18n_settingsactivity_052)
-        }) {
-            prefs.introSource = if (prefs.introSource == Prefs.INTRO_WORDMARK) Prefs.INTRO_VIDEO else Prefs.INTRO_WORDMARK
-        }
-        row(I18n.text(R.string.i18n_settingsactivity_053), I18n.text(R.string.i18n_settingsactivity_054), {
-            if (prefs.wakeDelay == 0) I18n.text(R.string.i18n_settingsactivity_055) else I18n.text(R.string.i18n_settingsactivity_056, prefs.wakeDelay / 1000.0).replace(".0 ", " ")
-        }) {
-            val opts = listOf(0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 10_000)
-            prefs.wakeDelay = opts.firstOrNull { it > prefs.wakeDelay } ?: 0
-        }
-        row(I18n.text(R.string.i18n_settingsactivity_057), I18n.text(R.string.i18n_settingsactivity_058), { onOff(prefs.introSound) }, checked = { prefs.introSound }) { prefs.introSound = !prefs.introSound }
-        row(I18n.text(R.string.i18n_settingsactivity_059), I18n.text(R.string.i18n_settingsactivity_060), { "" }, chevron = true) {
-            startActivity(Intent(this, HomeActivity::class.java)
-                .putExtra(Intro.EXTRA_PREVIEW, true)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        }
-
-        row(I18n.text(R.string.welcome_preview), I18n.text(R.string.welcome_preview_help), { "" }, chevron = true) {
-            startActivity(Intent(this, HomeActivity::class.java).putExtra(Welcome.EXTRA_PREVIEW, true))
-        }
-
-        section(I18n.text(R.string.i18n_settingsactivity_061))
-        row(I18n.text(R.string.i18n_settingsactivity_062), I18n.text(R.string.i18n_settingsactivity_063), {
-            Backgrounds.THEMES[prefs.background]?.first ?: Wallpapers.label(Wallpapers.sourceFor(prefs.background)).let {
-                if (prefs.background == Wallpapers.MINE) it else I18n.text(R.string.i18n_settingsactivity_064, it)
-            }
-        }, chevron = true) { startActivity(Intent(this, WallpaperActivity::class.java)) }
-        row(I18n.text(R.string.media_quality_wall_title), I18n.text(R.string.media_quality_wall_desc), {
+        if (uhdPanel) row(I18n.text(R.string.media_quality_wall_title), I18n.text(R.string.media_quality_wall_desc), {
             when (prefs.wallQuality) {
                 MediaQuality.UHD -> I18n.text(R.string.media_quality_4k)
                 MediaQuality.COMPAT -> I18n.text(R.string.media_quality_1080)
@@ -490,20 +451,89 @@ class SettingsActivity : Activity() {
                 runCatching { Wallpapers(applicationContext, Wallpapers.sourceFor(prefs.background)).refresh(force = true) }
             }.start()
         }
-        row(I18n.text(R.string.i18n_settingsactivity_065), I18n.text(R.string.i18n_settingsactivity_066), { minutesLabel(prefs.wallMinutes) }) {
-            val opts = listOf(5, 15, 30, 60, 180, 1440)
-            prefs.wallMinutes = opts[(opts.indexOf(prefs.wallMinutes) + 1) % opts.size]
+
+        section(I18n.text(R.string.section_clock))
+        row(I18n.text(R.string.i18n_settingsactivity_009), I18n.text(R.string.i18n_settingsactivity_010),
+            { if (prefs.clock24) I18n.text(R.string.i18n_settingsactivity_011) else I18n.text(R.string.i18n_settingsactivity_012) }) { prefs.clock24 = !prefs.clock24 }
+        row(I18n.text(R.string.i18n_settingsactivity_013), I18n.text(R.string.i18n_settingsactivity_014), {
+            when (prefs.clockStyle) { Prefs.CLOCK_LARGE -> I18n.text(R.string.i18n_settingsactivity_015); Prefs.CLOCK_OFF -> I18n.text(R.string.i18n_settingsactivity_016); else -> I18n.text(R.string.i18n_settingsactivity_017) }
+        }) {
+            val opts = listOf(Prefs.CLOCK_CORNER, Prefs.CLOCK_LARGE, Prefs.CLOCK_OFF)
+            prefs.clockStyle = opts[(opts.indexOf(prefs.clockStyle) + 1) % opts.size]
         }
-        row(I18n.text(R.string.i18n_settingsactivity_067), I18n.text(R.string.i18n_settingsactivity_068),
-            { I18n.text(R.string.i18n_settingsactivity_069, Wallpapers(this, Wallpapers.sourceFor(prefs.background)).files().size) }) { v ->
-            v.text = I18n.text(R.string.i18n_settingsactivity_070)
-            Thread {
-                val w = Wallpapers(applicationContext, Wallpapers.sourceFor(prefs.background))
-                w.refresh()
-                w.advance(prefs.wallMinutes, force = true)
-                runOnUiThread { v.text = I18n.text(R.string.i18n_settingsactivity_071, w.files().size) }
-            }.start()
+
+        section(I18n.text(R.string.section_interface))
+        row(I18n.text(R.string.dock_columns_title), I18n.text(R.string.dock_columns_description),
+            { prefs.dockColumns.toString() }) { prefs.dockColumns = DockLayout.next(prefs.dockColumns) }
+        row(I18n.text(R.string.i18n_settingsactivity_031), I18n.text(R.string.i18n_settingsactivity_032) +
+            I18n.text(R.string.i18n_settingsactivity_033), {
+            auto(prefs.focusStyle, prefs.focusTvos(this), "tvOS", I18n.text(R.string.i18n_settingsactivity_034))
+        }) {
+            prefs.focusStyle = next(prefs.focusStyle, Prefs.FOCUS_TVOS, Prefs.FOCUS_SIMPLE)
         }
+        row(I18n.text(R.string.i18n_settingsactivity_035), I18n.text(R.string.i18n_settingsactivity_036) +
+            I18n.text(R.string.i18n_settingsactivity_037), {
+            auto(prefs.ccStyle, prefs.ccGlass(this), I18n.text(R.string.i18n_settingsactivity_038), I18n.text(R.string.i18n_settingsactivity_039))
+        }) {
+            prefs.ccStyle = next(prefs.ccStyle, Prefs.CC_GLASS, Prefs.CC_PANEL)
+        }
+        row(I18n.text(R.string.i18n_settingsactivity_029), I18n.text(R.string.i18n_settingsactivity_030), { onOff(prefs.showAvatar) }, checked = { prefs.showAvatar }) { prefs.showAvatar = !prefs.showAvatar }
+        row(I18n.text(R.string.i18n_settingsactivity_026), I18n.text(R.string.i18n_settingsactivity_027), { "" }, chevron = true) {
+            startActivity(Intent(this, WallpaperActivity::class.java).putExtra("upload_avatar", true))
+        }
+        if (backdropFile(this) != null) row(I18n.text(R.string.i18n_settingsactivity_018), I18n.text(R.string.i18n_settingsactivity_019), {
+            if (prefs.settingsBg) I18n.text(R.string.i18n_settingsactivity_020) else I18n.text(R.string.i18n_settingsactivity_021)
+        }) {
+            prefs.settingsBg = !prefs.settingsBg
+            showBackdrop()
+        }
+        if (iconFile(this) != null) row(I18n.text(R.string.i18n_settingsactivity_022), I18n.text(R.string.i18n_settingsactivity_023), {
+            if (prefs.ownIcon) I18n.text(R.string.i18n_settingsactivity_024) else I18n.text(R.string.i18n_settingsactivity_025)
+        }) {
+            prefs.ownIcon = !prefs.ownIcon
+            showIcon(icon)
+        }
+    }
+
+    private fun homeScreen() {
+        heading.text = I18n.text(R.string.cat_home)
+        about.text = I18n.text(R.string.cat_home_help)
+        // Weather is a self-contained optional card. No network traffic until opt-in.
+        section(I18n.text(R.string.weather_settings))
+        row(I18n.text(R.string.weather_show), I18n.text(R.string.weather_settings_help),
+            { onOff(prefs.weatherEnabled) }, checked = { prefs.weatherEnabled }) { prefs.weatherEnabled = !prefs.weatherEnabled }
+        row(I18n.text(R.string.weather_city_settings), I18n.text(R.string.weather_city_help),
+            { prefs.weatherCity.ifBlank { I18n.text(R.string.weather_city_unknown) } }, chevron = true) { value ->
+            selectWeatherCity { city ->
+                prefs.weatherCity = city.name
+                prefs.weatherLatitude = city.latitude
+                prefs.weatherLongitude = city.longitude
+                value.text = city.name
+            }
+        }
+        row(I18n.text(R.string.weather_unit_settings), I18n.text(R.string.weather_unit_help),
+            { if (prefs.weatherFahrenheit) "°F" else "°C" }) {
+            prefs.weatherFahrenheit = !prefs.weatherFahrenheit
+        }
+
+        section(I18n.text(R.string.shelf_custom_section))
+        row(I18n.text(R.string.shelf_custom_url), I18n.text(R.string.shelf_custom_url_help),
+            { shelfUrlLabel() }, chevron = true) { value ->
+            editShelfUrl { value.text = shelfUrlLabel() }
+        }
+        row(I18n.text(R.string.shelf_custom_app), I18n.text(R.string.shelf_custom_app_help),
+            { shelfAppLabel() }, chevron = true) { show(Page.SHELF_APP) }
+        row(I18n.text(R.string.shelf_custom_clear), I18n.text(R.string.shelf_custom_clear_help), { "" }) {
+            prefs.shelfCustomUrl = ""
+            prefs.shelfCustomPkg = ""
+            show(page, openers[page] ?: 0)
+        }
+    }
+
+    private fun saver() {
+        heading.text = I18n.text(R.string.cat_saver)
+        about.text = I18n.text(R.string.cat_saver_help)
+        section(I18n.text(R.string.cat_saver))
         row(I18n.text(R.string.i18n_settingsactivity_072), I18n.text(R.string.i18n_settingsactivity_073),
             { onOff(prefs.frameScreensaver) }, checked = { prefs.frameScreensaver }) { v ->
             val on = !prefs.frameScreensaver
@@ -523,19 +553,6 @@ class SettingsActivity : Activity() {
             { if (prefs.saverMode == Prefs.SAVER_AERIAL) I18n.text(R.string.i18n_settingsactivity_078) else I18n.text(R.string.i18n_settingsactivity_079) }) {
             prefs.saverMode = if (prefs.saverMode == Prefs.SAVER_AERIAL) Prefs.SAVER_PHOTOS else Prefs.SAVER_AERIAL
         }
-        row(I18n.text(R.string.media_quality_aerial_title), I18n.text(R.string.media_quality_aerial_desc), {
-            when (prefs.aerialQuality) {
-                MediaQuality.UHD -> I18n.text(R.string.media_quality_4k)
-                MediaQuality.COMPAT -> I18n.text(R.string.media_quality_compat)
-                else -> I18n.text(R.string.media_quality_auto)
-            }
-        }) {
-            prefs.aerialQuality = when (prefs.aerialQuality) {
-                MediaQuality.AUTO -> MediaQuality.UHD
-                MediaQuality.UHD -> MediaQuality.COMPAT
-                else -> MediaQuality.AUTO
-            }
-        }
         row(I18n.text(R.string.i18n_settingsactivity_080), I18n.text(R.string.i18n_settingsactivity_081), { minutesLabel(idleMinutes()) }) { v ->
             val opts = listOf(1, 3, 5, 10, 15, 30)
             val next = opts[(opts.indexOf(idleMinutes()) + 1) % opts.size]
@@ -549,8 +566,128 @@ class SettingsActivity : Activity() {
             val opts = listOf(15, 30, 60, 120)
             prefs.frameSeconds = opts[(opts.indexOf(prefs.frameSeconds) + 1) % opts.size]
         }
+        if (uhdPanel) row(I18n.text(R.string.media_quality_aerial_title), I18n.text(R.string.media_quality_aerial_desc), {
+            when (prefs.aerialQuality) {
+                MediaQuality.UHD -> I18n.text(R.string.media_quality_4k)
+                MediaQuality.COMPAT -> I18n.text(R.string.media_quality_compat)
+                else -> I18n.text(R.string.media_quality_auto)
+            }
+        }) {
+            prefs.aerialQuality = when (prefs.aerialQuality) {
+                MediaQuality.AUTO -> MediaQuality.UHD
+                MediaQuality.UHD -> MediaQuality.COMPAT
+                else -> MediaQuality.AUTO
+            }
+        }
 
-        section(I18n.text(R.string.i18n_settingsactivity_087))
+        section(I18n.text(R.string.section_intro))
+        val video = Intro.videoFile(this) != null || OptionalAssets.file(this, OptionalAssets.intro) != null
+        row(I18n.text(R.string.i18n_settingsactivity_041), I18n.text(R.string.i18n_settingsactivity_042) +
+            if (video) "" else I18n.text(R.string.i18n_settingsactivity_043), {
+            when (prefs.intro) { Prefs.INTRO_BOOT -> I18n.text(R.string.i18n_settingsactivity_044); Prefs.INTRO_WAKE -> I18n.text(R.string.i18n_settingsactivity_045); else -> I18n.text(R.string.i18n_settingsactivity_046) }
+        }) {
+            val opts = listOf(Prefs.INTRO_OFF, Prefs.INTRO_BOOT, Prefs.INTRO_WAKE)
+            prefs.intro = opts[(opts.indexOf(prefs.intro) + 1) % opts.size]
+            // This boot counts as played: turning it on doesn't start it on the next return home.
+            prefs.introBoot = Intro.bootStamp(this)
+        }
+        row(I18n.text(R.string.i18n_settingsactivity_047), I18n.text(R.string.i18n_settingsactivity_048) +
+            if (video) "" else I18n.text(R.string.i18n_settingsactivity_049), {
+            if (prefs.introSource == Prefs.INTRO_WORDMARK) I18n.text(R.string.i18n_settingsactivity_050) else if (video) I18n.text(R.string.i18n_settingsactivity_051) else I18n.text(R.string.i18n_settingsactivity_052)
+        }) {
+            prefs.introSource = if (prefs.introSource == Prefs.INTRO_WORDMARK) Prefs.INTRO_VIDEO else Prefs.INTRO_WORDMARK
+        }
+        optionalAssetRow(OptionalAssets.intro, R.string.download_default_intro)
+        row(I18n.text(R.string.i18n_settingsactivity_053), I18n.text(R.string.i18n_settingsactivity_054), {
+            if (prefs.wakeDelay == 0) I18n.text(R.string.i18n_settingsactivity_055) else I18n.text(R.string.i18n_settingsactivity_056, prefs.wakeDelay / 1000.0).replace(".0 ", " ")
+        }) {
+            val opts = listOf(0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 10_000)
+            prefs.wakeDelay = opts.firstOrNull { it > prefs.wakeDelay } ?: 0
+        }
+        row(I18n.text(R.string.i18n_settingsactivity_057), I18n.text(R.string.i18n_settingsactivity_058), { onOff(prefs.introSound) }, checked = { prefs.introSound }) { prefs.introSound = !prefs.introSound }
+        row(I18n.text(R.string.i18n_settingsactivity_059), I18n.text(R.string.i18n_settingsactivity_060), { "" }, chevron = true) {
+            startActivity(Intent(this, HomeActivity::class.java)
+                .putExtra(Intro.EXTRA_PREVIEW, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+        row(I18n.text(R.string.welcome_preview), I18n.text(R.string.welcome_preview_help), { "" }, chevron = true) {
+            startActivity(Intent(this, HomeActivity::class.java).putExtra(Welcome.EXTRA_PREVIEW, true))
+        }
+    }
+
+    private fun remote() {
+        heading.text = I18n.text(R.string.cat_remote)
+        about.text = I18n.text(R.string.cat_remote_help)
+        section(I18n.text(R.string.section_buttons))
+        row(I18n.text(R.string.i18n_settingsactivity_101), I18n.text(R.string.i18n_settingsactivity_102), {
+            if (prefs.shutdownOnPowerKey) I18n.text(R.string.i18n_settingsactivity_103) else I18n.text(R.string.i18n_settingsactivity_104)
+        }) {
+            prefs.shutdownOnPowerKey = !prefs.shutdownOnPowerKey
+            if (prefs.shutdownOnPowerKey && !prefs.adbAuthorized)
+                Toast.makeText(this, I18n.text(R.string.i18n_settingsactivity_105), Toast.LENGTH_LONG).show()
+        }
+        for ((key, title) in listOf("remap_netflix" to R.string.remap_netflix, "remap_evo" to R.string.remap_evo)) {
+            row(I18n.text(title), I18n.text(R.string.remap_help), { remapLabel(key) }, chevron = true) {
+                remapKey = key
+                show(Page.REMAP)
+            }
+        }
+    }
+
+    /** The remote button the REMAP page picks a target for ([RemoteRemap] pref key). */
+    private var remapKey = "remap_netflix"
+
+    private fun remapLabel(key: String) = when (val target = prefs.remap(key)) {
+        "" -> I18n.text(R.string.remap_none)
+        RemoteRemap.INPUTS -> I18n.text(R.string.remap_inputs)
+        else -> appLabel(target)
+    }
+
+    private fun remapPicker() {
+        val key = remapKey
+        heading.text = I18n.text(if (key == "remap_evo") R.string.remap_evo else R.string.remap_netflix)
+        val help = I18n.text(R.string.remap_help)
+        about.text = help
+        fun choice(label: String, target: String, drawable: Drawable?) {
+            row(label, help, { if (prefs.remap(key) == target) "✓" else "" }, checked = { prefs.remap(key) == target },
+                checkbox = true, appIcon = drawable) {
+                prefs.setRemap(key, target)
+                up()
+            }
+        }
+        choice(I18n.text(R.string.remap_inputs), RemoteRemap.INPUTS, null)
+        choice(I18n.text(R.string.remap_none), "", null)
+        for (a in repo.allApps().filter { !repo.isOwn(it.pkg) }.distinctBy { it.pkg }.sortedBy { it.label }) {
+            choice(a.label, a.pkg, runCatching { packageManager.getActivityIcon(a.component) }.getOrNull())
+        }
+    }
+
+    private fun apps() {
+        heading.text = I18n.text(R.string.cat_apps)
+        about.text = I18n.text(R.string.cat_apps_help)
+        row(I18n.text(R.string.i18n_settingsactivity_005), I18n.text(R.string.i18n_settingsactivity_006),
+            { packageManager.getPackageInfo(packageName, 0).versionName ?: "" }, chevron = true) {
+            startActivity(Intent(this, UpdateActivity::class.java))
+        }
+        section(I18n.text(R.string.settings_apps_group))
+        row(I18n.text(R.string.i18n_settingsactivity_106), I18n.text(R.string.i18n_settingsactivity_107),
+            { onOff(prefs.recentFirst) }, checked = { prefs.recentFirst }) { prefs.recentFirst = !prefs.recentFirst }
+        row(I18n.text(R.string.i18n_settingsactivity_108), I18n.text(R.string.i18n_settingsactivity_109), { I18n.text(R.string.i18n_settingsactivity_110, prefs.hidden.size) }, chevron = true) { show(Page.HIDDEN) }
+        row(I18n.text(R.string.i18n_settingsactivity_111), I18n.text(R.string.i18n_settingsactivity_112), { I18n.text(R.string.i18n_settingsactivity_113, prefs.removed.size) }, chevron = true) {
+            show(Page.REMOVED)
+        }
+    }
+
+    private fun memory() {
+        heading.text = I18n.text(R.string.cat_memory)
+        about.text = I18n.text(R.string.cat_memory_help)
+        row(I18n.text(R.string.i18n_settingsactivity_094), I18n.text(R.string.i18n_settingsactivity_095), { I18n.text(R.string.i18n_settingsactivity_096, Cleaner.availMb(this)) }) { v ->
+            v.text = I18n.text(R.string.i18n_settingsactivity_097)
+            Thread {
+                val r = Cleaner.clean(applicationContext)
+                runOnUiThread { v.text = r.description() }
+            }.start()
+        }
         row(I18n.text(R.string.i18n_settingsactivity_088), I18n.text(R.string.i18n_settingsactivity_089), { onOff(prefs.cleanOnStandby) }, checked = { prefs.cleanOnStandby }) {
             prefs.cleanOnStandby = !prefs.cleanOnStandby
         }
@@ -561,38 +698,19 @@ class SettingsActivity : Activity() {
             prefs.cleanIntervalHours = opts[(opts.indexOf(prefs.cleanIntervalHours) + 1) % opts.size]
             KeeperService.start(this, KeeperService.ACTION_RESCHEDULE)
         }
-        row(I18n.text(R.string.i18n_settingsactivity_094), I18n.text(R.string.i18n_settingsactivity_095), { I18n.text(R.string.i18n_settingsactivity_096, Cleaner.availMb(this)) }) { v ->
-            v.text = I18n.text(R.string.i18n_settingsactivity_097)
-            Thread {
-                val r = Cleaner.clean(applicationContext)
-                runOnUiThread { v.text = r.description() }
-            }.start()
-        }
         row(I18n.text(R.string.i18n_settingsactivity_098), I18n.text(R.string.i18n_settingsactivity_099), { I18n.text(R.string.i18n_settingsactivity_100, prefs.keep.size) }, chevron = true) {
             show(Page.KEEP)
         }
-        row(I18n.text(R.string.i18n_settingsactivity_101), I18n.text(R.string.i18n_settingsactivity_102), {
-            if (prefs.shutdownOnPowerKey) I18n.text(R.string.i18n_settingsactivity_103) else I18n.text(R.string.i18n_settingsactivity_104)
-        }) {
-            prefs.shutdownOnPowerKey = !prefs.shutdownOnPowerKey
-            if (prefs.shutdownOnPowerKey && !prefs.adbAuthorized)
-                Toast.makeText(this, I18n.text(R.string.i18n_settingsactivity_105), Toast.LENGTH_LONG).show()
-        }
+    }
 
-        section(I18n.text(R.string.settings_apps_group))
-        row(I18n.text(R.string.i18n_settingsactivity_106), I18n.text(R.string.i18n_settingsactivity_107),
-            { onOff(prefs.recentFirst) }, checked = { prefs.recentFirst }) { prefs.recentFirst = !prefs.recentFirst }
-        row(I18n.text(R.string.i18n_settingsactivity_108), I18n.text(R.string.i18n_settingsactivity_109), { I18n.text(R.string.i18n_settingsactivity_110, prefs.hidden.size) }, chevron = true) { show(Page.HIDDEN) }
-        row(I18n.text(R.string.i18n_settingsactivity_111), I18n.text(R.string.i18n_settingsactivity_112), { I18n.text(R.string.i18n_settingsactivity_113, prefs.removed.size) }, chevron = true) {
-            show(Page.REMOVED)
+    /** Tigris's own system rows, under About this TV. */
+    private fun tigrisRows() {
+        section(I18n.text(R.string.section_tigris))
+        row(I18n.text(R.string.i18n_settingsactivity_138), I18n.text(R.string.i18n_settingsactivity_139),
+            { packageManager.getPackageInfo(packageName, 0).versionName ?: "" }, chevron = true) {
+            dialog(I18n.text(R.string.i18n_settingsactivity_138),
+                I18n.text(R.string.settings_about, packageManager.getPackageInfo(packageName, 0).versionName ?: ""))
         }
-
-        section(I18n.text(R.string.i18n_settingsactivity_114))
-        row(I18n.text(R.string.settings_network), I18n.text(R.string.settings_network_help), { networkLabel() }, chevron = true) {
-            show(Page.NETWORK)
-        }
-        row(I18n.text(R.string.settings_device), I18n.text(R.string.settings_device_help),
-            { android.os.Build.MODEL }, chevron = true) { show(Page.DEVICE) }
         row(I18n.text(R.string.i18n_settingsactivity_115), I18n.text(R.string.i18n_settingsactivity_116),
             { if (prefs.adbAuthorized) I18n.text(R.string.i18n_settingsactivity_117) else I18n.text(R.string.i18n_settingsactivity_118) }) { v ->
             v.text = I18n.text(R.string.i18n_settingsactivity_119)
@@ -600,23 +718,6 @@ class SettingsActivity : Activity() {
                 val ok = LocalAdb.shell(applicationContext, "echo ok", 60_000) != null
                 runOnUiThread { v.text = if (ok) I18n.text(R.string.i18n_settingsactivity_120) else I18n.text(R.string.i18n_settingsactivity_121) }
             }.start()
-        }
-        // Resolver success is not proof that the physical HOME key reaches us.
-        row(I18n.text(R.string.install_home_check_title), I18n.text(R.string.install_home_check_help), { "" }) {
-            val native = Guard.isDefaultHome(this)
-            val bound = HomeGuardService.isRunning
-            val secure = Guard.hasSecureSettings(this)
-            val next = HomeInstallGuide.nextStep(
-                android.os.Build.MANUFACTURER, android.os.Build.BRAND, native, bound, secure)
-            dialog(I18n.text(R.string.install_home_check_title),
-                I18n.text(R.string.install_home_check_status,
-                    native.toString(), bound.toString(), secure.toString()) + "\n\n" + I18n.text(next),
-                secondary = I18n.text(R.string.install_home_guide_open), secondaryAction = {
-                    runCatching {
-                        startActivity(Intent(Intent.ACTION_VIEW,
-                            android.net.Uri.parse("https://tigris-tv.pages.dev/#install")))
-                    }
-                })
         }
         row(I18n.text(R.string.i18n_settingsactivity_122), I18n.text(R.string.i18n_settingsactivity_123),
             { if (!prefs.guard) I18n.text(R.string.i18n_settingsactivity_124) else if (HomeGuardService.isRunning) I18n.text(R.string.i18n_settingsactivity_125) else I18n.text(R.string.i18n_settingsactivity_126) }, checked = { prefs.guard }) { v ->
@@ -650,16 +751,24 @@ class SettingsActivity : Activity() {
                 runOnUiThread { v.text = if (ok) onOff(prefs.keepAdb) else I18n.text(R.string.i18n_settingsactivity_135) }
             }.start()
         }
-        row(I18n.text(R.string.i18n_settingsactivity_138), I18n.text(R.string.i18n_settingsactivity_139),
-            { packageManager.getPackageInfo(packageName, 0).versionName ?: "" }, chevron = true) {
-            dialog(I18n.text(R.string.i18n_settingsactivity_138),
-                I18n.text(R.string.settings_about, packageManager.getPackageInfo(packageName, 0).versionName ?: ""))
+        // A brand install guide with an outside link: no use on the HEC TV this build is for.
+        // Resolver success is not proof that the physical HOME key reaches us.
+        if (!hec) row(I18n.text(R.string.install_home_check_title), I18n.text(R.string.install_home_check_help), { "" }) {
+            val native = Guard.isDefaultHome(this)
+            val bound = HomeGuardService.isRunning
+            val secure = Guard.hasSecureSettings(this)
+            val next = HomeInstallGuide.nextStep(
+                android.os.Build.MANUFACTURER, android.os.Build.BRAND, native, bound, secure)
+            dialog(I18n.text(R.string.install_home_check_title),
+                I18n.text(R.string.install_home_check_status,
+                    native.toString(), bound.toString(), secure.toString()) + "\n\n" + I18n.text(next),
+                secondary = I18n.text(R.string.install_home_guide_open), secondaryAction = {
+                    runCatching {
+                        startActivity(Intent(Intent.ACTION_VIEW,
+                            android.net.Uri.parse("https://tigris-tv.pages.dev/#install")))
+                    }
+                })
         }
-
-        // Everything that needs system permissions (Bluetooth, picture, sound, joining networks):
-        // one clearly labelled way out instead of grey jumps scattered through the list.
-        section(I18n.text(R.string.settings_android_section))
-        row(I18n.text(R.string.i18n_settingsactivity_136), I18n.text(R.string.i18n_settingsactivity_137), { "" }, chevron = true) { runCatching { startActivity(TvControls(this).settingsIntent()) } }
     }
 
     /** Read-only connection status; Android only lets apps read, not change, without system rights. */
@@ -732,7 +841,7 @@ class SettingsActivity : Activity() {
         row(I18n.text(R.string.settings_device_timezone), help, {
             java.util.TimeZone.getDefault().getDisplayName(false, java.util.TimeZone.LONG)
         }) {}
-        row(I18n.text(R.string.settings_device_tigris), help, { packageManager.getPackageInfo(packageName, 0).versionName ?: "" }) {}
+        tigrisRows()
     }
 
     /** One dock app. The shelf appears when that tile is focused in the first row. */
@@ -749,7 +858,7 @@ class SettingsActivity : Activity() {
             row(a.label, a.pkg, { if (a.pkg == prefs.shelfCustomPkg) "✓" else "" },
                 checked = { a.pkg == prefs.shelfCustomPkg }, checkbox = true, appIcon = drawable) {
                 prefs.shelfCustomPkg = a.pkg
-                show(Page.MAIN, opener)
+                up()
             }
         }
     }
@@ -922,12 +1031,20 @@ class SettingsActivity : Activity() {
             })
     }
 
+    /** One header style for every page: small, dimmed, on the 8 dp grid, aligned with the row text. */
     private fun section(title: String) {
         val first = list.childCount == 0
-        list.addView(text(11.5f, Color.argb(150, 255, 255, 255), weight = 600).apply { text = title },
-            LinearLayout.LayoutParams(-1, -2).apply {
-                marginStart = dp(16); topMargin = if (first) dp(2) else dp(18); bottomMargin = dp(6)
-            })
+        list.addView(text(14f, Color.argb(150, 255, 255, 255), weight = 600).apply {
+            text = title; letterSpacing = 0.01f
+        }, LinearLayout.LayoutParams(-1, -2).apply {
+            marginStart = dp(16); topMargin = if (first) 0 else dp(24); bottomMargin = dp(8)
+        })
+    }
+
+    /** A gap between groups of category rows, as tvOS separates its main list. */
+    private fun spacer() {
+        list.addView(View(this).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
+            LinearLayout.LayoutParams(-1, dp(16)))
     }
 
     /** Reveal the entire scaled row with a safety inset on all four sides. */
@@ -963,9 +1080,9 @@ class SettingsActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
             isFocusable = true; isClickable = true
             clipChildren = false; clipToPadding = false
-            // tvOS row: ~70 px at 1080p (35 dp), transparent until focused.
-            setPadding(dp(16), dp(6), dp(16), dp(6))
-            minimumHeight = dp(35)
+            // tvOS row: 80 px at 1080p (40 dp), transparent until focused; 8 dp grid.
+            setPadding(dp(16), dp(8), dp(16), dp(8))
+            minimumHeight = dp(40)
         }
         appIcon?.let { drawable ->
             r.addView(ImageView(this).apply {
@@ -973,14 +1090,14 @@ class SettingsActivity : Activity() {
                 importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             }, LinearLayout.LayoutParams(dp(24), dp(24)).apply { marginEnd = dp(12) })
         }
-        val l = text(14f, IDLE_TEXT, weight = 500).apply {
+        val l = text(16f, IDLE_TEXT, weight = 500).apply {
             text = label; maxLines = 2; ellipsize = TextUtils.TruncateAt.END
             setLineSpacing(dp(1).toFloat(), 1f)
         }
-        val v = text(13f, IDLE_VALUE).apply {
+        val v = text(14f, IDLE_VALUE).apply {
             text = value(); maxLines = 1; ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.END
-            maxWidth = dp(190)
+            maxWidth = dp(200)
         }
         r.addView(l, LinearLayout.LayoutParams(0, -2, 1f))
         r.addView(v, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(12) })
@@ -989,10 +1106,10 @@ class SettingsActivity : Activity() {
             gravity = Gravity.CENTER; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         } else null
         check?.let { r.addView(it, LinearLayout.LayoutParams(dp(20), dp(20)).apply { marginStart = dp(10) }) }
-        val arrow = if (chevron) text(17f, IDLE_VALUE, weight = 400).apply {
+        val arrow = if (chevron) text(20f, IDLE_VALUE, weight = 400).apply {
             text = "›"; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         } else null
-        arrow?.let { r.addView(it, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(10) }) }
+        arrow?.let { r.addView(it, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(8) }) }
         fun sync() {
             val on = checked?.invoke()
             if (on != null) {
@@ -1025,13 +1142,14 @@ class SettingsActivity : Activity() {
             }
         }
         r.setOnClickListener {
-            if (page == Page.MAIN) opener = list.indexOfChild(r)
+            val from = page
+            openers[from] = list.indexOfChild(r)
             onClick(v)
-            if (page == Page.MAIN && !v.text.startsWith(I18n.text(R.string.i18n_settingsactivity_150)) &&
+            if (page == from && from != Page.REMOVED && !v.text.startsWith(I18n.text(R.string.i18n_settingsactivity_150)) &&
                 !v.text.startsWith(I18n.text(R.string.i18n_settingsactivity_151))) v.text = value()
             sync()
         }
-        list.addView(r, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(2) })
+        list.addView(r, LinearLayout.LayoutParams(-1, -2))
         sync()
         return v
     }
@@ -1039,7 +1157,7 @@ class SettingsActivity : Activity() {
     private fun information(title: String, message: String) {
         list.addView(text(15f, weight = 600).apply { text = title },
             LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(16), dp(24), dp(16), dp(8)) })
-        list.addView(text(13f, IDLE_VALUE).apply {
+        list.addView(text(14f, IDLE_VALUE).apply {
             text = message; setLineSpacing(dp(3).toFloat(), 1f)
         }, LinearLayout.LayoutParams(-1, -2).apply { marginStart = dp(16); marginEnd = dp(16) })
         focusedTitle.text = title
@@ -1070,7 +1188,7 @@ class SettingsActivity : Activity() {
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK && page != Page.MAIN) {
-            if (page == entry) finish() else show(Page.MAIN, opener)
+            up()
             return true
         }
         return super.onKeyUp(keyCode, event)

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cat_look">Внешний вид</string>
+    <string name="cat_look_help">Обои, часы, док и анимация фокуса.</string>
+    <string name="cat_home">Главный экран</string>
+    <string name="cat_home_help">Погода и полка над доком.</string>
+    <string name="cat_saver">Заставка</string>
+    <string name="cat_saver_help">Заставка при простое и анимация при включении.</string>
+    <string name="cat_remote">Пульт</string>
+    <string name="cat_remote_help">Кнопка питания и дополнительные кнопки пульта.</string>
+    <string name="cat_apps">Приложения и обновления</string>
+    <string name="cat_apps_help">Обновления, порядок и скрытые приложения.</string>
+    <string name="cat_memory">Память</string>
+    <string name="cat_memory_help">Очистка памяти сейчас и по расписанию.</string>
+    <string name="cat_system_help">Bluetooth, изображение, звук, дата и время.</string>
+    <string name="section_wallpaper">Обои</string>
+    <string name="section_clock">Часы</string>
+    <string name="section_interface">Интерфейс</string>
+    <string name="section_intro">Анимация при включении</string>
+    <string name="section_buttons">Кнопки</string>
+    <string name="section_tigris">Tigris</string>
+    <string name="remap_netflix">Кнопка Netflix</string>
+    <string name="remap_evo">Кнопка evo</string>
+    <string name="remap_help">Что открывает кнопка. Работает, когда включён страж главного экрана.</string>
+    <string name="remap_inputs">Источники сигнала</string>
+    <string name="remap_none">Как в системе</string>
+    <string name="weather_show">Показывать погоду</string>
+    <string name="sleep_timer">Таймер сна</string>
+    <string name="sleep_timer_off">Выкл.</string>
+    <string name="sleep_timer_left">Ещё %1$d мин</string>
+</resources>
