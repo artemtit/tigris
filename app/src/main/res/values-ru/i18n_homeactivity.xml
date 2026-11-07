@@ -58,4 +58,8 @@
     <string name="i18n_homeactivity_056" formatted="false">Не удалось получить разрешение. Повторить можно в настройках главного экрана.</string>
     <string name="i18n_homeactivity_057">Не удалось удалить: %1$s</string>
     <string name="i18n_homeactivity_058" formatted="false">Локальная отладка недоступна</string>
+    <string name="now_playing">Сейчас играет</string>
+    <string name="now_playing_previous">Назад</string>
+    <string name="now_playing_play_pause">Воспроизвести или пауза</string>
+    <string name="now_playing_next">Далее</string>
 </resources>

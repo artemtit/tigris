@@ -87,6 +87,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     private lateinit var avatar: IconButton
     private lateinit var netButton: IconButton
     private lateinit var ccButton: IconButton
+    /** Under the corner buttons while some app plays music; UP from the dock lands on it first. */
+    private lateinit var nowPlaying: NowPlayingCard
     private lateinit var grid: RecyclerView
     private lateinit var adapter: TileAdapter
     private lateinit var repo: AppRepo
@@ -464,10 +466,17 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         header.addView(icons, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.TOP).apply {
             rightMargin = dp(32); topMargin = dp(26)
         })
+        // A column in the corner: buttons, Now Playing, then the dock below; UP and DOWN walk it.
+        nowPlaying = NowPlayingCard(this, io, onUp = { ccButton.requestFocus() }, onDown = { focusAt(focusedPos) })
+        val nowSlot = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
+        nowSlot.addView(nowPlaying, FrameLayout.LayoutParams(-2, -2))
+        header.addView(nowSlot, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.TOP).apply {
+            rightMargin = dp(40); topMargin = dp(78)
+        })
         listOf(netButton, ccButton, avatar).forEach { b ->
             b.setOnKeyListener { _, code, e ->
                 if (e.action != KeyEvent.ACTION_DOWN) false else when {
-                    code == KeyEvent.KEYCODE_DPAD_DOWN -> { focusAt(focusedPos); true }
+                    code == KeyEvent.KEYCODE_DPAD_DOWN -> { if (nowPlaying.active) nowPlaying.playPause.requestFocus() else focusAt(focusedPos); true }
                     code == KeyEvent.KEYCODE_DPAD_RIGHT && b == ccButton && avatar.visibility == View.VISIBLE -> { avatar.requestFocus(); true }
                     code == KeyEvent.KEYCODE_DPAD_LEFT && b == avatar -> { ccButton.requestFocus(); true }
                     else -> false
@@ -530,6 +539,10 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 icons.translationY = -off
                 // Off-screen controls must also leave remote-control focus navigation.
                 icons.visibility = if (off > 0f && off >= icons.bottom) View.INVISIBLE else View.VISIBLE
+                // Now Playing rides up with the buttons and fades like the large clock.
+                nowSlot.translationY = -off
+                nowSlot.alpha = 1f - expansion
+                nowSlot.visibility = if (expansion >= 1f) View.INVISIBLE else View.VISIBLE
                 dock.alpha = 1f - expansion
                 dockFrost.alpha = expansion
                 frost.alpha = expansion
@@ -1159,8 +1172,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             return true
         }
         if (dy < 0 && pos < cols) {
-            // Up from the first row reaches the buttons in the top-right corner.
-            ccButton.requestFocus()
+            // Up from the first row reaches Now Playing, or the buttons in the top-right corner.
+            if (nowPlaying.active) nowPlaying.playPause.requestFocus() else ccButton.requestFocus()
             return true
         }
         if (atEdge) {
@@ -1277,11 +1290,13 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         super.onStart()
         Guard.ensure(this)
         main.postDelayed({ Guard.rebindIfStalled(this) }, 5_000)
+        nowPlaying.start()
     }
 
     // Home pressed on Home only pauses and resumes, so the film goes on; another app in front frees the decoder.
     override fun onStop() {
         videoWallpaper.stop()
+        nowPlaying.stop()
         super.onStop()
     }
 
