@@ -159,6 +159,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
     private val volume: Slider
     private val inputModule: GlassButton
     private val networkModule: GlassButton
+    private val sleepTimer: GlassButton
     private var inputs: List<Input> = emptyList()
     private var volumeTarget = "speaker"
     private val status = ctx.text(11f, Color.argb(190, 255, 255, 255))
@@ -168,6 +169,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
     private val ticker = object : Runnable {
         override fun run() {
             followVolume()
+            showSleepTimer()
             host.postDelayed(this, 2_000)
         }
     }
@@ -229,6 +231,10 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         panel.addView(volume, LinearLayout.LayoutParams(-1, ctx.dp(36)).apply { topMargin = gap })
         inputModule = GlassButton(I18n.text(R.string.i18n_controlcenter_014), R.drawable.ic_input, Shape.CAPSULE) { pickInput() }
         panel.addView(inputModule, LinearLayout.LayoutParams(-1, cell).apply { topMargin = gap })
+        sleepTimer = GlassButton(I18n.text(R.string.sleep_timer), R.drawable.ic_moon, Shape.CAPSULE) {
+            needAdb { SleepTimer.cycle(ctx); showSleepTimer() }
+        }
+        panel.addView(sleepTimer, LinearLayout.LayoutParams(-1, cell).apply { topMargin = gap })
         panel.addView(status, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ctx.dp(10) })
         // The host clips the panel to its bounds; the padding is room for focused controls to grow into.
         val room = ctx.dp(16)
@@ -789,6 +795,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         networkModule.title.text = if (wired) I18n.text(R.string.i18n_controlcenter_018) else "Wi-Fi"
         networkModule.sub.text = if (caps == null) I18n.text(R.string.i18n_controlcenter_019) else I18n.text(R.string.i18n_controlcenter_020)
         networkModule.sub.visibility = View.VISIBLE
+        showSleepTimer()
         if (refreshing) return
         refreshing = true
         io.execute {
@@ -810,6 +817,12 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
                 if (pickPending) { pickPending = false; if (list.isNotEmpty()) pickInput() }
             }
         }
+    }
+
+    private fun showSleepTimer() {
+        val left = SleepTimer.minutesLeft(prefs.sleepTimerAt, System.currentTimeMillis())
+        sleepTimer.sub.text = if (left > 0) I18n.text(R.string.sleep_timer_left, left) else I18n.text(R.string.sleep_timer_off)
+        sleepTimer.sub.visibility = View.VISIBLE
     }
 
     /** The evo button pressed before the inputs were read: the list opens once they are. */

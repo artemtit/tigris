@@ -45,6 +45,7 @@
         <activity android:name=".UpdateActivity" android:exported="false" android:screenOrientation="landscape" />
         <service android:name=".UpdateJob" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false" />
         <receiver android:name=".UpdateResult" android:exported="false" />
+        <receiver android:name=".SleepTimerReceiver" android:exported="false" />
         <activity
             android:name=".HomeActivity"
             android:clearTaskOnLaunch="true"

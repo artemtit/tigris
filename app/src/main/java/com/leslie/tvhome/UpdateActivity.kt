@@ -394,8 +394,10 @@ class UpdateActivity : Activity() {
         body.addView(options, LinearLayout.LayoutParams(0, -1, 0.63f))
         section(R.string.update_section_home)
         Updates.products.filter { !it.optional }.forEach { card(it) }
-        section(R.string.update_section_optional)
-        Updates.products.filter { it.optional }.forEach { card(it) }
+        // Optional third-party apps (Miracast, HGTV) appear only once installed: clutter on a TV without them.
+        val optional = Updates.products.filter { it.optional && Updates.installed(this, it) != null }
+        if (optional.isNotEmpty()) section(R.string.update_section_optional)
+        optional.forEach { card(it) }
 
         val permissions = LinearLayout(this).apply {
             clipChildren = false

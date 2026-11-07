@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="weather_settings">Карточка погоды</string>
-  <string name="weather_settings_help">Необязательная погода Open-Meteo на главном экране; по умолчанию выключена.</string>
-  <string name="weather_city_settings">Город для погоды</string>
-  <string name="weather_city_help">Поиск города. Автоматическое определение местоположения не используется.</string>
+  <string name="weather_settings">Погода</string>
+  <string name="weather_settings_help">Погода Open-Meteo на главном экране. По умолчанию выключена.</string>
+  <string name="weather_city_settings">Город</string>
+  <string name="weather_city_help">Поиск по названию, без определения местоположения.</string>
   <string name="weather_choose_city">Выберите город</string>
   <string name="weather_search_city">Поиск города по названию</string>
   <string name="weather_city_unknown">Не выбрано</string>
@@ -16,6 +16,6 @@
   <string name="weather_cloud">Облачно</string><string name="weather_fog">Туман</string>
   <string name="weather_rain">Дождь</string><string name="weather_snow">Снег</string>
   <string name="weather_storm">Гроза</string>
-  <string name="weather_unit_settings">Единицы температуры</string>
+  <string name="weather_unit_settings">Единицы</string>
   <string name="weather_unit_help">Градусы Цельсия или Фаренгейта.</string>
 </resources>

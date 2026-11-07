@@ -6,8 +6,8 @@
     <string name="live_wallpaper_upload">Сначала отсканируйте QR-код, чтобы загрузить видео</string>
     <string name="live_wallpaper_failed">Видео недоступно. Показан статичный фон; проверьте формат или сеть.</string>
     <string name="download_default_backdrop">Фон настроек по умолчанию</string>
-    <string name="download_default_intro">Приветственное видео по умолчанию</string>
-    <string name="optional_asset_help">Необязательная загрузка. Ваши файлы имеют приоритет. Удалите, чтобы освободить место; без медиафайлов используется простой фон или логотип Tigris.</string>
+    <string name="download_default_intro">Стандартное видео</string>
+    <string name="optional_asset_help">Скачать или удалить. Ваше видео важнее; без видео — логотип Tigris.</string>
     <string name="asset_downloading">Выполняется…</string>
     <string name="asset_download">Скачать</string>
     <string name="asset_remove">Скачано · удалить</string>

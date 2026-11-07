@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cat_look">Appearance</string>
+    <string name="cat_look_help">Wallpaper, clock, dock and focus.</string>
+    <string name="cat_home">Home screen</string>
+    <string name="cat_home_help">Weather card and the shelf above the dock.</string>
+    <string name="cat_saver">Screensaver</string>
+    <string name="cat_saver_help">Screensaver and the startup animation.</string>
+    <string name="cat_remote">Remote</string>
+    <string name="cat_remote_help">Power button and extra remote buttons.</string>
+    <string name="cat_apps">Apps and updates</string>
+    <string name="cat_apps_help">Updates, app order and hidden apps.</string>
+    <string name="cat_memory">Memory</string>
+    <string name="cat_memory_help">Free memory now or on a schedule.</string>
+    <string name="cat_system_help">Bluetooth, picture, sound, date and time.</string>
+    <string name="section_wallpaper">Wallpaper</string>
+    <string name="section_clock">Clock</string>
+    <string name="section_interface">Interface</string>
+    <string name="section_intro">Startup animation</string>
+    <string name="section_buttons">Buttons</string>
+    <string name="section_tigris">Tigris</string>
+    <string name="remap_netflix">Netflix button</string>
+    <string name="remap_evo">evo button</string>
+    <string name="remap_help">What the button opens. Works while the Home guard is on.</string>
+    <string name="remap_inputs">Inputs</string>
+    <string name="remap_none">As the TV does</string>
+    <string name="weather_show">Show weather</string>
+    <string name="sleep_timer">Sleep timer</string>
+    <string name="sleep_timer_off">Off</string>
+    <string name="sleep_timer_left">%1$d min left</string>
+</resources>

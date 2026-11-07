@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cat_look">外观</string>
+    <string name="cat_look_help">壁纸、时钟、程序坞和聚焦动画。</string>
+    <string name="cat_home">主屏幕</string>
+    <string name="cat_home_help">天气卡片和程序坞上方的推荐栏。</string>
+    <string name="cat_saver">屏保</string>
+    <string name="cat_saver_help">空闲屏保和开机动画。</string>
+    <string name="cat_remote">遥控器</string>
+    <string name="cat_remote_help">电源键和其他遥控器按键。</string>
+    <string name="cat_apps">应用与更新</string>
+    <string name="cat_apps_help">更新、应用顺序和隐藏的应用。</string>
+    <string name="cat_memory">内存</string>
+    <string name="cat_memory_help">立即或定时清理内存。</string>
+    <string name="cat_system_help">蓝牙、图像、声音、日期和时间。</string>
+    <string name="section_wallpaper">壁纸</string>
+    <string name="section_clock">时钟</string>
+    <string name="section_interface">界面</string>
+    <string name="section_intro">开机动画</string>
+    <string name="section_buttons">按键</string>
+    <string name="section_tigris">Tigris</string>
+    <string name="remap_netflix">Netflix 键</string>
+    <string name="remap_evo">evo 键</string>
+    <string name="remap_help">按键打开的内容。需开启桌面守护。</string>
+    <string name="remap_inputs">输入源</string>
+    <string name="remap_none">系统默认</string>
+    <string name="weather_show">显示天气</string>
+    <string name="sleep_timer">睡眠定时</string>
+    <string name="sleep_timer_off">关</string>
+    <string name="sleep_timer_left">剩余 %1$d 分钟</string>
+</resources>
