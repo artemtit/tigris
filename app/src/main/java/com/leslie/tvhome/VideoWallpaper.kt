@@ -3,16 +3,17 @@ package com.leslie.tvhome
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.Region
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.os.SystemClock
+import android.view.Gravity
 import android.view.PixelCopy
-import android.view.Surface
-import android.view.TextureView
+import android.view.SurfaceView
+import android.view.View
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.media3.common.MediaItem
@@ -31,11 +32,11 @@ import java.net.URL
 import kotlin.random.Random
 
 /**
- * Shared tvOS aerial/local video wallpaper. Video decoding stays in the hardware
- * layer. Glass receives bounded, *asynchronous* PixelCopy snapshots; unlike
- * TextureView.getBitmap(), the GPU readback never blocks the remote-control UI.
+ * Shared tvOS aerial/local video wallpaper. The film plays into a SurfaceView behind
+ * the UI: SurfaceFlinger composites each video frame, so the app window redraws only
+ * when the UI changes (a TextureView re-rendered the whole window on the GPU per frame).
+ * Glass receives bounded, *asynchronous* PixelCopy snapshots of that surface.
  *
- * The extra source Surface is only borrowed for a single PixelCopy and released.
  * PixelCopy can fail on vendor codecs: video keeps playing and the static glass
  * remains in place until a good frame arrives.
  *
@@ -51,8 +52,13 @@ internal class VideoWallpaper(
     /** True while the film covers the screen, so the picture under it need not be drawn. */
     private val onCover: (Boolean) -> Unit = {},
 ) {
-    // Films fill the screen (see crop): opaque, so the GPU composites them without blending.
-    private val texture = TextureView(ctx).apply { alpha = 0f; isOpaque = true }
+    // Default Z order: below the window, seen through the hole it clears while its alpha is 1.
+    // Alpha 0 skips that clear, so the picture under it shows; the surface keeps decoding.
+    private val video = object : SurfaceView(ctx) {
+        // ponytail: no transparent-region hint. The hint only updates on layout, and a stale one
+        // makes SurfaceFlinger skip window pixels (frost, photo); per-pixel alpha is always right.
+        override fun gatherTransparentRegion(region: Region?) = true
+    }.apply { alpha = 0f; visibility = View.GONE }
     var frame: Bitmap? = null
         private set
 
@@ -60,7 +66,7 @@ internal class VideoWallpaper(
     private val layer = object : FrameLayout(ctx) {
         override fun dispatchDraw(canvas: Canvas) {
             if (canvas.isHardwareAccelerated) super.dispatchDraw(canvas)
-            else if (texture.alpha > 0f) frame?.let {
+            else if (video.alpha > 0f) frame?.let {
                 canvas.drawBitmap(it, null, Rect(0, 0, width, height), framePaint)
             }
         }
@@ -86,7 +92,6 @@ internal class VideoWallpaper(
     private var aspect = 16f / 9f
     private var captureGeneration = 0L
     private var pendingCapture = false
-    private var captureSurface: Surface? = null
     private var captureStartedAt = 0L
     private var failedCopies = 0
     private var nextCaptureAt = 0L
@@ -99,15 +104,13 @@ internal class VideoWallpaper(
             val now = SystemClock.uptimeMillis()
             // Vendor PixelCopy can swallow callbacks. Never hold the busy flag forever.
             if (pendingCapture && now - captureStartedAt > 3_000L) {
-                captureSurface?.release()
-                captureSurface = null
                 captureGeneration++
                 pendingCapture = false
                 failedCopies++
                 nextCaptureAt = now + 5_000L
             }
-            if (!pendingCapture && now >= nextCaptureAt && texture.alpha > 0f &&
-                texture.isAvailable && canSample() && texture.width > 0 && texture.height > 0
+            if (!pendingCapture && now >= nextCaptureAt && video.alpha > 0f &&
+                video.holder.surface.isValid && canSample() && layer.width > 0 && layer.height > 0
             ) {
                 capture(now)
             }
@@ -116,23 +119,24 @@ internal class VideoWallpaper(
     }
 
     init {
-        layer.addView(texture, FrameLayout.LayoutParams(-1, -1))
+        layer.addView(video, FrameLayout.LayoutParams(-1, -1, Gravity.CENTER))
         host.addView(layer, FrameLayout.LayoutParams(-1, -1))
-        texture.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> crop() }
+        // Resizing the surface view from inside a layout pass would be dropped: post it.
+        layer.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> main.post { crop() } }
         // Films used to live in the cache, which the system wipes; the old folder goes once.
         dl.post { File(ctx.cacheDir, "aerials").deleteRecursively() }
     }
 
     private fun show(on: Boolean) {
-        texture.alpha = if (on) 1f else 0f
+        video.alpha = if (on) 1f else 0f
         onCover(on)
     }
 
     /** Called from the UI thread; only enqueues an asynchronous PixelCopy. */
     private fun capture(now: Long) {
-        val surfaceTexture = texture.surfaceTexture ?: return
-        val width = minOf(if (lowEnd) 320 else 480, texture.width)
-        val height = (width.toLong() * texture.height / texture.width).toInt().coerceAtLeast(1)
+        // Screen-shaped like before; PixelCopy scales the whole decoded frame into it.
+        val width = minOf(if (lowEnd) 320 else 480, layer.width)
+        val height = (width.toLong() * layer.height / layer.width).toInt().coerceAtLeast(1)
         val bitmap = runCatching { Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888) }
             .getOrNull() ?: run {
                 nextCaptureAt = now + 10_000L
@@ -142,13 +146,9 @@ internal class VideoWallpaper(
         pendingCapture = true
         captureStartedAt = now
         nextCaptureAt = now + if (lowEnd) 1_000L else 500L
-        val surface = Surface(surfaceTexture)
-        captureSurface = surface
         try {
-            PixelCopy.request(surface, bitmap, { result ->
-                surface.release()
+            PixelCopy.request(video, bitmap, { result ->
                 main.post {
-                    if (captureSurface === surface) captureSurface = null
                     if (generation != captureGeneration || player == null) {
                         bitmap.recycle()
                         return@post
@@ -169,8 +169,7 @@ internal class VideoWallpaper(
                 }
             }, copyHandler)
         } catch (_: Exception) {
-            surface.release()
-            if (captureSurface === surface) captureSurface = null
+            // Surface destroyed in between (IllegalArgumentException): retry later.
             bitmap.recycle()
             pendingCapture = false
             failedCopies++
@@ -197,7 +196,8 @@ internal class VideoWallpaper(
         p.volume = 0f
         // Aerials loop too: the film repeats until the next download is ready.
         p.repeatMode = Player.REPEAT_MODE_ONE
-        p.setVideoTextureView(texture)
+        video.visibility = View.VISIBLE
+        p.setVideoSurfaceView(video)
         p.addListener(object : Player.Listener {
             override fun onRenderedFirstFrame() {
                 if (player !== p) return
@@ -354,12 +354,11 @@ internal class VideoWallpaper(
         }
     }
 
+    /** Centre-crop: the surface view outgrows the screen on one axis; the window clips the rest. */
     private fun crop() {
-        if (texture.width <= 0 || texture.height <= 0) return
-        val viewAspect = texture.width.toFloat() / texture.height
-        val sx = maxOf(1f, aspect / viewAspect)
-        val sy = maxOf(1f, viewAspect / aspect)
-        texture.setTransform(Matrix().apply { setScale(sx, sy, texture.width / 2f, texture.height / 2f) })
+        val (w, h) = cover(layer.width, layer.height, aspect) ?: return
+        val lp = video.layoutParams
+        if (lp.width != w || lp.height != h) video.layoutParams = FrameLayout.LayoutParams(w, h, Gravity.CENTER)
     }
 
     private fun armTimeout() {
@@ -401,8 +400,6 @@ internal class VideoWallpaper(
 
     private fun clearFrame() {
         captureGeneration++
-        captureSurface?.release()
-        captureSurface = null
         pendingCapture = false
         frame = null
         onFrame(null)
@@ -412,6 +409,8 @@ internal class VideoWallpaper(
         freeze()
         show(false)
         clearFrame()
+        // No film (photo, gradient, failure): no surface, no layer for SurfaceFlinger.
+        video.visibility = View.GONE
     }
 
     /**
@@ -425,8 +424,6 @@ internal class VideoWallpaper(
         player?.release()
         player = null
         captureGeneration++
-        captureSurface?.release()
-        captureSurface = null
         pendingCapture = false
         key = null
         failures = 0
@@ -450,6 +447,13 @@ internal class VideoWallpaper(
         const val AERIAL = "video_aerial"
         private const val MAX_BYTES_PER_SECOND = 2L * 1024 * 1024
         val SOURCES = listOf(LOCAL, AERIAL)
+
+        /** Size covering a [w]×[h] view with video of [aspect], or null before layout. */
+        fun cover(w: Int, h: Int, aspect: Float): Pair<Int, Int>? {
+            if (w <= 0 || h <= 0 || aspect <= 0f) return null
+            val viewAspect = w.toFloat() / h
+            return Math.round(w * maxOf(1f, aspect / viewAspect)) to Math.round(h * maxOf(1f, viewAspect / aspect))
+        }
         fun label(source: String) = I18n.text(if (source == LOCAL) R.string.live_wallpaper_local else R.string.live_wallpaper_aerial)
         /** Holds at most the film on screen and the one downloaded ahead. */
         fun aerialDir(ctx: Context) = File(ctx.noBackupFilesDir, "aerials").apply { mkdirs() }
