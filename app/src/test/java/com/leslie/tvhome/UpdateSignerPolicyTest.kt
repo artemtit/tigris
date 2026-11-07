@@ -8,6 +8,15 @@ import org.junit.Test
 class UpdateSignerPolicyTest {
     private val pinned = "ea7f4568203d294bd37acac966d6d707f79147549d24c2244f58a6fbc27a6291"
 
+    @Test fun ownReleaseKeyIsPinnedAndForeignKeyRejected() {
+        val own = setOf(UpdateSignerPolicy.TIGRIS_SIGNER)
+        assertEquals(64, UpdateSignerPolicy.TIGRIS_SIGNER.length)
+        assertTrue(UpdateSignerPolicy.sameSigner(own, own) &&
+            UpdateSignerPolicy.matchesPinned(own, true, UpdateSignerPolicy.TIGRIS_SIGNER))
+        assertFalse(UpdateSignerPolicy.matchesPinned(setOf(pinned), true, UpdateSignerPolicy.TIGRIS_SIGNER))
+        assertFalse(UpdateSignerPolicy.matchesPinned(own + pinned, true, UpdateSignerPolicy.TIGRIS_SIGNER))
+    }
+
     @Test fun android9ArchiveMissingSigningInfoUsesLegacyParser() {
         var calls = 0
         val observed = UpdateSignerPolicy.withLegacyFallback(emptySet(), legacyAllowed = true) {

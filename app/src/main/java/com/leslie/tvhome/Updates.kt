@@ -18,7 +18,7 @@ import java.util.concurrent.Executors
 object Updates {
     data class Product(val name: String, val repo: String, val pkg: String, val optional: Boolean = false)
     val products get() = listOf(
-        Product(I18n.text(R.string.i18n_updates_001), "lesnolie/Tigris", "com.leslie.tvhome"),
+        Product(I18n.text(R.string.i18n_updates_001), "artemtit/tigris-releases", "com.leslie.tvhome"),
         Product(I18n.text(R.string.i18n_updates_002), "weekdayjast/MiracastReceiver", OptionalAppPolicy.MIRACAST_PKG, true),
         Product(I18n.text(R.string.optional_hgtv_name), "pan8664716/HGTV", OptionalAppPolicy.HGTV_PKG, true)
     )
@@ -185,6 +185,8 @@ object Updates {
                     certs(runCatching { pm.getPackageInfo(p.pkg, PackageManager.GET_SIGNATURES) }.getOrNull())
                 }
                 check(UpdateSignerPolicy.sameSigner(signatures, installedSignatures)) { I18n.text(R.string.i18n_updates_020) }
+                // Tigris itself must additionally be signed by our pinned release key.
+                if (p.pkg == c.packageName) check(UpdateSignerPolicy.matchesPinned(signatures, true, UpdateSignerPolicy.TIGRIS_SIGNER)) { I18n.text(R.string.i18n_updates_020) }
             } else {
                 val trusted = OptionalAppPolicy.trustedCertificate(p.pkg)
                 check(trusted != null && UpdateSignerPolicy.matchesPinned(signatures, p.optional, trusted)) {
