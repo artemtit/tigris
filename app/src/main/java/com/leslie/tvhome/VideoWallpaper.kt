@@ -48,8 +48,11 @@ internal class VideoWallpaper(
     host: FrameLayout,
     private val canSample: () -> Boolean,
     private val onFrame: (Bitmap?) -> Unit,
+    /** True while the film covers the screen, so the picture under it need not be drawn. */
+    private val onCover: (Boolean) -> Unit = {},
 ) {
-    private val texture = TextureView(ctx).apply { alpha = 0f; isOpaque = false }
+    // Films fill the screen (see crop): opaque, so the GPU composites them without blending.
+    private val texture = TextureView(ctx).apply { alpha = 0f; isOpaque = true }
     var frame: Bitmap? = null
         private set
 
@@ -70,12 +73,15 @@ internal class VideoWallpaper(
     private var aerial = false
     private var failures = 0
     private var failedKey: String? = null // survives stop(): don't restart a source that just failed
-    private val dlThread = HandlerThread("TigrisAerialDownload").apply { start() }
+    // Background priority: a download never competes with the UI or an app's cold start.
+    private val dlThread = HandlerThread("TigrisAerialDownload", android.os.Process.THREAD_PRIORITY_BACKGROUND).apply { start() }
     private val dl = Handler(dlThread.looper)
     @Volatile private var dlGeneration = 0L
     private var fetching = false
     private var current: File? = null
     private var ready: File? = null
+    /** The local video loops in place of the aerials until the first film is on disk. */
+    private var filler = false
     private val hevc by lazy { MediaQuality.hevcDecoderPresent() }
     private var aspect = 16f / 9f
     private var captureGeneration = 0L
@@ -113,6 +119,13 @@ internal class VideoWallpaper(
         layer.addView(texture, FrameLayout.LayoutParams(-1, -1))
         host.addView(layer, FrameLayout.LayoutParams(-1, -1))
         texture.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> crop() }
+        // Films used to live in the cache, which the system wipes; the old folder goes once.
+        dl.post { File(ctx.cacheDir, "aerials").deleteRecursively() }
+    }
+
+    private fun show(on: Boolean) {
+        texture.alpha = if (on) 1f else 0f
+        onCover(on)
     }
 
     /** Called from the UI thread; only enqueues an asynchronous PixelCopy. */
@@ -190,7 +203,7 @@ internal class VideoWallpaper(
                 if (player !== p) return
                 main.removeCallbacks(timeout)
                 failures = 0
-                texture.alpha = 1f
+                show(true)
                 main.removeCallbacks(sample)
                 sample.run()
             }
@@ -217,9 +230,11 @@ internal class VideoWallpaper(
         val done = aerialDir(ctx).listFiles { f -> f.name.endsWith(".mov") }.orEmpty()
             .sortedByDescending { it.lastModified() }
         done.drop(1).let { old -> dl.post { old.forEach { it.delete() } } }
-        // First run: the static background stays until the first film is fully downloaded.
+        // First run: the local video (or else the static background) stays until the first film is fully downloaded.
         ready = done.firstOrNull()
-        if (ready != null) showNext() else fetchNext()
+        if (ready != null) { showNext(); return }
+        MediaFiles.wallpaper(ctx)?.let { filler = true; play(android.net.Uri.fromFile(it).toString()) }
+        fetchNext()
     }
 
     private fun showNext() {
@@ -227,6 +242,7 @@ internal class VideoWallpaper(
         ready = null
         val old = current
         current = next
+        filler = false
         play(android.net.Uri.fromFile(next).toString())
         if (old != null && old != next) dl.post { old.delete() }
         fetchNext()
@@ -245,7 +261,8 @@ internal class VideoWallpaper(
         if (gen != dlGeneration || player == null) return
         fetching = false
         ready = file
-        if (current == null) showNext()
+        // The local filler hands over at the end of its loop, like one film to the next.
+        if (current == null && !filler) showNext()
     }
 
     /** No network or Apple unreachable: keep looping the current film and retry with backoff. */
@@ -316,11 +333,17 @@ internal class VideoWallpaper(
             c.inputStream.use { input ->
                 FileOutputStream(part, code == 206).use { out ->
                     val buf = ByteArray(64 * 1024)
+                    val started = SystemClock.elapsedRealtime()
+                    var got = 0L
                     while (true) {
                         if (gen != dlGeneration) throw InterruptedIOException("stopped")
                         val n = input.read(buf)
                         if (n < 0) break
                         out.write(buf, 0, n)
+                        // ponytail: average-rate cap, so eMMC and CPU stay free for the UI and app launches.
+                        got += n
+                        val ahead = got * 1000 / MAX_BYTES_PER_SECOND - (SystemClock.elapsedRealtime() - started)
+                        if (ahead > 0) Thread.sleep(ahead)
                     }
                 }
             }
@@ -346,7 +369,7 @@ internal class VideoWallpaper(
 
     private fun play(uri: String) {
         val p = player ?: return
-        texture.alpha = 0f
+        show(false)
         clearFrame()
         p.setMediaItem(MediaItem.fromUri(uri))
         armTimeout()
@@ -363,7 +386,8 @@ internal class VideoWallpaper(
         // Decoder errors and the timeout say nothing about the file: keep it.
         if (errorCode in 2000..3999) current?.let { f -> dl.post { f.delete() } }
         current = null
-        texture.alpha = 0f
+        filler = false
+        show(false)
         clearFrame()
         if (ready != null) showNext() else fetchNext()
     }
@@ -385,12 +409,25 @@ internal class VideoWallpaper(
     }
 
     fun stop() {
+        freeze()
+        show(false)
+        clearFrame()
+    }
+
+    /**
+     * Frees the decoder and the download but leaves the last frame on screen, for an app
+     * launch: the cold start gets the memory, and the launch animation shows no change.
+     * [start] plays again as after [stop].
+     */
+    fun freeze() {
         main.removeCallbacks(timeout)
         main.removeCallbacks(sample)
         player?.release()
         player = null
-        texture.alpha = 0f
-        clearFrame()
+        captureGeneration++
+        captureSurface?.release()
+        captureSurface = null
+        pendingCapture = false
         key = null
         failures = 0
         // Cancels the download in flight (its .part resumes next time) and any pending retry.
@@ -399,6 +436,7 @@ internal class VideoWallpaper(
         fetching = false
         current = null
         ready = null
+        filler = false
     }
 
     fun destroy() {
@@ -410,9 +448,10 @@ internal class VideoWallpaper(
     companion object {
         const val LOCAL = "video_local"
         const val AERIAL = "video_aerial"
+        private const val MAX_BYTES_PER_SECOND = 2L * 1024 * 1024
         val SOURCES = listOf(LOCAL, AERIAL)
         fun label(source: String) = I18n.text(if (source == LOCAL) R.string.live_wallpaper_local else R.string.live_wallpaper_aerial)
         /** Holds at most the film on screen and the one downloaded ahead. */
-        fun aerialDir(ctx: Context) = File(ctx.cacheDir, "aerials").apply { mkdirs() }
+        fun aerialDir(ctx: Context) = File(ctx.noBackupFilesDir, "aerials").apply { mkdirs() }
     }
 }

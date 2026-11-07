@@ -16,6 +16,12 @@ object Device {
         (am.isLowRamDevice || mem.totalMem < 2_500L * 1024 * 1024 || android.os.Build.VERSION.SDK_INT < 30 ||
             Runtime.getRuntime().availableProcessors() < 4).also { lowEnd = it }
     }
+
+    /** When the process started with the TV (App touches this first), uptime until deferrable work may run. */
+    private val settleAt = android.os.SystemClock.elapsedRealtime().let { if (it < 60_000L) it + 20_000L else 0L }
+
+    /** Milliseconds left in which work that can wait (video, downloads, weather) stays held back after boot. */
+    fun settling(): Long = (settleAt - android.os.SystemClock.elapsedRealtime()).coerceAtLeast(0L)
 }
 
 /** All user settings in one place. */

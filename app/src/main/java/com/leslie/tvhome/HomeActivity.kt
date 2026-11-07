@@ -202,6 +202,9 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 
+    /** Plays the held-back video wallpaper once the TV has settled after boot. */
+    private val settled = Runnable { if (resumed) applyBackground() }
+
     private val ticker = object : Runnable {
         override fun run() {
             updateClock()
@@ -358,7 +361,9 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         backdrop.addView(bg, match())
         videoWallpaper = VideoWallpaper(this, backdrop,
             canSample = { resumed && !shelfShown && !videoGlassFrames.busy && !videoGlassReady },
-            onFrame = ::updateVideoGlass)
+            onFrame = ::updateVideoGlass,
+            // The opaque film hides the picture: one full-screen fill less per frame.
+            onCover = { bg.visibility = if (it) View.INVISIBLE else View.VISIBLE })
 
         val dm = resources.displayMetrics
         sw = dm.widthPixels
@@ -379,7 +384,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         dockRect.set(side - pad, firstRowY - pad, sw - side + pad, firstRowY + tileH + pad)
         dockRadius = dp(11) + pad.toFloat()
         buildShelf(side)
-        frost = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; alpha = 0f }
+        frost = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; alpha = 0f; visibility = View.INVISIBLE }
         scene.addView(frost, match())
         dock = ImageView(this).apply { scaleType = ImageView.ScaleType.FIT_XY }
         scene.addView(dock, FrameLayout.LayoutParams(dockRect.width(), dockRect.height()).apply {
@@ -528,6 +533,9 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 dock.alpha = 1f - expansion
                 dockFrost.alpha = expansion
                 frost.alpha = expansion
+                frost.visibility = if (expansion > 0f) View.VISIBLE else View.INVISIBLE
+                // Fully frosted, the opaque blur covers wallpaper, film and shelf: don't draw them underneath.
+                backdrop.visibility = if (expansion >= 1f && frost.drawable != null) View.INVISIBLE else View.VISIBLE
                 if (off > 0f) scrollGlass.invalidateSelf()
                 // The date, weather and large clock drift up and give way to the rows coming up under them.
                 bigClock.translationY = -expansion * dp(28)
@@ -537,6 +545,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         scene.addView(grid, match())
         header.bringToFront()
         setContentView(root)
+        // The black root fills the screen already; the window's own black fill was one more pass.
+        window.setBackgroundDrawable(null)
     }
 
     /** The weather follows the date on its line: "четверг, 29 окт.  ·  ⛅ 8°". */
@@ -560,7 +570,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             ?: run { showWeather(I18n.text(R.string.weather_weather_unavailable)) }
         val now = System.currentTimeMillis()
         // The line lives in the large clock; the corner clock and no clock leave it unseen.
-        if (prefs.clockStyle != Prefs.CLOCK_LARGE || weatherLoading || now - lastWeatherAttempt < 2 * 60_000L) return
+        // Just after boot the cached line will do; a later minute tick fetches.
+        if (prefs.clockStyle != Prefs.CLOCK_LARGE || weatherLoading || now - lastWeatherAttempt < 2 * 60_000L || Device.settling() > 0) return
         weatherLoading = true
         lastWeatherAttempt = now
         io.execute {
@@ -589,6 +600,9 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         }
         if (theme in VideoWallpaper.SOURCES) {
             showBackground("graphite", null)
+            // Just after boot the static picture stays a little longer; the decoder and download wait.
+            val wait = Device.settling()
+            if (wait > 0) { main.removeCallbacks(settled); main.postDelayed(settled, wait); return }
             if (resumed && intro == null && welcome == null && getSystemService(android.os.PowerManager::class.java).isInteractive)
                 videoWallpaper.start(theme)
             return
@@ -599,7 +613,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         refreshing = true
         io.execute {
             val walls = Wallpapers(this, Wallpapers.sourceFor(theme))
-            runCatching { walls.refresh(); walls.advance(prefs.wallMinutes) }
+            // Just after boot the photo on disk will do; a later minute tick refreshes.
+            if (Device.settling() == 0L) runCatching { walls.refresh(); walls.advance(prefs.wallMinutes) }
             val photo = walls.current()
             refreshing = false
             main.post { if (!isDestroyed && prefs.background == theme) showBackground(theme, photo) }
@@ -709,8 +724,9 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     // ------------------------------------------------------------------- shelf
 
     private fun buildShelf(side: Int) {
-        shelf = FrameLayout(this).apply { alpha = 0f; visibility = View.INVISIBLE }
-        shelfPics = FrameLayout(this)
+        // Fades without a full-screen offscreen layer; the pictures and text don't overlap much.
+        shelf = FrameLayout(this).apply { alpha = 0f; visibility = View.INVISIBLE; forceHasOverlappingRendering(false) }
+        shelfPics = FrameLayout(this).apply { forceHasOverlappingRendering(false) }
         shelf.addView(shelfPics, FrameLayout.LayoutParams(-1, -1))
         val shadow = { t: TextView -> t.setShadowLayer(dp(10).toFloat(), 0f, dp(1).toFloat(), Color.argb(150, 0, 0, 0)) }
         shelfSource = text(16f, Color.argb(200, 255, 255, 255), weight = 600).also(shadow)
@@ -941,17 +957,20 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         val app = adapter.apps.getOrNull(pos) ?: return
         app.folder?.let { openFolder(it); return }
         app.input?.let { i -> io.execute { tv.setInput(i) }; return }
+        // The decoder, its memory and the download go to the app's cold start; onResume plays on.
+        videoWallpaper.freeze()
         // The stock launcher (Xiaomi's PatchWall) can only be opened through the system Home action.
         if (HomeGuardService.isStockHome(app.pkg) && HomeGuardService.openStockLauncher()) {
             rememberOpened(app.pkg)
             return
         }
-        val intent = repo.launchIntent(app) ?: return
+        val intent = repo.launchIntent(app) ?: return applyBackground()
         val opts = ActivityOptions.makeScaleUpAnimation(cell.card, 0, 0, cell.card.width, cell.card.height)
         try {
             startActivity(intent, opts.toBundle())
             rememberOpened(app.pkg)
         } catch (e: Exception) {
+            applyBackground()
             Toast.makeText(this, I18n.text(R.string.i18n_homeactivity_005, app.label), Toast.LENGTH_SHORT).show()
         }
     }
@@ -1042,9 +1061,10 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 val app = apps[index]
                 try {
                     val intent = repo.launchIntent(app) ?: return@setItems
+                    videoWallpaper.freeze()
                     if (!HomeGuardService.isStockHome(app.pkg) || !HomeGuardService.openStockLauncher()) startActivity(intent)
                     rememberOpened(folder.id)
-                } catch (_: Exception) { Toast.makeText(this, I18n.text(R.string.i18n_homeactivity_024, app.label), Toast.LENGTH_SHORT).show() }
+                } catch (_: Exception) { applyBackground(); Toast.makeText(this, I18n.text(R.string.i18n_homeactivity_024, app.label), Toast.LENGTH_SHORT).show() }
             }.setNeutralButton(I18n.text(R.string.i18n_homeactivity_025)) { _, _ -> manageFolder(folder, focusedPos) }
             .setNegativeButton(I18n.text(R.string.i18n_homeactivity_026), null).create()
         if (apps.isEmpty()) dialog.setMessage(I18n.text(R.string.i18n_homeactivity_027))
@@ -1303,6 +1323,12 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         main.removeCallbacks(ticker)
         main.removeCallbacks(shelfAdvance)
         super.onPause()
+    }
+
+    /** Tiles are redrawn cheaply when needed; the bound ones keep their pictures. */
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) repo.invalidate()
     }
 
     private fun askAdbAuthorization() {
