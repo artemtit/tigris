@@ -95,7 +95,6 @@ class SettingsActivity : Activity() {
     private lateinit var pageShade: View
     private lateinit var scroll: ScrollView
     private lateinit var root: FrameLayout
-    private lateinit var glass: UpdateGlass
     private lateinit var focusedTitle: TextView
     /** The category glyph on show; null while the user's own icon is in use. */
     private var glyph = 0
@@ -135,13 +134,12 @@ class SettingsActivity : Activity() {
         prefs = Prefs(this)
         repo = AppRepo(this)
         root = FrameLayout(this).apply {
-            // tvOS dark: a neutral near-black fall, no hue (the bitmap below paints the same gradient).
+            // Neutral graphite until the blurred wallpaper below is composed (a frame or two).
             background = android.graphics.drawable.GradientDrawable(
                 android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
                 intArrayOf(SettingsBackdrop.TOP, SettingsBackdrop.BOTTOM))
             clipChildren = false; clipToPadding = false
         }
-        glass = UpdateGlass(root, moving = true)
         backdrop = ImageView(this).apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
         }
@@ -153,14 +151,19 @@ class SettingsActivity : Activity() {
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }
         root.addView(pageShade, FrameLayout.LayoutParams(-1, -1))
-        // Safe area ~90 x 60 px at 1080p (Android TV is 960 x 540 dp at any density); list ~52 % wide.
+        // Safe area ~90 x 60 px at 1080p (Android TV is 960 x 540 dp at any density); the glass panel
+        // floats 48 dp in from the top, right and bottom edges, ~54 % of the width.
         val sideMargin = dp(45)
         val safeTop = dp(30)
-        val listWidth = (resources.displayMetrics.widthPixels * 0.52f).toInt()
-        val leftWidth = resources.displayMetrics.widthPixels - listWidth - sideMargin * 2 - dp(24)
+        val panelInset = dp(48)
+        val panelWidth = (resources.displayMetrics.widthPixels * 0.52f).toInt() + dp(24)
+        val leftWidth = resources.displayMetrics.widthPixels - panelWidth - panelInset - sideMargin - dp(24)
+        // A soft shadow under the left column's white type keeps it legible over a bright wallpaper.
+        val legible = { v: TextView -> v.setShadowLayer(dp(10).toFloat(), 0f, dp(1).toFloat(), Color.argb(110, 0, 0, 0)) }
         // One line, shrinking for long category names so it never runs into the glyph.
         heading = text(40f, weight = 700).apply {
             maxLines = 1; letterSpacing = -0.02f
+            legible(this)
             setAutoSizeTextTypeUniformWithConfiguration(26, 40, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
         }
         root.addView(heading, FrameLayout.LayoutParams(leftWidth, dp(52)).apply {
@@ -182,9 +185,11 @@ class SettingsActivity : Activity() {
             letterSpacing = -0.01f
             maxLines = 2; ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.CENTER_HORIZONTAL
+            legible(this)
         }
         left.addView(focusedTitle, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(20) })
-        about = text(16f, Color.argb(153, 255, 255, 255)).apply {
+        about = text(16f, Color.argb(179, 255, 255, 255)).apply {
+            legible(this)
             maxLines = 3; ellipsize = TextUtils.TruncateAt.END
             setLineSpacing(dp(3).toFloat(), 1f)
             gravity = Gravity.CENTER_HORIZONTAL
@@ -196,8 +201,9 @@ class SettingsActivity : Activity() {
         list = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             clipChildren = false; clipToPadding = false
-            // Room for the focused row to grow into: rows scale 1.025 about their centre, ~6 dp per side at 500 dp.
-            setPadding(dp(12), dp(10), dp(12), dp(14))
+            // 14 dp inside the panel keeps the 14 dp plates concentric with its 28 dp corners; a row
+            // scaled 1.025 about its centre grows ~6 dp per side, still inside the glass.
+            setPadding(dp(14), dp(14), dp(14), dp(14))
         }
         scroll = object : ScrollView(this) {
             override fun requestChildRectangleOnScreen(child: View, rectangle: Rect, immediate: Boolean) = false
@@ -208,7 +214,6 @@ class SettingsActivity : Activity() {
             isVerticalFadingEdgeEnabled = true
             setFadingEdgeLength(dp(16))
             addView(list)
-            setOnScrollChangeListener { _, _, _, _, _ -> glass.refresh() }
         }
         val viewport = FrameLayout(this).apply {
             clipChildren = true; clipToPadding = true
@@ -217,10 +222,15 @@ class SettingsActivity : Activity() {
         scroll.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
             v.clipBounds = Rect(0, 0, v.width, v.height)
         }
-        root.addView(viewport, FrameLayout.LayoutParams(listWidth + dp(24), -1, Gravity.END).apply {
-            rightMargin = sideMargin - dp(12); topMargin = safeTop - dp(10); bottomMargin = safeTop - dp(14)
-        })
-        root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> glass.refresh() }
+        // The list's glass: its own view behind the clipped viewport, so the shadow can spill past the edge.
+        val panelBounds = { FrameLayout.LayoutParams(panelWidth, -1, Gravity.END).apply {
+            rightMargin = panelInset; topMargin = panelInset; bottomMargin = panelInset
+        } }
+        root.addView(View(this).apply {
+            background = GlassPanel(this)
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, panelBounds())
+        root.addView(viewport, panelBounds())
         setContentView(root)
         showBackdrop()
         entry = when (intent.getStringExtra(EXTRA_PAGE)) {
@@ -235,7 +245,6 @@ class SettingsActivity : Activity() {
         page = p
         pageGlyph = glyphFor(if (parent(p) == Page.MAIN) p else parent(p))
         setGlyph(pageGlyph)
-        glass.removeWithin(list)
         list.removeAllViews()
         scroll.scrollTo(0, 0)
         when (p) {
@@ -317,7 +326,20 @@ class SettingsActivity : Activity() {
         val revision = ++backdropRevision
         artwork.execute {
             val original = selected?.let { runCatching { decodeIcon(it, 1440) }.getOrNull() }
-            val source = original ?: SettingsBackdrop.load(this)
+            if (original == null) {
+                // The Home wallpaper (photo, or a still of the film), blurred, darkened, static while open.
+                val image = SettingsBackdrop.compose(SettingsBackdrop.load(this), sw, sh)
+                runOnUiThread {
+                    if (!isFinishing && !isDestroyed && revision == backdropRevision) {
+                        backdrop.setImageBitmap(image)
+                        pageShade.visibility = View.GONE
+                        icon.visibility = if (resources.configuration.fontScale > 1.15f) View.INVISIBLE else View.VISIBLE
+                        scene = image
+                    }
+                }
+                return@execute
+            }
+            val source = original
             val width = 720
             val height = (width.toLong() * sh / sw).toInt().coerceAtLeast(1)
             val image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -345,7 +367,6 @@ class SettingsActivity : Activity() {
                     pageShade.visibility = if (original != null) View.VISIBLE else View.GONE
                     icon.visibility = if (original != null || resources.configuration.fontScale > 1.15f) View.INVISIBLE else View.VISIBLE
                     scene = material
-                    glass.texture(material)
                 }
             }
         }
@@ -360,8 +381,10 @@ class SettingsActivity : Activity() {
     override fun onDestroy() {
         backdropRevision++
         activeDialog?.dismiss()
-        glass.close()
         artwork.shutdownNow()
+        // The one blurred page bitmap goes with the page.
+        backdrop.setImageDrawable(null)
+        scene = null
         super.onDestroy()
     }
 
@@ -376,7 +399,7 @@ class SettingsActivity : Activity() {
             v.setImageBitmap(own)
         } else {
             glyph = pageGlyph
-            v.setColorFilter(Color.argb(217, 255, 255, 255))
+            v.setColorFilter(Color.argb(230, 255, 255, 255))
             v.setImageResource(glyph)
         }
     }
@@ -1061,7 +1084,7 @@ class SettingsActivity : Activity() {
     /** One header style for every page: small, dimmed, on the 8 dp grid, aligned with the row text. */
     private fun section(title: String) {
         val first = list.childCount == 0
-        list.addView(text(14f, Color.argb(128, 255, 255, 255), weight = 500).apply {
+        list.addView(text(14f, Color.argb(140, 255, 255, 255), weight = 500).apply {
             text = title; letterSpacing = 0.01f
         }, LinearLayout.LayoutParams(-1, -2).apply {
             marginStart = dp(20); topMargin = if (first) 0 else dp(24); bottomMargin = dp(8)
@@ -1152,10 +1175,10 @@ class SettingsActivity : Activity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { sync() }
             override fun afterTextChanged(s: Editable?) {}
         })
-        val corner = dp(12).toFloat()
+        val corner = dp(14).toFloat()
         r.setOnFocusChangeListener { _, on ->
             // Focus = a solid white plate with dark ink, a soft shadow and a short decelerating lift, as on tvOS.
-            r.background = if (on) rounded(Color.WHITE, corner) else null
+            r.background = if (on) rounded(Color.argb(242, 255, 255, 255), corner) else null
             l.setTextColor(if (on) FOCUS_TEXT else IDLE_TEXT)
             v.setTextColor(if (on) FOCUS_VALUE else IDLE_VALUE)
             arrow?.setTextColor(if (on) FOCUS_CHEVRON else IDLE_CHEVRON)
