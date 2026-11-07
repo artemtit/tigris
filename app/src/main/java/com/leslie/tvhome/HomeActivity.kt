@@ -24,6 +24,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.Gravity
 import android.view.KeyEvent
@@ -89,6 +90,11 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     private lateinit var ccButton: IconButton
     /** Under the corner buttons while some app plays music; UP from the dock lands on it first. */
     private lateinit var nowPlaying: NowPlayingCard
+    /** Full-screen cover of the playing track after a minute without the remote. */
+    private lateinit var music: MusicMode
+    private var lastKeyAt = 0L
+    /** The key that closed the music mode: its repeats and release are swallowed too. */
+    private var swallowKey = -1
     private lateinit var grid: RecyclerView
     private lateinit var adapter: TileAdapter
     private lateinit var repo: AppRepo
@@ -468,6 +474,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         })
         // A column in the corner: buttons, Now Playing, then the dock below; UP and DOWN walk it.
         nowPlaying = NowPlayingCard(this, io, onUp = { ccButton.requestFocus() }, onDown = { focusAt(focusedPos) })
+        music = MusicMode(root, nowPlaying)
+        nowPlaying.onChange = ::checkMusic
         val nowSlot = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
         nowSlot.addView(nowPlaying, FrameLayout.LayoutParams(-2, -2))
         header.addView(nowSlot, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.TOP).apply {
@@ -1233,12 +1241,51 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         focusAt(focusedPos)
     }
 
+    private val musicOpen = Runnable { checkMusic() }
+    private val musicClose = Runnable { music.hide() }
+
+    /**
+     * The music mode opens once the remote has rested [NowPlaying.IDLE_MS] while music plays and
+     * nothing else is open; while open it follows the track and closes when the music goes away.
+     */
+    private fun checkMusic() {
+        main.removeCallbacks(musicOpen)
+        if (music.isShowing) {
+            music.bind()
+            main.removeCallbacks(musicClose)
+            NowPlaying.closeIn(nowPlaying.active, nowPlaying.playing)?.let { main.postDelayed(musicClose, it) }
+            return
+        }
+        if (!resumed) return
+        val blocked = welcome != null || intro != null || sheets.isNotEmpty() || control.isOpen || moving >= 0 || !hasWindowFocus()
+        when (val wait = NowPlaying.openIn(nowPlaying.playing, blocked, SystemClock.uptimeMillis() - lastKeyAt)) {
+            null -> {}
+            0L -> music.show()
+            else -> main.postDelayed(musicOpen, wait)
+        }
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         restartIdle()
         welcome?.let { return it.key(event) }
         // Any key skips the intro to its closing zoom; nothing behind it reacts meanwhile.
         intro?.let { if (event.action == KeyEvent.ACTION_UP) it.skip(); return true }
         val code = event.keyCode
+        // Media keys reach the session and keep the music mode; any other key only closes it.
+        if (music.isShowing && NowPlaying.passesThrough(code)) return super.dispatchKeyEvent(event)
+        lastKeyAt = SystemClock.uptimeMillis()
+        if (music.isShowing) {
+            music.hide()
+            main.removeCallbacks(musicClose)
+            swallowKey = code
+            return true
+        }
+        if (code == swallowKey) {
+            if (event.action == KeyEvent.ACTION_UP) swallowKey = -1
+            return true
+        }
+        swallowKey = -1
+        checkMusic()
         if (event.action == KeyEvent.ACTION_DOWN && code == KeyEvent.KEYCODE_DPAD_RIGHT &&
             sheets.isEmpty() && control.isOpen && avatar.isShown && control.atRightEdge()) {
             control.close()
@@ -1296,6 +1343,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     // Home pressed on Home only pauses and resumes, so the film goes on; another app in front frees the decoder.
     override fun onStop() {
         videoWallpaper.stop()
+        main.removeCallbacks(musicClose)
+        music.release()
         nowPlaying.stop()
         super.onStop()
     }
@@ -1316,6 +1365,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         prefs.homeInFront = true
         HomeGuardService.onHomeResumed()
         restartIdle()
+        lastKeyAt = SystemClock.uptimeMillis()
+        checkMusic()
         applyBackground()
         updateNetworkIcon()
         main.removeCallbacks(ticker)
@@ -1335,6 +1386,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         resumed = false
         prefs.homeInFront = false
         main.removeCallbacks(idleFrame)
+        main.removeCallbacks(musicOpen)
         main.removeCallbacks(ticker)
         main.removeCallbacks(shelfAdvance)
         super.onPause()
