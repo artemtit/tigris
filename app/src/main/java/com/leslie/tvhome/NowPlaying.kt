@@ -525,8 +525,7 @@ class MusicMode(
         override fun run() {
             main.removeCallbacks(this)
             if (!isShowing) return
-            update()
-            if (card.playing) main.postDelayed(this, 250)
+            if (update()) main.postDelayed(this, 250)
         }
     }
 
@@ -591,6 +590,7 @@ class MusicMode(
         title.text = card.titleText
         artist.text = card.artistText
         val meta = card.metadata
+        dur = meta?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
         if (backdrop.drawable == null) backdrop.setImageDrawable(ColorDrawable(Color.BLACK))
         val track = card.track
         if (track != null && track != artKey) {
@@ -653,10 +653,14 @@ class MusicMode(
         slide.start(Motion.glideMs((to - from).toInt()).toLong(), Motion.glide) { f -> column.translationX = lerp(from, to, f) }
     }
 
-    private fun update() {
-        val st = card.state ?: return
-        val dur = card.metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
-        val pos = NowPlaying.position(st.position, st.lastPositionUpdateTime, st.playbackSpeed, card.playing, SystemClock.elapsedRealtime(), dur)
+    // One binder call per tick: duration is cached in bind(), "playing" comes from the same state.
+    private var dur = 0L
+
+    /** Returns whether playback is running, so the tick knows to continue. */
+    private fun update(): Boolean {
+        val st = card.state ?: return false
+        val playing = st.state == PlaybackState.STATE_PLAYING || st.state == PlaybackState.STATE_BUFFERING
+        val pos = NowPlaying.position(st.position, st.lastPositionUpdateTime, st.playbackSpeed, playing, SystemClock.elapsedRealtime(), dur)
         if (pos / 1000 != second) {
             second = pos / 1000
             bar.visibility = if (dur > 0) View.VISIBLE else View.INVISIBLE
@@ -665,12 +669,13 @@ class MusicMode(
             elapsed.text = NowPlaying.clock(pos)
             total.text = NowPlaying.clock(dur)
         }
-        val t = words ?: return
-        if (lines.isEmpty()) return
+        val t = words ?: return playing
+        if (lines.isEmpty()) return playing
         // Plain lyrics carry no times: they move through the song in proportion.
         val i = t.synced?.let { Lyrics.index(it, pos) }
             ?: if (dur > 0) (pos * lines.size / dur).toInt().coerceAtMost(lines.size - 1) else 0
         if (i != at) place(i, at != Int.MIN_VALUE && list.isLaidOut && !list.isLayoutRequested)
+        return playing
     }
 
     /** Puts line [i] at 40 % of the height and lights it; glides there when [animate]. */

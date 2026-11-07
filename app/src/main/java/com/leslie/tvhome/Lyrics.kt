@@ -51,9 +51,14 @@ object Lyrics {
      * Looks the song up off the main thread; [done] gets the result there (null: none). Network
      * errors are not cached, so the next play of the song tries again.
      */
+    // Only the newest track's lookup runs: skipped tracks don't queue slow requests ahead of it.
+    @Volatile private var wanted: String? = null
+
     fun fetch(key: String, artist: String, title: String, album: String?, durationSec: Long, done: (Text?) -> Unit) {
         val main = android.os.Handler(android.os.Looper.getMainLooper())
+        wanted = key
         worker.execute {
+            if (wanted != key) return@execute
             val hit = cached(key)
             val result = if (hit.first) hit.second else runCatching { lookup(artist, title, album, durationSec) }
                 .onSuccess { synchronized(this) { cache[key] = it } }.getOrNull()
