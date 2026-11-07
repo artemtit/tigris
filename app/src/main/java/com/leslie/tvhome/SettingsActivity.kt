@@ -169,6 +169,7 @@ class SettingsActivity : Activity() {
         // tvOS: a large bare glyph for the focused category, its title and description beneath, one left column.
         val left = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL // tvOS centres the glyph and its caption in the left half
             clipChildren = false; clipToPadding = false
         }
         icon = ImageView(this).apply {
@@ -176,15 +177,17 @@ class SettingsActivity : Activity() {
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             showIcon(this)
         }
-        left.addView(icon, LinearLayout.LayoutParams(dp(220), dp(220)))
+        left.addView(icon, LinearLayout.LayoutParams(dp(190), dp(190)).apply { topMargin = dp(40) })
         focusedTitle = text(28f, weight = 700).apply {
             letterSpacing = -0.01f
             maxLines = 2; ellipsize = TextUtils.TruncateAt.END
+            gravity = Gravity.CENTER_HORIZONTAL
         }
         left.addView(focusedTitle, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(20) })
         about = text(16f, Color.argb(153, 255, 255, 255)).apply {
             maxLines = 3; ellipsize = TextUtils.TruncateAt.END
             setLineSpacing(dp(3).toFloat(), 1f)
+            gravity = Gravity.CENTER_HORIZONTAL
         }
         left.addView(about, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
         root.addView(left, FrameLayout.LayoutParams(leftWidth, -1).apply {
@@ -1068,7 +1071,7 @@ class SettingsActivity : Activity() {
     /** A gap between groups of category rows, as tvOS separates its main list. */
     private fun spacer() {
         list.addView(View(this).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
-            LinearLayout.LayoutParams(-1, dp(24)))
+            LinearLayout.LayoutParams(-1, dp(14)))
     }
 
     /** Reveal the entire scaled row with a safety inset on all four sides. */
@@ -1106,8 +1109,8 @@ class SettingsActivity : Activity() {
             clipChildren = false; clipToPadding = false
             // tvOS row: ~116 px at 1080p (58 dp), transparent until focused. One padding for both states,
             // so value and chevron sit in the same column whether the row is focused or not.
-            setPadding(dp(20), dp(8), dp(20), dp(8))
-            minimumHeight = dp(58)
+            setPadding(dp(20), dp(6), dp(20), dp(6))
+            minimumHeight = dp(48)
         }
         appIcon?.let { drawable ->
             r.addView(ImageView(this).apply {
@@ -1115,7 +1118,7 @@ class SettingsActivity : Activity() {
                 importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             }, LinearLayout.LayoutParams(dp(24), dp(24)).apply { marginEnd = dp(12) })
         }
-        val l = text(19f, IDLE_TEXT, weight = 500).apply {
+        val l = text(18f, IDLE_TEXT, weight = 500).apply {
             text = label; maxLines = 2; ellipsize = TextUtils.TruncateAt.END
             setLineSpacing(dp(1).toFloat(), 1f)
         }
