@@ -34,13 +34,13 @@ internal class SettingsDialog(
 
     init {
         requestWindowFeature(Window.FEATURE_NO_TITLE)
-        root.setBackgroundColor(Color.argb(130, 3, 7, 15))
+        root.setBackgroundColor(Color.argb(150, 0, 0, 0))
         root.clipChildren = false
         val width = minOf(activity.dp(650), activity.resources.displayMetrics.widthPixels - activity.dp(80))
         val height = minOf(activity.dp(if (compact) 242 else 410),
             activity.resources.displayMetrics.heightPixels - activity.dp(76))
         val frame = FrameLayout(activity).apply {
-            background = rounded(Color.argb(230, 12, 22, 36), activity.dp(28).toFloat())
+            background = rounded(Color.argb(240, 28, 28, 30), activity.dp(28).toFloat())
             clipChildren = false
         }
         root.addView(frame, FrameLayout.LayoutParams(width, height, Gravity.CENTER))

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings category glyph: thin outline on a 24 grid, tinted by the page. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.4" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M3.5,10.8L12,3.8l8.5,7"/>
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.4" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M5.8,9v11h4.5v-5.5h3.4v5.5h4.5V9"/>
+</vector>

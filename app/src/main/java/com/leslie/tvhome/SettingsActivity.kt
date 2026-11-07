@@ -71,9 +71,13 @@ class SettingsActivity : Activity() {
         }
 
         private val IDLE_TEXT = Color.argb(235, 255, 255, 255)
-        private val IDLE_VALUE = Color.argb(170, 255, 255, 255)
-        private val FOCUS_TEXT = Color.rgb(28, 28, 30)
-        private val FOCUS_VALUE = Color.argb(140, 0, 0, 0)
+        private val IDLE_VALUE = Color.argb(153, 255, 255, 255)
+        private val IDLE_CHEVRON = Color.argb(102, 255, 255, 255)
+        private val FOCUS_TEXT = Color.BLACK
+        private val FOCUS_VALUE = Color.rgb(99, 99, 102)
+        private val FOCUS_CHEVRON = Color.rgb(142, 142, 147)
+        /** Focus growth, about the row's centre; the list's side padding leaves room for it. */
+        private const val FOCUS_SCALE = 1.025f
 
         /** Opens straight on a sub-page (the Home and Control Center network buttons); Back then leaves. */
         const val EXTRA_PAGE = "page"
@@ -93,7 +97,9 @@ class SettingsActivity : Activity() {
     private lateinit var root: FrameLayout
     private lateinit var glass: UpdateGlass
     private lateinit var focusedTitle: TextView
-    private lateinit var back: TextView
+    /** The category glyph on show; null while the user's own icon is in use. */
+    private var glyph = 0
+    private var pageGlyph = R.drawable.ic_cat_system
     private val artwork = Executors.newSingleThreadExecutor()
     private var scene: Bitmap? = null
     private var backdropKey: String? = null
@@ -129,7 +135,10 @@ class SettingsActivity : Activity() {
         prefs = Prefs(this)
         repo = AppRepo(this)
         root = FrameLayout(this).apply {
-            setBackgroundColor(Color.rgb(18, 24, 34))
+            // tvOS dark: a neutral near-black fall, no hue (the bitmap below paints the same gradient).
+            background = android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(SettingsBackdrop.TOP, SettingsBackdrop.BOTTOM))
             clipChildren = false; clipToPadding = false
         }
         glass = UpdateGlass(root, moving = true)
@@ -140,66 +149,51 @@ class SettingsActivity : Activity() {
         pageShade = View(this).apply {
             background = android.graphics.drawable.GradientDrawable(
                 android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-                intArrayOf(0x28030a14, 0x00030a14, 0xb0030a14.toInt()))
+                intArrayOf(0x28000000, 0x00000000, 0xb0000000.toInt()))
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }
         root.addView(pageShade, FrameLayout.LayoutParams(-1, -1))
-        // tvOS: rows float over a dimmed picture, no slabs; the dim deepens towards the list.
-        root.addView(View(this).apply {
-            background = android.graphics.drawable.GradientDrawable(
-                android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
-                intArrayOf(0x33000000, 0x59000000, 0x8c000000.toInt()))
-            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-        }, FrameLayout.LayoutParams(-1, -1))
         // Safe area ~90 x 60 px at 1080p (Android TV is 960 x 540 dp at any density); list ~52 % wide.
         val sideMargin = dp(45)
         val safeTop = dp(30)
         val listWidth = (resources.displayMetrics.widthPixels * 0.52f).toInt()
         val leftWidth = resources.displayMetrics.widthPixels - listWidth - sideMargin * 2 - dp(24)
-        heading = text(30f, weight = 600).apply { maxLines = 2; letterSpacing = -0.02f }
-        root.addView(heading, FrameLayout.LayoutParams(leftWidth, -2).apply {
+        // One line, shrinking for long category names so it never runs into the glyph.
+        heading = text(40f, weight = 700).apply {
+            maxLines = 1; letterSpacing = -0.02f
+            setAutoSizeTextTypeUniformWithConfiguration(26, 40, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
+        }
+        root.addView(heading, FrameLayout.LayoutParams(leftWidth, dp(52)).apply {
             leftMargin = sideMargin; topMargin = safeTop
         })
-        val left = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
-        icon = ImageView(this).apply {
-            showIcon(this)
-            scaleType = ImageView.ScaleType.FIT_CENTER
-            clipRounded(dp(18).toFloat())
+        // tvOS: a large bare glyph for the focused category, its title and description beneath, one left column.
+        val left = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            clipChildren = false; clipToPadding = false
         }
-        left.addView(icon, FrameLayout.LayoutParams(dp(132), dp(132), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
-            topMargin = dp(28)
-        })
-        val description = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        focusedTitle = text(18f, weight = 600).apply {
+        icon = ImageView(this).apply {
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            showIcon(this)
+        }
+        left.addView(icon, LinearLayout.LayoutParams(dp(220), dp(220)))
+        focusedTitle = text(28f, weight = 700).apply {
             letterSpacing = -0.01f
             maxLines = 2; ellipsize = TextUtils.TruncateAt.END
         }
-        description.addView(focusedTitle, LinearLayout.LayoutParams(-1, -2))
-        about = text(14f, Color.argb(200, 255, 255, 255)).apply {
-            maxLines = 5; ellipsize = TextUtils.TruncateAt.END
+        left.addView(focusedTitle, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(20) })
+        about = text(16f, Color.argb(153, 255, 255, 255)).apply {
+            maxLines = 3; ellipsize = TextUtils.TruncateAt.END
             setLineSpacing(dp(3).toFloat(), 1f)
         }
-        description.addView(about, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
-        left.addView(description, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { bottomMargin = dp(52) })
-        back = text(14f, weight = 500).apply {
-            text = I18n.text(R.string.i18n_updateactivity_016); gravity = Gravity.CENTER
-            isFocusable = true; isClickable = true
-            setOnClickListener { up() }
-        }
-        back.background = rounded(Color.argb(40, 255, 255, 255), dp(20).toFloat())
-        back.setOnFocusChangeListener { _, on ->
-            back.background = rounded(if (on) Color.WHITE else Color.argb(40, 255, 255, 255), dp(20).toFloat())
-            back.setTextColor(if (on) FOCUS_TEXT else Color.WHITE)
-            back.tweenScale(if (on) 1.04f else 1f, if (on) 180 else 150)
-        }
-        left.addView(back, FrameLayout.LayoutParams(dp(112), dp(40), Gravity.BOTTOM))
+        left.addView(about, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
         root.addView(left, FrameLayout.LayoutParams(leftWidth, -1).apply {
-            leftMargin = sideMargin; topMargin = dp(84); bottomMargin = safeTop
+            leftMargin = sideMargin; topMargin = dp(100); bottomMargin = safeTop
         })
         list = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             clipChildren = false; clipToPadding = false
-            // Room for the focused row to grow into (scale 1.04 of ~480 dp is ~10 dp per side).
+            // Room for the focused row to grow into: rows scale 1.025 about their centre, ~6 dp per side at 500 dp.
             setPadding(dp(12), dp(10), dp(12), dp(14))
         }
         scroll = object : ScrollView(this) {
@@ -236,6 +230,8 @@ class SettingsActivity : Activity() {
 
     private fun show(p: Page, focusIndex: Int = 0) {
         page = p
+        pageGlyph = glyphFor(if (parent(p) == Page.MAIN) p else parent(p))
+        setGlyph(pageGlyph)
         glass.removeWithin(list)
         list.removeAllViews()
         scroll.scrollTo(0, 0)
@@ -263,7 +259,7 @@ class SettingsActivity : Activity() {
             val target = list.getChildAt(focusIndex.coerceIn(0, maxOf(list.childCount - 1, 0)))
             val focus = target?.takeIf { it.isFocusable } ?: (0 until list.childCount)
                 .map { list.getChildAt(it) }.firstOrNull { it.isFocusable }
-            (focus ?: back).requestFocus()
+            focus?.requestFocus()
             focus?.let { reveal(it, immediate = true) }
         }
     }
@@ -330,10 +326,12 @@ class SettingsActivity : Activity() {
                     (height - source.height * scale) / 2f)
             }
             canvas.drawBitmap(source, matrix, Paint(Paint.FILTER_BITMAP_FLAG))
+            // The user's own picture stays, but well behind the text, as tvOS keeps its page dark.
+            if (original != null) canvas.drawColor(Color.argb(165, 0, 0, 0))
             // Match the actual crop and page scrim; never re-center the original artwork in the glass.
             val shade = Paint().apply {
                 shader = android.graphics.LinearGradient(0f, 0f, 0f, height.toFloat(),
-                    intArrayOf(0x28030a14, 0x00030a14, 0xb0030a14.toInt()), null,
+                    intArrayOf(0x28000000, 0x00000000, 0xb0000000.toInt()), null,
                     android.graphics.Shader.TileMode.CLAMP)
             }
             val material = image.copy(Bitmap.Config.ARGB_8888, true)
@@ -364,18 +362,44 @@ class SettingsActivity : Activity() {
         super.onDestroy()
     }
 
+    /** The user's own settings picture, bare; otherwise the focused category's glyph. */
     private fun showIcon(v: ImageView) {
         val own = customIcon(this)?.let { decodeIcon(it, dp(380)) }
-        glass.removeWithin(v)
+        (v.getTag(R.id.motion_focus) as? Tween)?.cancel()
+        v.alpha = 1f
         if (own != null) {
+            glyph = 0
+            v.clearColorFilter()
             v.setImageBitmap(own)
-            v.setPadding(0, 0, 0, 0)
-            v.background = null
         } else {
-            glass.control(v, 32, content = true)
-            v.setImageResource(R.drawable.ic_gear)
-            v.setPadding(dp(42), dp(42), dp(42), dp(42))
+            glyph = pageGlyph
+            v.setColorFilter(Color.argb(217, 255, 255, 255))
+            v.setImageResource(glyph)
         }
+    }
+
+    private fun glyphFor(p: Page) = when (p) {
+        Page.LOOK -> R.drawable.ic_cat_look
+        Page.HOMESCREEN -> R.drawable.ic_cat_home
+        Page.SAVER -> R.drawable.ic_cat_saver
+        Page.REMOTE -> R.drawable.ic_cat_remote
+        Page.APPS -> R.drawable.ic_cat_apps
+        Page.MEMORY -> R.drawable.ic_cat_memory
+        Page.NETWORK -> R.drawable.ic_cat_network
+        Page.DEVICE -> R.drawable.ic_cat_device
+        else -> R.drawable.ic_cat_system
+    }
+
+    /** Swaps the glyph with a quick critically damped crossfade (~200 ms); a frame per change, nothing continuous. */
+    private fun setGlyph(res: Int) {
+        if (glyph == 0 || glyph == res) return
+        glyph = res
+        val t = icon.getTag(R.id.motion_focus) as? Tween ?: Tween().also { icon.setTag(R.id.motion_focus, it) }
+        val from = icon.alpha
+        t.start(90, Motion.ease, end = {
+            icon.setImageResource(glyph)
+            t.start(130, Motion.ease) { f -> icon.alpha = f }
+        }) { f -> icon.alpha = from * (1 - f) }
     }
 
     /** This build runs on one HEC TV: install guides for other brands' firmware stay hidden here. */
@@ -390,19 +414,19 @@ class SettingsActivity : Activity() {
     private fun main() {
         heading.text = I18n.text(R.string.i18n_settingsactivity_003)
         about.text = ""
-        row(I18n.text(R.string.cat_look), I18n.text(R.string.cat_look_help), { backgroundLabel() }, chevron = true) { show(Page.LOOK) }
-        row(I18n.text(R.string.cat_home), I18n.text(R.string.cat_home_help), { "" }, chevron = true) { show(Page.HOMESCREEN) }
-        row(I18n.text(R.string.cat_saver), I18n.text(R.string.cat_saver_help), { onOff(prefs.frameScreensaver) }, chevron = true) { show(Page.SAVER) }
-        row(I18n.text(R.string.cat_remote), I18n.text(R.string.cat_remote_help), { "" }, chevron = true) { show(Page.REMOTE) }
+        row(I18n.text(R.string.cat_look), I18n.text(R.string.cat_look_help), { backgroundLabel() }, chevron = true, glyph = R.drawable.ic_cat_look) { show(Page.LOOK) }
+        row(I18n.text(R.string.cat_home), I18n.text(R.string.cat_home_help), { "" }, chevron = true, glyph = R.drawable.ic_cat_home) { show(Page.HOMESCREEN) }
+        row(I18n.text(R.string.cat_saver), I18n.text(R.string.cat_saver_help), { onOff(prefs.frameScreensaver) }, chevron = true, glyph = R.drawable.ic_cat_saver) { show(Page.SAVER) }
+        row(I18n.text(R.string.cat_remote), I18n.text(R.string.cat_remote_help), { "" }, chevron = true, glyph = R.drawable.ic_cat_remote) { show(Page.REMOTE) }
         spacer()
-        row(I18n.text(R.string.cat_apps), I18n.text(R.string.cat_apps_help), { "" }, chevron = true) { show(Page.APPS) }
+        row(I18n.text(R.string.cat_apps), I18n.text(R.string.cat_apps_help), { "" }, chevron = true, glyph = R.drawable.ic_cat_apps) { show(Page.APPS) }
         row(I18n.text(R.string.cat_memory), I18n.text(R.string.cat_memory_help),
-            { I18n.text(R.string.i18n_settingsactivity_096, Cleaner.availMb(this)) }, chevron = true) { show(Page.MEMORY) }
-        row(I18n.text(R.string.settings_network), I18n.text(R.string.settings_network_help), { networkLabel() }, chevron = true) {
+            { I18n.text(R.string.i18n_settingsactivity_096, Cleaner.availMb(this)) }, chevron = true, glyph = R.drawable.ic_cat_memory) { show(Page.MEMORY) }
+        row(I18n.text(R.string.settings_network), I18n.text(R.string.settings_network_help), { networkLabel() }, chevron = true, glyph = R.drawable.ic_cat_network) {
             show(Page.NETWORK)
         }
         row(I18n.text(R.string.settings_device), I18n.text(R.string.settings_device_help),
-            { android.os.Build.MODEL }, chevron = true) { show(Page.DEVICE) }
+            { android.os.Build.MODEL }, chevron = true, glyph = R.drawable.ic_cat_device) { show(Page.DEVICE) }
         spacer()
         // Everything that needs system permissions (Bluetooth, picture, sound, joining networks):
         // one clearly labelled way out instead of grey jumps scattered through the list.
@@ -1034,17 +1058,17 @@ class SettingsActivity : Activity() {
     /** One header style for every page: small, dimmed, on the 8 dp grid, aligned with the row text. */
     private fun section(title: String) {
         val first = list.childCount == 0
-        list.addView(text(14f, Color.argb(150, 255, 255, 255), weight = 600).apply {
+        list.addView(text(14f, Color.argb(128, 255, 255, 255), weight = 500).apply {
             text = title; letterSpacing = 0.01f
         }, LinearLayout.LayoutParams(-1, -2).apply {
-            marginStart = dp(16); topMargin = if (first) 0 else dp(24); bottomMargin = dp(8)
+            marginStart = dp(20); topMargin = if (first) 0 else dp(24); bottomMargin = dp(8)
         })
     }
 
     /** A gap between groups of category rows, as tvOS separates its main list. */
     private fun spacer() {
         list.addView(View(this).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
-            LinearLayout.LayoutParams(-1, dp(16)))
+            LinearLayout.LayoutParams(-1, dp(24)))
     }
 
     /** Reveal the entire scaled row with a safety inset on all four sides. */
@@ -1066,7 +1090,7 @@ class SettingsActivity : Activity() {
     /** One focus target per row; explicit switch/checkbox semantics and bounded value width. */
     private fun row(label: String, desc: String?, value: () -> String, chevron: Boolean = false,
                     checked: (() -> Boolean)? = null, checkbox: Boolean = false,
-                    appIcon: Drawable? = null, onClick: (TextView) -> Unit): TextView {
+                    appIcon: Drawable? = null, glyph: Int? = null, onClick: (TextView) -> Unit): TextView {
         val r = object : LinearLayout(this) {
             override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
                 super.onInitializeAccessibilityNodeInfo(info)
@@ -1080,9 +1104,10 @@ class SettingsActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
             isFocusable = true; isClickable = true
             clipChildren = false; clipToPadding = false
-            // tvOS row: 80 px at 1080p (40 dp), transparent until focused; 8 dp grid.
-            setPadding(dp(16), dp(8), dp(16), dp(8))
-            minimumHeight = dp(40)
+            // tvOS row: ~116 px at 1080p (58 dp), transparent until focused. One padding for both states,
+            // so value and chevron sit in the same column whether the row is focused or not.
+            setPadding(dp(20), dp(8), dp(20), dp(8))
+            minimumHeight = dp(58)
         }
         appIcon?.let { drawable ->
             r.addView(ImageView(this).apply {
@@ -1090,23 +1115,23 @@ class SettingsActivity : Activity() {
                 importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             }, LinearLayout.LayoutParams(dp(24), dp(24)).apply { marginEnd = dp(12) })
         }
-        val l = text(16f, IDLE_TEXT, weight = 500).apply {
+        val l = text(19f, IDLE_TEXT, weight = 500).apply {
             text = label; maxLines = 2; ellipsize = TextUtils.TruncateAt.END
             setLineSpacing(dp(1).toFloat(), 1f)
         }
-        val v = text(14f, IDLE_VALUE).apply {
+        val v = text(17f, IDLE_VALUE).apply {
             text = value(); maxLines = 1; ellipsize = TextUtils.TruncateAt.END
             gravity = Gravity.END
-            maxWidth = dp(200)
+            maxWidth = dp(220)
         }
         r.addView(l, LinearLayout.LayoutParams(0, -2, 1f))
         r.addView(v, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(12) })
         // tvOS shows On/Off as the value instead of a switch; checkmarks stay for multi-select lists.
-        val check = if (checkbox) text(15f, weight = 600).apply {
+        val check = if (checkbox) text(18f, weight = 600).apply {
             gravity = Gravity.CENTER; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         } else null
         check?.let { r.addView(it, LinearLayout.LayoutParams(dp(20), dp(20)).apply { marginStart = dp(10) }) }
-        val arrow = if (chevron) text(20f, IDLE_VALUE, weight = 400).apply {
+        val arrow = if (chevron) text(24f, IDLE_CHEVRON, weight = 400).apply {
             text = "›"; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         } else null
         arrow?.let { r.addView(it, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(8) }) }
@@ -1124,18 +1149,20 @@ class SettingsActivity : Activity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { sync() }
             override fun afterTextChanged(s: Editable?) {}
         })
-        val corner = dp(9).toFloat()
+        val corner = dp(12).toFloat()
         r.setOnFocusChangeListener { _, on ->
-            // Focus = a solid white plate with dark ink and a short decelerating lift, as on tvOS.
+            // Focus = a solid white plate with dark ink, a soft shadow and a short decelerating lift, as on tvOS.
             r.background = if (on) rounded(Color.WHITE, corner) else null
             l.setTextColor(if (on) FOCUS_TEXT else IDLE_TEXT)
             v.setTextColor(if (on) FOCUS_VALUE else IDLE_VALUE)
-            arrow?.setTextColor(if (on) FOCUS_VALUE else IDLE_VALUE)
+            arrow?.setTextColor(if (on) FOCUS_CHEVRON else IDLE_CHEVRON)
             check?.setTextColor(if (on) FOCUS_TEXT else Color.WHITE)
-            // Grown from the label's left edge, so the text keeps the column and only the plate reaches past it.
-            r.pivotX = l.left.toFloat()
-            r.tweenScale(if (on) 1.04f else 1f, if (on) 180 else 150, Motion.ease)
+            // Grown about its centre, so the plate stays inside the list's padding on both sides.
+            r.pivotX = r.width / 2f
+            r.pivotY = r.height / 2f
+            r.tweenScale(if (on) FOCUS_SCALE else 1f, if (on) 180 else 150, Motion.ease, z = if (on) dp(6).toFloat() else 0f)
             if (on) {
+                setGlyph(glyph ?: pageGlyph)
                 focusedTitle.text = label
                 if (desc != null) about.text = desc
                 reveal(r)

@@ -293,7 +293,7 @@ class UpdateActivity : Activity() {
 
     private fun show() {
         val root = FrameLayout(this).apply {
-            setBackgroundColor(Color.rgb(20, 27, 38))
+            setBackgroundColor(SettingsBackdrop.BOTTOM)
             clipChildren = false; clipToPadding = false
         }
         val background = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP }
