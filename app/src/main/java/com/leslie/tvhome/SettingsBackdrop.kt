@@ -52,10 +52,10 @@ internal object SettingsBackdrop {
             setScale(scale, scale)
             postTranslate((width - source.width * scale) / 2f, (height - source.height * scale) / 2f)
         }, Paint(Paint.FILTER_BITMAP_FLAG))
-        canvas.drawColor(Color.argb(46, 0, 0, 0))
+        canvas.drawColor(Color.argb(18, 0, 0, 0))
         canvas.drawPaint(Paint().apply {
             shader = LinearGradient(0f, 0f, width * 0.5f, 0f,
-                Color.argb(84, 0, 0, 0), Color.TRANSPARENT, Shader.TileMode.CLAMP)
+                Color.argb(72, 0, 0, 0), Color.TRANSPARENT, Shader.TileMode.CLAMP)
         })
         return image
     }

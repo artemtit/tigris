@@ -155,7 +155,7 @@ class SettingsActivity : Activity() {
         // floats 48 dp in from the top, right and bottom edges, ~54 % of the width.
         val sideMargin = dp(45)
         val safeTop = dp(30)
-        val panelInset = dp(48)
+        val panelInset = dp(36)
         val panelWidth = (resources.displayMetrics.widthPixels * 0.52f).toInt() + dp(24)
         val leftWidth = resources.displayMetrics.widthPixels - panelWidth - panelInset - sideMargin - dp(24)
         // A soft shadow under the left column's white type keeps it legible over a bright wallpaper.
@@ -1094,7 +1094,7 @@ class SettingsActivity : Activity() {
     /** A gap between groups of category rows, as tvOS separates its main list. */
     private fun spacer() {
         list.addView(View(this).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
-            LinearLayout.LayoutParams(-1, dp(14)))
+            LinearLayout.LayoutParams(-1, dp(8)))
     }
 
     /** Reveal the entire scaled row with a safety inset on all four sides. */
@@ -1133,7 +1133,7 @@ class SettingsActivity : Activity() {
             // tvOS row: ~116 px at 1080p (58 dp), transparent until focused. One padding for both states,
             // so value and chevron sit in the same column whether the row is focused or not.
             setPadding(dp(20), dp(6), dp(20), dp(6))
-            minimumHeight = dp(48)
+            minimumHeight = dp(44)
         }
         appIcon?.let { drawable ->
             r.addView(ImageView(this).apply {
