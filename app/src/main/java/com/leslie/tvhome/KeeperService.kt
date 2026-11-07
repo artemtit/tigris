@@ -27,6 +27,7 @@ class KeeperService : Service() {
 
     private val screenOff = object : BroadcastReceiver() {
         override fun onReceive(c: Context, i: Intent) {
+            SleepTimer.set(c, 0) // a manual standby ends the sleep timer, so it can't fire after wake
             if (prefs.shutdownOnPowerKey && prefs.adbAuthorized) {
                 Cleaner.shutdown(applicationContext)
             } else if (prefs.cleanOnStandby) {
@@ -121,6 +122,9 @@ class BootReceiver : BroadcastReceiver() {
         Guard.ensure(c)
         // A running guard looks at what is in front before taking Home, so HDMI-CEC is left alone.
         // Boot alone, with no stock window and no usage-stats evidence, does not start an activity.
-        if (action == Intent.ACTION_BOOT_COMPLETED) HomeGuardService.onBootCompleted()
+        if (action == Intent.ACTION_BOOT_COMPLETED) {
+            SleepTimer.set(c, 0) // alarms don't survive a reboot; clear the stale "N min left"
+            HomeGuardService.onBootCompleted()
+        }
     }
 }
