@@ -150,16 +150,21 @@ internal class VideoWallpaper(
 
     private fun show(on: Boolean) {
         video.alpha = if (on) 1f else 0f
-        if (on && veil.visibility == View.VISIBLE) {
-            // The same frame as the still: a cut nobody sees. Another film: a short crossfade.
-            if (resuming) hideVeil() else veilFade.start(200, end = ::hideVeil) { veil.alpha = 1f - it }
-        }
+        main.removeCallbacks(liftVeil)
+        // First-frame fires before SurfaceFlinger shows it on this vendor: an instant cut flashed
+        // black. Hold the still a beat, then fade (same frame: invisible; another film: crossfade).
+        if (on && veil.visibility == View.VISIBLE) main.postDelayed(liftVeil, 150)
         cover()
+    }
+
+    private val liftVeil = Runnable {
+        if (video.alpha > 0f && veil.visibility == View.VISIBLE) veilFade.start(if (resuming) 150 else 250, end = ::hideVeil) { veil.alpha = 1f - it }
     }
 
     private fun cover() = onCover(video.alpha > 0f || veil.visibility == View.VISIBLE)
 
     private fun showVeil() {
+        main.removeCallbacks(liftVeil)
         val s = still ?: return
         veilFade.cancel()
         if ((veil.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap !== s) veil.setImageBitmap(s)
