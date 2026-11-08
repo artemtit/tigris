@@ -6,7 +6,7 @@
   </a>
 </p>
 
-**Languages:** [English](README.en.md) · [Simplified Chinese](README.md)
+**Languages:** [English](README.en.md) · [Simplified Chinese](README.zh.md)
 
 A tvOS-inspired launcher for Android TV, featuring a Liquid Glass Dock, Top Shelf-like content, a translucent Control Center, photographic wallpapers, and a photo-frame screensaver.
 
