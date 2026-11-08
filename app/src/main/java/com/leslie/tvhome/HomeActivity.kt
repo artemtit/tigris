@@ -134,6 +134,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     private var dockRadius = 0f
     /** The glass baked over the home picture, kept for when the shelf goes away. */
     @Volatile private var homeDock: Bitmap? = null
+    /** Source whose film baked the current dock glass: it stays up across returns until a fresh frame replaces it. */
+    private var videoGlassSource: String? = null
     private var dockShown: Drawable? = null
 
     /** Top Shelf: content of the focused first-row dock app filling the screen above the dock. */
@@ -667,7 +669,9 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 // Settings sits over this same frost; only a real photo, never the green stand-in.
                 if (photo != null) SettingsBackdrop.home = theme to blurred
                 // A video bake may have overtaken this initial static fallback.
-                val live = prefs.background in VideoWallpaper.SOURCES && videoWallpaper.frame != null
+                // The last film glass also stays: graphite in between made the dock flicker clear/frosted on return.
+                val live = prefs.background in VideoWallpaper.SOURCES &&
+                    (videoWallpaper.frame != null || videoGlassSource == prefs.background)
                 if (!live) homeDock = glass
                 if (!live) {
                     frost.setImageBitmap(blurred)
@@ -732,6 +736,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 result.getOrNull()?.let { (glass, blurred) ->
                     SettingsBackdrop.home = source to blurred
                     homeDock = glass
+                    videoGlassSource = source
                     if (!shelfShown) {
                         videoGlassReady = true
                         frost.setImageBitmap(blurred)
