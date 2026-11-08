@@ -306,6 +306,8 @@ internal class VideoWallpaper(
     fun start(source: String) {
         val file = MediaFiles.wallpaper(ctx)
         val nextKey = if (source == LOCAL) "$source:${file?.lastModified()}:${file?.length()}" else source
+        // Back from a freeze with the same film: just carry on, the frame never left the screen.
+        if (key == nextKey && frozen) { frozen = false; player?.play(); return }
         if (key == nextKey || failedKey == nextKey) return
         failedKey = null
         stop()
@@ -556,14 +558,19 @@ internal class VideoWallpaper(
      */
     fun freeze() {
         keepStill()
-        release()
+        // Pause, don't release: on this vendor a released decoder blanks the surface at once,
+        // a black flash under the app's launch animation. onStop's stop() frees it a moment later.
+        player?.pause()
+        frozen = player != null
     }
+    private var frozen = false
 
     private fun release() {
         main.removeCallbacks(timeout)
         main.removeCallbacks(sample)
         player?.release()
         player = null
+        frozen = false
         captureGeneration++
         pendingCapture = false
         key = null
