@@ -37,7 +37,8 @@ import kotlin.random.Random
  * Shared tvOS aerial/local video wallpaper. The film plays into a SurfaceView behind
  * the UI: SurfaceFlinger composites each video frame, so the app window redraws only
  * when the UI changes (a TextureView re-rendered the whole window on the GPU per frame).
- * Glass receives bounded, *asynchronous* PixelCopy snapshots of that surface.
+ * Glass receives bounded PixelCopy snapshots of that surface, requested on [copyThread]:
+ * on API 30 the request blocks its calling thread until the copy is done.
  *
  * PixelCopy can fail on vendor codecs: video keeps playing and the static glass
  * remains in place until a good frame arrives.
@@ -181,27 +182,33 @@ internal class VideoWallpaper(
         val film = if (aerial) "$AERIAL:${current?.name.orEmpty()}" else key.orEmpty()
         val pos = p.currentPosition
         val config = if (still8888) Bitmap.Config.ARGB_8888 else Bitmap.Config.RGB_565
-        // The surface view's own size: the veil's centre-crop then matches the film exactly.
-        val b = runCatching { Bitmap.createBitmap(video.width, video.height, config) }.getOrNull() ?: return
-        try {
-            PixelCopy.request(video, b, { result ->
-                if (result != PixelCopy.SUCCESS) {
-                    // Some readbacks only do 8888: the next still converts. Until then the old still stays.
-                    if (config == Bitmap.Config.RGB_565) still8888 = true
-                    b.recycle()
-                    return@request
-                }
-                val out = if (config == Bitmap.Config.RGB_565) b
-                    else b.copy(Bitmap.Config.RGB_565, false).also { b.recycle() } ?: return@request
-                main.post { install(out, film, pos) }
-                runCatching {
-                    val tmp = File(ctx.noBackupFilesDir, "last_frame.tmp")
-                    FileOutputStream(tmp).use { out.compress(Bitmap.CompressFormat.JPEG, 85, it) }
-                    if (tmp.renameTo(stillFile(ctx))) { prefs.stillFilm = film; prefs.stillPos = pos }
-                }
-            }, copyHandler)
-        } catch (_: Exception) {
-            b.recycle()
+        // The surface view's shape, at most 960 wide: the veil's centre-crop still matches the film.
+        val (w, h) = stillSize(video.width, video.height)
+        val b = runCatching { Bitmap.createBitmap(w, h, config) }.getOrNull() ?: return
+        copyHandler.post {
+            val s = video.holder.surface
+            if (!s.isValid) { b.recycle(); return@post }
+            try {
+                PixelCopy.request(s, null, b, { result ->
+                    if (result != PixelCopy.SUCCESS) {
+                        // Some readbacks only do 8888: the next still converts. Until then the old still stays.
+                        if (config == Bitmap.Config.RGB_565) still8888 = true
+                        b.recycle()
+                        return@request
+                    }
+                    val out = if (config == Bitmap.Config.RGB_565) b
+                        else b.copy(Bitmap.Config.RGB_565, false).also { b.recycle() } ?: return@request
+                    // Written before main sees the bitmap: once installed it may be recycled.
+                    runCatching {
+                        val tmp = File(ctx.noBackupFilesDir, "last_frame.tmp")
+                        FileOutputStream(tmp).use { out.compress(Bitmap.CompressFormat.JPEG, 85, it); it.fd.sync() }
+                        if (tmp.renameTo(stillFile(ctx))) prefs.saveStill(film, pos)
+                    }
+                    main.post { install(out, film, pos) }
+                }, copyHandler)
+            } catch (_: Exception) {
+                b.recycle()
+            }
         }
     }
 
@@ -210,13 +217,16 @@ internal class VideoWallpaper(
         still = b
         stillFilm = film
         stillPos = pos
-        // Decoder already released (app launch): the still takes over from the surface's last frame.
-        if (veil.visibility == View.VISIBLE || player == null) showVeil()
+        // Veil up (maybe mid-crossfade): swap the picture only, showVeil() would cancel the fade.
+        if (veil.visibility == View.VISIBLE) veil.setImageBitmap(b)
+        // Decoder already released: the still takes over from the surface's last frame.
+        else if (player == null) showVeil()
         old?.recycle()
     }
 
     /** Shows the still while the film for [source] is not on screen; after boot it comes from disk. */
     fun showStill(source: String) {
+        if (!stillFits(source, stillFilm)) dropStill()
         if (video.alpha > 0f) return
         if (still == null && stillFits(source, stillFilm)) still = loadStill()
         showVeil()
@@ -230,7 +240,7 @@ internal class VideoWallpaper(
             main.post {
                 if (still !== small) { full.recycle(); return@post }
                 still = full
-                if (veil.visibility == View.VISIBLE) showVeil()
+                if (veil.visibility == View.VISIBLE) veil.setImageBitmap(full)
                 small.recycle()
             }
         }
@@ -258,7 +268,7 @@ internal class VideoWallpaper(
             level == android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL && veil.visibility != View.VISIBLE) dropStill()
     }
 
-    /** Called from the UI thread; only enqueues an asynchronous PixelCopy. */
+    /** Called from the UI thread; the PixelCopy itself runs on [copyThread] (blocking there on API 30). */
     private fun capture(now: Long) {
         // Screen-shaped like before; PixelCopy scales the whole decoded frame into it.
         val width = minOf(if (lowEnd) 320 else 480, layer.width)
@@ -272,34 +282,36 @@ internal class VideoWallpaper(
         pendingCapture = true
         captureStartedAt = now
         nextCaptureAt = now + if (lowEnd) 1_000L else 500L
-        try {
-            PixelCopy.request(video, bitmap, { result ->
-                main.post {
-                    if (generation != captureGeneration || player == null) {
-                        bitmap.recycle()
-                        return@post
-                    }
-                    pendingCapture = false
-                    if (result == PixelCopy.SUCCESS) {
-                        failedCopies = 0
-                        frame = bitmap
-                        onFrame(bitmap)
-                    } else {
-                        bitmap.recycle()
-                        failedCopies++
-                        // Some vendor codecs do not support copying their video layer.
-                        // Back off rather than spin and interfere with remote input.
-                        nextCaptureAt = SystemClock.uptimeMillis() +
-                            if (failedCopies >= 3) 10_000L else 1_500L
-                    }
+        val done = PixelCopy.OnPixelCopyFinishedListener { result ->
+            main.post {
+                if (generation != captureGeneration || player == null) {
+                    bitmap.recycle()
+                    return@post
                 }
-            }, copyHandler)
-        } catch (_: Exception) {
-            // Surface destroyed in between (IllegalArgumentException): retry later.
-            bitmap.recycle()
-            pendingCapture = false
-            failedCopies++
-            nextCaptureAt = now + if (failedCopies >= 3) 10_000L else 1_500L
+                pendingCapture = false
+                if (result == PixelCopy.SUCCESS) {
+                    failedCopies = 0
+                    frame = bitmap
+                    onFrame(bitmap)
+                } else {
+                    bitmap.recycle()
+                    failedCopies++
+                    // Some vendor codecs do not support copying their video layer.
+                    // Back off rather than spin and interfere with remote input.
+                    nextCaptureAt = SystemClock.uptimeMillis() +
+                        if (failedCopies >= 3) 10_000L else 1_500L
+                }
+            }
+        }
+        copyHandler.post {
+            val s = video.holder.surface
+            // Surface destroyed in between (IllegalArgumentException): a failed copy, retried later.
+            try {
+                if (s.isValid) PixelCopy.request(s, null, bitmap, done, copyHandler)
+                else done.onPixelCopyFinished(PixelCopy.ERROR_SOURCE_INVALID)
+            } catch (_: Exception) {
+                done.onPixelCopyFinished(PixelCopy.ERROR_SOURCE_INVALID)
+            }
         }
     }
 
@@ -370,6 +382,8 @@ internal class VideoWallpaper(
         // First run: the local video (or else the static background) stays until the first film is fully downloaded.
         if (ready != null) { showNext(); return }
         MediaFiles.wallpaper(ctx)?.let { filler = true; play(android.net.Uri.fromFile(it).toString()) }
+        // Nothing plays until the download lands: no film will fade the veil out, so it goes now.
+        if (!filler) hideVeil()
         fetchNext()
     }
 
@@ -531,6 +545,8 @@ internal class VideoWallpaper(
     private fun fail() {
         val k = key
         stop()
+        // No film will follow to fade it out: the static background shows instead of a stuck still.
+        hideVeil()
         failedKey = k
         Toast.makeText(ctx, I18n.text(R.string.live_wallpaper_failed), Toast.LENGTH_LONG).show()
     }
@@ -610,5 +626,11 @@ internal class VideoWallpaper(
         fun stillFits(source: String, stillFilm: String) = source in SOURCES && stillFilm.startsWith("$source:")
         /** Where [film] starts: at the still's position if the still was taken from it. */
         fun resumeAt(film: String, stillFilm: String, stillPos: Long) = if (film == stillFilm && stillPos > 0L) stillPos else 0L
+        /** The still's size: [w]×[h]'s shape, at most [STILL_MAX_WIDTH] wide (the veil centre-crops it). */
+        fun stillSize(w: Int, h: Int): Pair<Int, Int> {
+            if (w <= STILL_MAX_WIDTH) return w to h
+            return STILL_MAX_WIDTH to (h.toLong() * STILL_MAX_WIDTH / w).toInt().coerceAtLeast(1)
+        }
+        private const val STILL_MAX_WIDTH = 960
     }
 }

@@ -129,6 +129,8 @@ class Prefs(ctx: Context) {
     var stillPos: Long
         get() = sp.getLong("still_pos", 0L)
         set(v) = sp.edit().putLong("still_pos", v).apply()
+    /** Both at once and on disk before returning: call off the main thread. */
+    fun saveStill(film: String, pos: Long) = sp.edit().putString("still_film", film).putLong("still_pos", pos).commit()
 
     /** Seconds each photo stays up in the photo frame. */
     var frameSeconds: Int
