@@ -7,6 +7,8 @@
 Это форк [lesnolie/Tigris](https://github.com/lesnolie/Tigris) (MIT). Оригинальная документация:
 [English](README.en.md) · [简体中文](README.zh.md).
 
+**[⭐ Поставить звезду](https://github.com/artemtit/tigris)** · **[☕ Поддержать автора](https://yoomoney.ru/to/4100118595097077/0)**
+
 ![Главный экран](docs/screenshots/ru/home-2.jpg)
 
 | Пункт управления | Настройки |
@@ -84,6 +86,11 @@ JDK 17 и Android SDK (platform 36):
 Своя сборка подписывается вашим ключом, поэтому самообновление из этого репозитория для неё
 работать не будет — укажите свой репозиторий в `Updates.kt` и SHA-256 своего сертификата в
 `UpdateSignerPolicy.TIGRIS_SIGNER`.
+
+## Поддержать
+
+Если лаунчер пригодился — можно скинуть на кофе: [ЮMoney](https://yoomoney.ru/to/4100118595097077/0).
+Звёздочка на GitHub тоже очень помогает.
 
 ## Благодарности и лицензия
 
