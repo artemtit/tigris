@@ -61,6 +61,8 @@ internal class VideoWallpaper(
     }.apply { alpha = 0f; visibility = View.GONE }
     var frame: Bitmap? = null
         private set
+    /** The film's surface is on screen (hiding its parent would destroy the surface: a black flash on return). */
+    val showing get() = video.visibility == View.VISIBLE
 
     private val framePaint = Paint(Paint.FILTER_BITMAP_FLAG)
     private val layer = object : FrameLayout(ctx) {

@@ -560,7 +560,9 @@ class HomeActivity : Activity(), TileAdapter.Listener {
                 frost.alpha = expansion
                 frost.visibility = if (expansion > 0f) View.VISIBLE else View.INVISIBLE
                 // Fully frosted, the opaque blur covers wallpaper, film and shelf: don't draw them underneath.
-                backdrop.visibility = if (expansion >= 1f && frost.drawable != null) View.INVISIBLE else View.VISIBLE
+                // Not while a film plays: hiding the backdrop destroys its SurfaceView, and coming back down
+                // would flash black until the next decoded frame. The film costs the app nothing to keep.
+                backdrop.visibility = if (expansion >= 1f && frost.drawable != null && !videoWallpaper.showing) View.INVISIBLE else View.VISIBLE
                 if (off > 0f) scrollGlass.invalidateSelf()
                 // The date, weather and large clock drift up and give way to the rows coming up under them.
                 bigClock.translationY = -expansion * dp(28)
