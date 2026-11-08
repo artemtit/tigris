@@ -2,6 +2,7 @@ package com.leslie.tvhome
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
@@ -15,6 +16,7 @@ import android.view.PixelCopy
 import android.view.SurfaceView
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -64,11 +66,25 @@ internal class VideoWallpaper(
     /** The film's surface is on screen (hiding its parent would destroy the surface: a black flash on return). */
     val showing get() = video.visibility == View.VISIBLE
 
+    /**
+     * The film's last frame, taken on leaving Home and kept on disk for boot. [veil] shows it over
+     * the surface while the decoder restarts, so Home comes back with a picture, not the gradient.
+     */
+    private var still: Bitmap? = null
+    private val prefs = Prefs(ctx)
+    private var stillFilm = prefs.stillFilm
+    private var stillPos = prefs.stillPos
+    @Volatile private var still8888 = false
+    /** The film restarts at the still's own frame: the veil can go without a fade. */
+    private var resuming = false
+    private val veilFade = Tween()
+    private val veil = ImageView(ctx).apply { scaleType = ImageView.ScaleType.CENTER_CROP; visibility = View.GONE }
+
     private val framePaint = Paint(Paint.FILTER_BITMAP_FLAG)
     private val layer = object : FrameLayout(ctx) {
         override fun dispatchDraw(canvas: Canvas) {
             if (canvas.isHardwareAccelerated) super.dispatchDraw(canvas)
-            else if (video.alpha > 0f) frame?.let {
+            else (frame.takeIf { video.alpha > 0f } ?: still.takeIf { veil.visibility == View.VISIBLE })?.let {
                 canvas.drawBitmap(it, null, Rect(0, 0, width, height), framePaint)
             }
         }
@@ -122,6 +138,8 @@ internal class VideoWallpaper(
 
     init {
         layer.addView(video, FrameLayout.LayoutParams(-1, -1, Gravity.CENTER))
+        // Above the surface's hole, so it can fade out over the running film.
+        layer.addView(veil, FrameLayout.LayoutParams(-1, -1))
         host.addView(layer, FrameLayout.LayoutParams(-1, -1))
         // Resizing the surface view from inside a layout pass would be dropped: post it.
         layer.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> main.post { crop() } }
@@ -131,7 +149,113 @@ internal class VideoWallpaper(
 
     private fun show(on: Boolean) {
         video.alpha = if (on) 1f else 0f
-        onCover(on)
+        if (on && veil.visibility == View.VISIBLE) {
+            // The same frame as the still: a cut nobody sees. Another film: a short crossfade.
+            if (resuming) hideVeil() else veilFade.start(200, end = ::hideVeil) { veil.alpha = 1f - it }
+        }
+        cover()
+    }
+
+    private fun cover() = onCover(video.alpha > 0f || veil.visibility == View.VISIBLE)
+
+    private fun showVeil() {
+        val s = still ?: return
+        veilFade.cancel()
+        if ((veil.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap !== s) veil.setImageBitmap(s)
+        veil.alpha = 1f
+        veil.visibility = View.VISIBLE
+        cover()
+    }
+
+    private fun hideVeil() {
+        veilFade.cancel()
+        veil.visibility = View.GONE
+        veil.setImageDrawable(null)
+        cover()
+    }
+
+    /** Before Home goes: the frame on screen becomes the still (in memory, and on disk for boot). */
+    fun keepStill() {
+        val p = player ?: return
+        if (video.alpha == 0f || !video.holder.surface.isValid || video.width <= 0 || video.height <= 0) return
+        val film = if (aerial) "$AERIAL:${current?.name.orEmpty()}" else key.orEmpty()
+        val pos = p.currentPosition
+        val config = if (still8888) Bitmap.Config.ARGB_8888 else Bitmap.Config.RGB_565
+        // The surface view's own size: the veil's centre-crop then matches the film exactly.
+        val b = runCatching { Bitmap.createBitmap(video.width, video.height, config) }.getOrNull() ?: return
+        try {
+            PixelCopy.request(video, b, { result ->
+                if (result != PixelCopy.SUCCESS) {
+                    // Some readbacks only do 8888: the next still converts. Until then the old still stays.
+                    if (config == Bitmap.Config.RGB_565) still8888 = true
+                    b.recycle()
+                    return@request
+                }
+                val out = if (config == Bitmap.Config.RGB_565) b
+                    else b.copy(Bitmap.Config.RGB_565, false).also { b.recycle() } ?: return@request
+                main.post { install(out, film, pos) }
+                runCatching {
+                    val tmp = File(ctx.noBackupFilesDir, "last_frame.tmp")
+                    FileOutputStream(tmp).use { out.compress(Bitmap.CompressFormat.JPEG, 85, it) }
+                    if (tmp.renameTo(stillFile(ctx))) { prefs.stillFilm = film; prefs.stillPos = pos }
+                }
+            }, copyHandler)
+        } catch (_: Exception) {
+            b.recycle()
+        }
+    }
+
+    private fun install(b: Bitmap, film: String, pos: Long) {
+        val old = still
+        still = b
+        stillFilm = film
+        stillPos = pos
+        // Decoder already released (app launch): the still takes over from the surface's last frame.
+        if (veil.visibility == View.VISIBLE || player == null) showVeil()
+        old?.recycle()
+    }
+
+    /** Shows the still while the film for [source] is not on screen; after boot it comes from disk. */
+    fun showStill(source: String) {
+        if (video.alpha > 0f) return
+        if (still == null && stillFits(source, stillFilm)) still = loadStill()
+        showVeil()
+    }
+
+    /** A quick half-size decode for the first draw; the full one replaces it a moment later. */
+    private fun loadStill(): Bitmap? {
+        val small = decodeStill(2) ?: return null
+        copyHandler.post {
+            val full = decodeStill(1) ?: return@post
+            main.post {
+                if (still !== small) { full.recycle(); return@post }
+                still = full
+                if (veil.visibility == View.VISIBLE) showVeil()
+                small.recycle()
+            }
+        }
+        return small
+    }
+
+    private fun decodeStill(sample: Int): Bitmap? = runCatching {
+        BitmapFactory.decodeFile(stillFile(ctx).path, BitmapFactory.Options().apply {
+            inPreferredConfig = Bitmap.Config.RGB_565
+            inSampleSize = sample
+        })
+    }.getOrNull()
+
+    /** Not a video wallpaper any more, or memory is short: the still goes (the file stays). */
+    fun dropStill() {
+        val s = still ?: return
+        hideVeil()
+        still = null
+        s.recycle()
+    }
+
+    /** Critical memory drops the still unless it is on screen; a dying background process drops it anyway. */
+    fun trim(level: Int) {
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE ||
+            level == android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL && veil.visibility != View.VISIBLE) dropStill()
     }
 
     /** Called from the UI thread; only enqueues an asynchronous PixelCopy. */
@@ -227,13 +351,21 @@ internal class VideoWallpaper(
                     main.post { if (player === p && ready != null) showNext() }
             }
         })
-        if (!aerial) { play(android.net.Uri.fromFile(file!!).toString()); return }
+        if (!aerial) { play(android.net.Uri.fromFile(file!!).toString(), resumeAt(nextKey, stillFilm, stillPos)); return }
         // The newest finished film was downloaded ahead and not shown yet; older ones have played.
         val done = aerialDir(ctx).listFiles { f -> f.name.endsWith(".mov") }.orEmpty()
             .sortedByDescending { it.lastModified() }
-        done.drop(1).let { old -> dl.post { old.forEach { it.delete() } } }
+        // The still's film plays on from its frame while it is on disk; a newer one waits for its loop end.
+        val resume = done.firstOrNull { "$AERIAL:${it.name}" == stillFilm }
+        ready = done.firstOrNull()?.takeIf { it != resume }
+        done.filter { it != resume && it != ready }.let { old -> dl.post { old.forEach { it.delete() } } }
+        if (resume != null) {
+            current = resume
+            play(android.net.Uri.fromFile(resume).toString(), stillPos)
+            fetchNext()
+            return
+        }
         // First run: the local video (or else the static background) stays until the first film is fully downloaded.
-        ready = done.firstOrNull()
         if (ready != null) { showNext(); return }
         MediaFiles.wallpaper(ctx)?.let { filler = true; play(android.net.Uri.fromFile(it).toString()) }
         fetchNext()
@@ -368,11 +500,12 @@ internal class VideoWallpaper(
         main.postDelayed(timeout, 20_000L)
     }
 
-    private fun play(uri: String) {
+    private fun play(uri: String, at: Long = 0L) {
         val p = player ?: return
         show(false)
         clearFrame()
-        p.setMediaItem(MediaItem.fromUri(uri))
+        resuming = at > 0L
+        p.setMediaItem(MediaItem.fromUri(uri), at)
         armTimeout()
         p.prepare()
         p.play()
@@ -408,11 +541,12 @@ internal class VideoWallpaper(
     }
 
     fun stop() {
-        freeze()
+        release()
         show(false)
         clearFrame()
         // No film (photo, gradient, failure): no surface, no layer for SurfaceFlinger.
         video.visibility = View.GONE
+        showVeil()
     }
 
     /**
@@ -421,6 +555,11 @@ internal class VideoWallpaper(
      * [start] plays again as after [stop].
      */
     fun freeze() {
+        keepStill()
+        release()
+    }
+
+    private fun release() {
         main.removeCallbacks(timeout)
         main.removeCallbacks(sample)
         player?.release()
@@ -459,5 +598,10 @@ internal class VideoWallpaper(
         fun label(source: String) = I18n.text(if (source == LOCAL) R.string.live_wallpaper_local else R.string.live_wallpaper_aerial)
         /** Holds at most the film on screen and the one downloaded ahead. */
         fun aerialDir(ctx: Context) = File(ctx.noBackupFilesDir, "aerials").apply { mkdirs() }
+        fun stillFile(ctx: Context) = File(ctx.noBackupFilesDir, "last_frame.jpg")
+        /** A still on disk ("source:film") stands in only for the source it was taken from. */
+        fun stillFits(source: String, stillFilm: String) = source in SOURCES && stillFilm.startsWith("$source:")
+        /** Where [film] starts: at the still's position if the still was taken from it. */
+        fun resumeAt(film: String, stillFilm: String, stillPos: Long) = if (film == stillFilm && stillPos > 0L) stillPos else 0L
     }
 }

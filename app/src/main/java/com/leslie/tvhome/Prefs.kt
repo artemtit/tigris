@@ -122,6 +122,13 @@ class Prefs(ctx: Context) {
     var aerialQueuePos: Int
         get() = sp.getInt("aerial_queue_pos", 0)
         set(v) = sp.edit().putInt("aerial_queue_pos", v).apply()
+    /** The film ("source:film") and position of the still in last_frame.jpg. */
+    var stillFilm: String
+        get() = sp.getString("still_film", "")!!
+        set(v) = sp.edit().putString("still_film", v).apply()
+    var stillPos: Long
+        get() = sp.getLong("still_pos", 0L)
+        set(v) = sp.edit().putLong("still_pos", v).apply()
 
     /** Seconds each photo stays up in the photo frame. */
     var frameSeconds: Int
