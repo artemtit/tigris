@@ -226,6 +226,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         super.onCreate(savedInstanceState)
         Tween.readScale(this)
         prefs = Prefs(this)
+        UiSounds.refresh(this)
         cols = prefs.dockColumns
         repo = AppRepo(this)
         buildViews()

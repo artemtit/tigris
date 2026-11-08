@@ -133,6 +133,7 @@ class SettingsActivity : Activity() {
         super.onCreate(savedInstanceState)
         prefs = Prefs(this)
         repo = AppRepo(this)
+        UiSounds.refresh(this)
         root = FrameLayout(this).apply {
             // Neutral graphite until the blurred wallpaper below is composed (a frame or two).
             background = android.graphics.drawable.GradientDrawable(
@@ -531,9 +532,10 @@ class SettingsActivity : Activity() {
         row(I18n.text(R.string.i18n_settingsactivity_026), I18n.text(R.string.i18n_settingsactivity_027), { "" }, chevron = true) {
             startActivity(Intent(this, WallpaperActivity::class.java).putExtra("upload_avatar", true))
         }
-        row(I18n.text(R.string.ui_sounds_title), if (UiSounds.available(this)) I18n.text(R.string.ui_sounds_desc) else I18n.text(R.string.ui_sounds_hint),
-            { onOff(prefs.uiSounds && UiSounds.available(this)) }, checked = { prefs.uiSounds }) {
-            if (UiSounds.available(this)) prefs.uiSounds = !prefs.uiSounds
+        val hasSounds = UiSounds.available(this)
+        row(I18n.text(R.string.ui_sounds_title), if (hasSounds) I18n.text(R.string.ui_sounds_desc) else I18n.text(R.string.ui_sounds_hint),
+            { onOff(prefs.uiSounds && hasSounds) }, checked = { prefs.uiSounds }) {
+            if (hasSounds) { prefs.uiSounds = !prefs.uiSounds; UiSounds.enabled = prefs.uiSounds }
         }
         if (backdropFile(this) != null) row(I18n.text(R.string.i18n_settingsactivity_018), I18n.text(R.string.i18n_settingsactivity_019), {
             if (prefs.settingsBg) I18n.text(R.string.i18n_settingsactivity_020) else I18n.text(R.string.i18n_settingsactivity_021)

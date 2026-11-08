@@ -26,32 +26,42 @@ object UiSounds {
         }
     }
 
-    private var pool: SoundPool? = null
-    private val ids = HashMap<Kind, Int>()
+    @Volatile private var pool: SoundPool? = null
+    @Volatile private var ids: Map<Kind, Int> = emptyMap()
+    /** Mirrors Prefs.uiSounds so the key path never touches SharedPreferences. */
+    @Volatile var enabled = false
     private val gate = Gate()
 
     fun dir(ctx: Context): File? = ctx.getExternalFilesDir(null)?.let { File(it, "sounds") }
 
     fun available(ctx: Context): Boolean = dir(ctx)?.let { d -> Kind.values().any { File(d, it.file).isFile } } == true
 
-    @Synchronized
+    /** Main thread only (key dispatch). */
     fun play(ctx: Context, kind: Kind, repeatCount: Int = 0) {
-        if (!Prefs(ctx).uiSounds) return
+        if (!enabled) return
         if (kind == Kind.NAVIGATE && !gate.allow(SystemClock.uptimeMillis(), repeatCount)) return
-        val p = pool ?: create(ctx).also { pool = it }
+        val p = pool ?: return
         ids[kind]?.let { p.play(it, 1f, 1f, 1, 0, 1f) }
     }
 
-    private fun create(ctx: Context): SoundPool {
-        val p = SoundPool.Builder().setMaxStreams(3).setAudioAttributes(
-            AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()).build()
-        val d = dir(ctx)
-        for (k in Kind.values()) {
-            val f = d?.let { File(it, k.file) }
-            if (f != null && f.isFile) runCatching { ids[k] = p.load(f.path, 1) }
-        }
-        return p
+    /** (Re)loads the files off the main thread; call on activity create so newly added files are picked up. */
+    fun refresh(ctx: Context) {
+        val app = ctx.applicationContext
+        Thread {
+            val on = Prefs(app).uiSounds
+            val p = SoundPool.Builder().setMaxStreams(3).setAudioAttributes(
+                AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()).build()
+            val d = dir(app)
+            val m = HashMap<Kind, Int>()
+            for (k in Kind.values()) {
+                val f = d?.let { File(it, k.file) }
+                if (f != null && f.isFile) runCatching { m[k] = p.load(f.path, 1) }
+            }
+            val old = pool
+            ids = m; pool = p; enabled = on
+            old?.release()
+        }.start()
     }
 
     /** Runs [dispatch] and plays navigate when a D-pad press moved focus, click when OK was consumed. */
