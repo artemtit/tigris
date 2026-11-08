@@ -7,11 +7,11 @@
 Это форк [lesnolie/Tigris](https://github.com/lesnolie/Tigris) (MIT). Оригинальная документация:
 [English](README.en.md) · [简体中文](README.zh.md).
 
-![Главный экран](docs/screenshots/ru/home.jpg)
+![Главный экран](docs/screenshots/ru/home-2.jpg)
 
 | Пункт управления | Настройки |
 |---|---|
-| ![Пункт управления](docs/screenshots/ru/control-center.jpg) | ![Настройки](docs/screenshots/ru/settings.jpg) |
+| ![Пункт управления](docs/screenshots/ru/control-center-2.jpg) | ![Настройки](docs/screenshots/ru/settings.jpg) |
 
 ## Что умеет
 
