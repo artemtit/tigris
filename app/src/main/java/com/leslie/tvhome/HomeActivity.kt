@@ -627,6 +627,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         }
         if (theme in VideoWallpaper.SOURCES) {
             showBackground("graphite", null)
+            // The last film frame covers the gradient until the film is back (after boot: from disk).
+            videoWallpaper.showStill(theme)
             // Just after boot the static picture stays a little longer; the decoder and download wait.
             val wait = Device.settling()
             if (wait > 0) { main.removeCallbacks(settled); main.postDelayed(settled, wait); return }
@@ -635,6 +637,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
             return
         }
         videoWallpaper.stop()
+        videoWallpaper.dropStill()
         if (!Wallpapers.isPhoto(theme)) return showBackground(theme, null)
         if (refreshing) return
         refreshing = true
@@ -1386,6 +1389,8 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     }
 
     override fun onPause() {
+        // The surface still exists here: its frame is what Home shows on return.
+        videoWallpaper.keepStill()
         HomeGuardService.onHomePaused()
         swallowKey = -1
         resumed = false
@@ -1407,6 +1412,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
         if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) repo.invalidate()
+        videoWallpaper.trim(level)
     }
 
     private fun askAdbAuthorization() {
