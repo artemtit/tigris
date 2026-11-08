@@ -298,6 +298,10 @@ class Prefs(ctx: Context) {
         get() = sp.getInt("wake_delay", 5000)
         set(v) = sp.edit().putInt("wake_delay", v.coerceIn(0, 15_000)).apply()
 
+    var uiSounds: Boolean
+        get() = sp.getBoolean("ui_sounds", true)
+        set(v) = sp.edit().putBoolean("ui_sounds", v).apply()
+
     var introSound: Boolean
         get() = sp.getBoolean("intro_sound", true)
         set(v) = sp.edit().putBoolean("intro_sound", v).apply()

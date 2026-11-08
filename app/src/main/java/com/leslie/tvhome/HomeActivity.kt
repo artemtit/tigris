@@ -1307,16 +1307,16 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         }
         if (event.action == KeyEvent.ACTION_UP && (code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_MENU)) {
             when {
-                sheets.isNotEmpty() -> sheets.last().dismiss()
-                control.isOpen -> control.close()
+                sheets.isNotEmpty() -> { UiSounds.play(this, UiSounds.Kind.BACK); sheets.last().dismiss() }
+                control.isOpen -> { UiSounds.play(this, UiSounds.Kind.BACK); control.close() }
                 moving >= 0 -> endMove()
-                header.hasFocus() -> focusAt(focusedPos)
+                header.hasFocus() -> { UiSounds.play(this, UiSounds.Kind.BACK); focusAt(focusedPos) }
                 else -> control.open()
             }
             return true
         }
         if (code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_MENU) return true
-        return super.dispatchKeyEvent(event)
+        return UiSounds.around(this, event) { super.dispatchKeyEvent(event) }
     }
 
     override fun onNewIntent(intent: Intent) {

@@ -28,4 +28,7 @@
     <string name="sleep_timer">睡眠定时</string>
     <string name="sleep_timer_off">关</string>
     <string name="sleep_timer_left">剩余 %1$d 分钟</string>
+    <string name="ui_sounds_title">界面音效</string>
+    <string name="ui_sounds_desc">导航和点击音效。</string>
+    <string name="ui_sounds_hint">请将 navigate.wav、click.wav、back.wav 放入 sounds 文件夹。</string>
 </resources>

@@ -28,4 +28,7 @@
     <string name="sleep_timer">Sleep timer</string>
     <string name="sleep_timer_off">Off</string>
     <string name="sleep_timer_left">%1$d min left</string>
+    <string name="ui_sounds_title">Interface sounds</string>
+    <string name="ui_sounds_desc">Navigation and click sounds.</string>
+    <string name="ui_sounds_hint">Put navigate.wav, click.wav, back.wav into the sounds folder.</string>
 </resources>

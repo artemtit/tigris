@@ -531,6 +531,10 @@ class SettingsActivity : Activity() {
         row(I18n.text(R.string.i18n_settingsactivity_026), I18n.text(R.string.i18n_settingsactivity_027), { "" }, chevron = true) {
             startActivity(Intent(this, WallpaperActivity::class.java).putExtra("upload_avatar", true))
         }
+        row(I18n.text(R.string.ui_sounds_title), if (UiSounds.available(this)) I18n.text(R.string.ui_sounds_desc) else I18n.text(R.string.ui_sounds_hint),
+            { onOff(prefs.uiSounds && UiSounds.available(this)) }, checked = { prefs.uiSounds }) {
+            if (UiSounds.available(this)) prefs.uiSounds = !prefs.uiSounds
+        }
         if (backdropFile(this) != null) row(I18n.text(R.string.i18n_settingsactivity_018), I18n.text(R.string.i18n_settingsactivity_019), {
             if (prefs.settingsBg) I18n.text(R.string.i18n_settingsactivity_020) else I18n.text(R.string.i18n_settingsactivity_021)
         }) {
@@ -1239,7 +1243,10 @@ class SettingsActivity : Activity() {
     /** On Android TV the screensaver starts after the "screen off" timeout. */
     private fun idleMinutes() = Settings.System.getInt(contentResolver, Settings.System.SCREEN_OFF_TIMEOUT, 600_000) / 60_000
 
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean = UiSounds.around(this, event) { super.dispatchKeyEvent(event) }
+
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) UiSounds.play(this, UiSounds.Kind.BACK)
         if (keyCode == KeyEvent.KEYCODE_BACK && page != Page.MAIN) {
             up()
             return true

@@ -14,3 +14,6 @@ local.properties
 keystore.properties
 .env
 __pycache__/
+
+# Third-party interface sounds are device-local, never committed
+*.wav

@@ -28,4 +28,7 @@
     <string name="sleep_timer">Таймер сна</string>
     <string name="sleep_timer_off">Выкл.</string>
     <string name="sleep_timer_left">Ещё %1$d мин</string>
+    <string name="ui_sounds_title">Звуки интерфейса</string>
+    <string name="ui_sounds_desc">Звуки навигации и нажатий.</string>
+    <string name="ui_sounds_hint">Положите navigate.wav, click.wav, back.wav в папку sounds.</string>
 </resources>
