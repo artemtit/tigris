@@ -26,7 +26,10 @@ object UiSounds {
         }
     }
 
+    /** About 5 steps of the TV's 0–100 volume below the content at the usual level (~-4.5 dB). */
+    private const val VOLUME = 0.6f
     @Volatile private var pool: SoundPool? = null
+    @Volatile private var loaded: List<Any> = emptyList()
     @Volatile private var ids: Map<Kind, Int> = emptyMap()
     /** Mirrors Prefs.uiSounds so the key path never touches SharedPreferences. */
     @Volatile var enabled = false
@@ -41,7 +44,7 @@ object UiSounds {
         if (!enabled) return
         if (kind == Kind.NAVIGATE && !gate.allow(SystemClock.uptimeMillis(), repeatCount)) return
         val p = pool ?: return
-        ids[kind]?.let { p.play(it, 1f, 1f, 1, 0, 1f) }
+        ids[kind]?.let { p.play(it, VOLUME, VOLUME, 1, 0, 1f) }
     }
 
     /** (Re)loads the files off the main thread; call on activity create so newly added files are picked up. */
@@ -49,6 +52,11 @@ object UiSounds {
         val app = ctx.applicationContext
         Thread {
             val on = Prefs(app).uiSounds
+            enabled = on
+            val d0 = dir(app)
+            val sig = Kind.values().map { k -> d0?.let { File(it, k.file) }?.let { listOf(it.isFile, it.length(), it.lastModified()) } ?: "" }
+            // Same files: keep the pool, a rebuild would cut a sound that is still playing (click → Settings).
+            if (sig == loaded && pool != null) return@Thread
             val p = SoundPool.Builder().setMaxStreams(3).setAudioAttributes(
                 AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()).build()
@@ -59,7 +67,7 @@ object UiSounds {
                 if (f != null && f.isFile) runCatching { m[k] = p.load(f.path, 1) }
             }
             val old = pool
-            ids = m; pool = p; enabled = on
+            ids = m; pool = p; loaded = sig
             old?.release()
         }.start()
     }
@@ -81,7 +89,7 @@ object UiSounds {
         }
     }
 
-    /** Runs [dispatch], arms navigate for a D-pad press, plays click when OK was consumed. */
+    /** Runs [dispatch] and arms navigate for a D-pad press. Click is played only where an app or Settings opens. */
     fun around(act: Activity, e: KeyEvent, dispatch: () -> Boolean): Boolean {
         if (e.action != KeyEvent.ACTION_DOWN) return dispatch()
         when (e.keyCode) {
@@ -89,11 +97,6 @@ object UiSounds {
                 dpadAt = SystemClock.uptimeMillis(); dpadRepeat = e.repeatCount
             }
         }
-        val handled = dispatch()
-        when (e.keyCode) {
-            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER ->
-                if (handled && e.repeatCount == 0) play(act, Kind.CLICK)
-        }
-        return handled
+        return dispatch()
     }
 }

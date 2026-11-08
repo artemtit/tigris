@@ -464,6 +464,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         icons.addView(netButton, LinearLayout.LayoutParams(dp(28), dp(28)).apply { marginEnd = dp(6) })
         icons.addView(ccButton, LinearLayout.LayoutParams(dp(28), dp(28)))
         avatar = IconButton(this, R.drawable.profile_avatar, portrait = true) {
+            UiSounds.play(this, UiSounds.Kind.CLICK)
             startActivity(Intent(this, SettingsActivity::class.java))
         }.apply {
             id = View.generateViewId()
@@ -1002,6 +1003,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         val intent = repo.launchIntent(app) ?: return applyBackground()
         val opts = ActivityOptions.makeScaleUpAnimation(cell.card, 0, 0, cell.card.width, cell.card.height)
         try {
+            UiSounds.play(this, UiSounds.Kind.CLICK)
             startActivity(intent, opts.toBundle())
             rememberOpened(app.pkg)
         } catch (e: Exception) {
@@ -1342,6 +1344,7 @@ class HomeActivity : Activity(), TileAdapter.Listener {
         if (moving >= 0) endMove()
         // The guard brought the screen back (an app exited to the stock launcher): stay where we were.
         if (intent.getBooleanExtra(EXTRA_GUARD, false)) return
+        UiSounds.play(this, UiSounds.Kind.BACK)
         focusedPos = 0
         // Scroll by our own offset: smoothScrollToPosition aligns to the padding and leaves the grid off its resting place.
         grid.smoothScrollBy(0, -scrollY, Motion.glide, Motion.glideMs(scrollY))

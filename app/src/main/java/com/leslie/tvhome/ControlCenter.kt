@@ -221,6 +221,7 @@ class ControlCenter(private val home: HomeActivity, private val host: FrameLayou
         }
         utility(I18n.text(R.string.i18n_controlcenter_011), R.drawable.ic_gear) {
             close()
+            UiSounds.play(ctx, UiSounds.Kind.CLICK)
             ctx.startActivity(Intent(ctx, SettingsActivity::class.java))
         }
         panel.addView(utilities, LinearLayout.LayoutParams(-1, -2).apply { topMargin = gap })
