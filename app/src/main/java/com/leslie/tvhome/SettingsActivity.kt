@@ -134,6 +134,7 @@ class SettingsActivity : Activity() {
         prefs = Prefs(this)
         repo = AppRepo(this)
         UiSounds.refresh(this)
+        UiSounds.attach(this)
         root = FrameLayout(this).apply {
             // Neutral graphite until the blurred wallpaper below is composed (a frame or two).
             background = android.graphics.drawable.GradientDrawable(

@@ -64,14 +64,33 @@ object UiSounds {
         }.start()
     }
 
-    /** Runs [dispatch] and plays navigate when a D-pad press moved focus, click when OK was consumed. */
-    inline fun around(act: Activity, e: KeyEvent, dispatch: () -> Boolean): Boolean {
+    private var dpadAt = Long.MIN_VALUE / 2
+    private var dpadRepeat = 0
+
+    /**
+     * Navigate plays on the focus change itself: grids move focus after a scroll, so checking
+     * right after dispatch missed most left/right steps. Only focus changes within 500 ms of a
+     * D-pad press count, so programmatic focus (resume, dialogs) stays silent.
+     */
+    fun attach(act: Activity) {
+        act.window.decorView.viewTreeObserver.addOnGlobalFocusChangeListener { old, new ->
+            if (old != null && new != null && SystemClock.uptimeMillis() - dpadAt < 500) {
+                dpadAt = Long.MIN_VALUE / 2
+                play(act, Kind.NAVIGATE, dpadRepeat)
+            }
+        }
+    }
+
+    /** Runs [dispatch], arms navigate for a D-pad press, plays click when OK was consumed. */
+    fun around(act: Activity, e: KeyEvent, dispatch: () -> Boolean): Boolean {
         if (e.action != KeyEvent.ACTION_DOWN) return dispatch()
-        val before = act.currentFocus
+        when (e.keyCode) {
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                dpadAt = SystemClock.uptimeMillis(); dpadRepeat = e.repeatCount
+            }
+        }
         val handled = dispatch()
         when (e.keyCode) {
-            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT ->
-                if (act.currentFocus !== before) play(act, Kind.NAVIGATE, e.repeatCount)
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER ->
                 if (handled && e.repeatCount == 0) play(act, Kind.CLICK)
         }
